@@ -24,7 +24,7 @@ window.RUTH_PROFILE_RECORDS = (() => {
 // ICU transfer: releasing ICU Orders releases these MAR rows and discontinues the ortho rows it DCs.
 window.RUTH_ICU_TRANSFER={
  ordersId:'chart-25d195d201d581a0a439ec5e6a8a85a4',
- release:['Normal saline 500 mL over 30 minutes STAT','Normal saline at 125 mL/hr after bolus','After fluid bolus, if MAP <65 or SBP <100: norepinephrine 2 mcg/min; titrate by 2 mcg every 5 minutes to MAP >65 or SBP >100; max 30 mcg/min','Vancomycin 500 mg/250 mL every 8 hours over 2 hours'],
+ release:['Normal saline 500 mL over 30 minutes STAT','Normal saline at 125 mL/hr after bolus','Norepinephrine','Vancomycin 500 mg/250 mL every 8 hours over 2 hours'],
  discontinue:["Lactated Ringer's at 75 mL/hr",'Piperacillin-tazobactam 450 mg every 8 hours']
 };
 for(const record of window.RUTH_PROFILE_RECORDS){
@@ -54,8 +54,22 @@ window.migrateRuthOrthoStart=function(){
  }
  state.ruthOrthoStartV1=true;
 };
+// Saved charts may hold the ICU norepinephrine order as one long MAR name; show the drug and rate, with titration in notes.
+window.RUTH_NOREPINEPHRINE={name:'Norepinephrine',dose:'2 mcg/min',frequency:'Continuous',scheduledTime:'Continuous',notes:'Start after fluid bolus if MAP <65 or SBP <100. Titrate by 2 mcg every 5 minutes to MAP >65 or SBP >100. Maximum 30 mcg/min.'};
+window.migrateRuthNorepinephrine=function(){
+ if(state.ruthNorepinephrineV1)return;
+ const pid='ruth-livingston',old=/^After fluid bolus, if MAP <65 or SBP <100: norepinephrine/i;
+ const fix=rows=>{if(!Array.isArray(rows))return rows;let kept=false;return rows.filter(med=>{
+  if(med?.patientId!==pid||!(old.test(med.name||'')||med.name===window.RUTH_NOREPINEPHRINE.name))return true;
+  if(kept)return false;kept=true;Object.assign(med,window.RUTH_NOREPINEPHRINE);return true;});};
+ state.medicationCatalog=fix(state.medicationCatalog);
+ for(const item of state.releaseQueue||[])if(item.patientId===pid&&old.test(item.rowData?.name||'')){Object.assign(item.rowData,window.RUTH_NOREPINEPHRINE);item.title=item.content='Norepinephrine 2 mcg/min';}
+ const base=state.simulationBases?.[pid];if(base?.collections)base.collections.medicationCatalog=fix(base.collections.medicationCatalog);
+ state.ruthNorepinephrineV1=true;
+};
 window.migrateRuthProfile=function(){
  window.migrateRuthOrthoStart();
+ window.migrateRuthNorepinephrine();
  if(state.ruthProfileImportV1)return;
  const cloneData=value=>JSON.parse(JSON.stringify(value));
  const pid='ruth-livingston';

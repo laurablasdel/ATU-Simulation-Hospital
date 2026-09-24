@@ -5,6 +5,9 @@
 * Removed the WDL "Physical Assessment" form from Brody, Livingston, Shapiro, Sharp and Watkins. It showed raw text with nothing to chart except name and shift. Students use the Detailed Head-to-Toe Assessment instead.
 * Carl and Karl: removed the blank "ER VS" row and the empty columns. The ER vital signs are now read-only, like Ruth's. Students chart new vitals in the Vitals / Flowsheet form.
 * Ruth: she now starts on the Ortho Orders, transcribed from the Notion Ortho Orders page. **ICU Orders** starts pending. When faculty releases it at transfer, the NS 500 mL bolus, NS 125 mL/hr, norepinephrine and vancomycin appear on the MAR, and LR 75 mL/hr and piperacillin-tazobactam are discontinued. The NS bolus row was removed from the starting paper MAR.
+* Faculty Live Control no longer shows the student "unfinished entries" warning after an edit is saved. Each faculty card is saved by its own button. Student charting screens still warn before leaving.
+* Faculty MAR now shows the same medication table as students. Unreleased medications (such as Ruth's ICU medications) are listed separately under "Not Yet Released — Students Cannot See These".
+* Ruth's ICU norepinephrine now shows on the MAR as **Norepinephrine**, dose 2 mcg/min, IV infusion, continuous. The start and titration instructions appear as a note under the name. Saved charts with the old long entry are updated. Medication notes now display on the MAR.
 * One-time migration updates charts and reset bases already saved in a browser. Reset defaults were updated. Test: `tests/level3-assessment-fixes.cjs`.
 
 ## Carl Shapiro

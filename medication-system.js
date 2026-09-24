@@ -214,7 +214,7 @@ function reconcileSmithTylenolMAR(){
 function ensureMedicationData(){
  state.medicationCatalog||=[];state.bloodUnits||=[];
  for(const p of state.patients)p.barcode||=`PT-${slug(p.mrn||p.name)}`;
- for(const [patientId,meds] of Object.entries(LEVEL3_MAR_MEDICATIONS||{}))for(const med of meds){const [name,route,due,previous,status]=med;if(!state.medicationCatalog.some(x=>x.patientId===patientId&&x.name===name))state.medicationCatalog.push({id:uid('med'),patientId,name,dose:'',route,frequency:due,scheduledTime:due,status:status||'Due',previouslyGiven:previous||'',provider:state.patients.find(x=>x.id===patientId)?.provider||'',highAlert:/insulin|warfarin|heparin|oxytocin|pitocin/i.test(name),barcode:`MED-${slug(name)}-${slug(state.patients.find(x=>x.id===patientId)?.mrn||patientId)}`,notes:''});}
+ for(const [patientId,meds] of Object.entries(LEVEL3_MAR_MEDICATIONS||{}))for(const med of meds){const [name,route,due,previous,status,dose='',notes='']=med;if(!state.medicationCatalog.some(x=>x.patientId===patientId&&x.name===name))state.medicationCatalog.push({id:uid('med'),patientId,name,dose,route,frequency:due,scheduledTime:due,status:status||'Due',previouslyGiven:previous||'',provider:state.patients.find(x=>x.id===patientId)?.provider||'',highAlert:/insulin|warfarin|heparin|oxytocin|pitocin/i.test(name),barcode:`MED-${slug(name)}-${slug(state.patients.find(x=>x.id===patientId)?.mrn||patientId)}`,notes});}
  for(const order of state.orders||[]){
   if(order.type!=='Medication')continue;
   const matching=state.medicationCatalog.find(x=>x.patientId===order.patientId&&(x.sourceOrderId===order.id||x.id===order.medicationId||medicationGenericKey(x.name)===medicationGenericKey(order.text)));
