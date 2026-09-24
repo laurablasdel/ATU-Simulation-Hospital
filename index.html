@@ -1067,8 +1067,9 @@ function renderPatients(){
   <div class="note" style="margin:5px 0">Allergies: ${esc((p.allergies||[]).join(", "))}</div>
   <button class="primary openPatient" data-id="${esc(p.id)}">Open Chart</button>
  </div>`).join("")||'<div class="note">No patients assigned.</div>'}</div>`;
+ const patientUnit=p=>['carl-shapiro','ruth-livingston'].includes(p.id)?'Medical Surgical and ICU':(p.unit||'Other');
  const patientGroups=patientLevelTab===3
-  ? [...new Set(visible.map(p=>p.unit||'Other'))].map(unit=>`<h2 style="color:var(--green);margin:16px 0 8px">${esc(unit)}</h2>${patientCards(visible.filter(p=>(p.unit||'Other')===unit))}`).join("")
+  ? [...new Set(visible.map(patientUnit))].map(unit=>`<h2 style="color:var(--green);margin:16px 0 8px">${esc(unit)}</h2>${patientCards(visible.filter(p=>patientUnit(p)===unit))}`).join("")
   : patientCards(visible);
  document.getElementById("view").innerHTML=panel("Active Patients",`
  <div class="levelTabs" role="tablist" aria-label="Nursing level">${levels.map(level=>`<button class="levelTab ${level===patientLevelTab?"active":""}" role="tab" aria-selected="${level===patientLevelTab}" data-level="${level}">Level ${level}<span class="levelCount">${state.patients.filter(p=>Number(p.level||PATIENT_LEVELS[p.id])===level).length}</span></button>`).join("")}</div>
