@@ -1,5 +1,12 @@
 # Changes for the repository owner
 
+## Level 3 chart fixes (September 24, 2026)
+
+* Removed the WDL "Physical Assessment" form from Brody, Livingston, Shapiro, Sharp and Watkins. It showed raw text with nothing to chart except name and shift. Students use the Detailed Head-to-Toe Assessment instead.
+* Carl and Karl: removed the blank "ER VS" row and the empty columns. The ER vital signs are now read-only, like Ruth's. Students chart new vitals in the Vitals / Flowsheet form.
+* Ruth: she now starts on the Ortho Orders, transcribed from the Notion Ortho Orders page. **ICU Orders** starts pending. When faculty releases it at transfer, the NS 500 mL bolus, NS 125 mL/hr, norepinephrine and vancomycin appear on the MAR, and LR 75 mL/hr and piperacillin-tazobactam are discontinued. The NS bolus row was removed from the starting paper MAR.
+* One-time migration updates charts and reset bases already saved in a browser. Reset defaults were updated. Test: `tests/level3-assessment-fixes.cjs`.
+
 ## Carl Shapiro
 
 * Changed `chart-262195d201d580e18688dc6f4d7711db` (Lab Results / Shapiro new) from immediately visible to pending faculty release. Original baseline lab record and both original images are retained.

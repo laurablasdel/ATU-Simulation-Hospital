@@ -14,14 +14,48 @@ window.RUTH_PROFILE_RECORDS = (() => {
   record('25d195d201d58103a862e1423b28b42b','Culture Results — Ruth','labs','pending',baseline.replace('Blood culture: pending','Blood culture: Positive E. Cloacae')),
   record('25d195d201d5813d8944d02d7166f91c','ICU Lab Results — Ruth (verify chloride before release)','labs','pending','## Ruth Livingston — ICU Laboratory report\n\n'+table(['Test','Yesterday 0600','Today 0600','Current repeat'],cbc)+'\n\n'+table(['Test','Today 0600','Current repeat'],chemistry)+'\n\nBlood culture: Positive E. Cloacae. Blood type: A+. * Asterisks and reference ranges retained from the source. Current repeat collection time is not specified. Chloride is printed as 1.5 in the source and has not been corrected.'),
   record('25d195d201d58164b326d9be8612eae5','Transfusion Orders — Ruth','orders','pending','## Orders\n\n1. Transfuse 2 units PRBC\n2. Type and cross 2 units PRBC\n\nDr. Marcus\n\nDate and time: not entered in source.'),
-  record('25d195d201d581aa9910c83836fe6b07','Consents — source attachment needed','documents','released','The blood transfusion consent is available in the original Notion record. The scanned PDF could not be downloaded into this repository.\n\n[Open original consent in Notion]('+source('25d195d201d581aa9910c83836fe6b07')+')\n\nFaculty: add the original PDF before using this chart as a complete standalone record. This link does not attest that consent is signed.')
+  record('25d195d201d581aa9910c83836fe6b07','Consents — source attachment needed','documents','released','The blood transfusion consent is available in the original Notion record. The scanned PDF could not be downloaded into this repository.\n\n[Open original consent in Notion]('+source('25d195d201d581aa9910c83836fe6b07')+')\n\nFaculty: add the original PDF before using this chart as a complete standalone record. This link does not attest that consent is signed.'),
+  // Ruth starts on the orthopedic unit. The ICU Orders record stays pending until faculty releases it at transfer.
+  record('1c94d1ee708c80f9ac86f6d6e6c9f38d','Ortho Orders','orders','released','Livingston, Ruth (10/8/xxxx)\n'+table(['Date and time','Order','Type of order and who received the order (Verbal/ Telephone)'],[
+   'Admit to Medical-Surgical Orthopedic Unit','Diagnosis: Post-op Open Reduction Internal Fixation (ORIF)','Full Code','Diet: Regular','Activity: Up with assistance; Place SCD when in bed','PT: Full weight bearing; Gait training with walker','Administer supplemental O2 to keep SpO2 >93%','Vital Signs q 4 hours and PRN','I & O q 4 hours','Bladder scan q shift & PRN signs/symptoms of urinary retention','Sterile Dressing change to right hip q day','LABS: BMP, CBC, lactate level','Docusate Sodium 100 mg PO BID','Enoxaparin Sodium 40 mg SQ daily','Piperacillin Tazobactam 450 mg IV q 8 hrs','Calcium Carbonate 650 mg po daily','Alendronate 70 mg po weekly on Wednesdays','Oxycodone 15 mg po q 4 hours prn pain','Acetaminophen 650 mg po q 6 hrs prn temp > 101F','Ketorolac 30 mg IVP q 6 hrs prn pain; not to exceed 120 mg/daily','Lactated Ringers IV @ 75 mls/hr'
+  ].map(order=>['',order,'']).concat([['','','Entered by Dr. Marcus']])))
  ];
 })();
+// ICU transfer: releasing ICU Orders releases these MAR rows and discontinues the ortho rows it DCs.
+window.RUTH_ICU_TRANSFER={
+ ordersId:'chart-25d195d201d581a0a439ec5e6a8a85a4',
+ release:['Normal saline 500 mL over 30 minutes STAT','Normal saline at 125 mL/hr after bolus','After fluid bolus, if MAP <65 or SBP <100: norepinephrine 2 mcg/min; titrate by 2 mcg every 5 minutes to MAP >65 or SBP >100; max 30 mcg/min','Vancomycin 500 mg/250 mL every 8 hours over 2 hours'],
+ discontinue:["Lactated Ringer's at 75 mL/hr",'Piperacillin-tazobactam 450 mg every 8 hours']
+};
 for(const record of window.RUTH_PROFILE_RECORDS){
  const existing=window.CHART_RECORDS.find(r=>r.id===record.id);
  if(existing)Object.assign(existing,record);else window.CHART_RECORDS.push({...record});
 }
+window.RUTH_ORTHO_START_RECORDS=JSON.parse(JSON.stringify(window.CHART_RECORDS.filter(r=>['chart-1c94d1ee708c80f9ac86f6d6e6c9f38d',window.RUTH_ICU_TRANSFER.ordersId,'chart-25d195d201d5816fb8a9eb0e7e5bb4fd'].includes(r.id))));
+// Saved charts from before 2026-09-24 started Ruth with ICU orders and ICU medications active.
+window.migrateRuthOrthoStart=function(){
+ if(state.ruthOrthoStartV1)return;
+ const pid='ruth-livingston',t=window.RUTH_ICU_TRANSFER,cloneData=value=>JSON.parse(JSON.stringify(value));
+ const fixMeds=rows=>{for(const med of rows||[]){if(med.patientId!==pid)continue;
+  if(t.release.includes(med.name))Object.assign(med,{status:'Pending',releaseStatus:'pending'});
+  else if(t.discontinue.includes(med.name))Object.assign(med,{status:'Active',releaseStatus:'released'});}};
+ state.chartContentEdits ||= {};
+ for(const start of window.RUTH_ORTHO_START_RECORDS){
+  delete state.chartContentEdits[start.id];
+  const live=CHART_RECORDS.find(r=>r.id===start.id);if(live)Object.assign(live,cloneData(start));else CHART_RECORDS.push(cloneData(start));
+ }
+ state.releaseQueue=(state.releaseQueue||[]).filter(q=>q.chartRecordId!==t.ordersId);
+ seedChartPending();fixMeds(state.medicationCatalog);
+ const base=state.simulationBases?.[pid];
+ if(base){
+  base.chartRecords=(base.chartRecords||[]).filter(r=>!window.RUTH_ORTHO_START_RECORDS.some(s=>s.id===r.id)&&r.id!=='chart-25d195d201d581788086cb6c706ac318').concat(cloneData(window.RUTH_ORTHO_START_RECORDS));
+  base.releaseQueue=(base.releaseQueue||[]).filter(q=>q.chartRecordId!==t.ordersId).concat(cloneData(state.releaseQueue.filter(q=>q.chartRecordId===t.ordersId)));
+  fixMeds(base.collections?.medicationCatalog);
+ }
+ state.ruthOrthoStartV1=true;
+};
 window.migrateRuthProfile=function(){
+ window.migrateRuthOrthoStart();
  if(state.ruthProfileImportV1)return;
  const cloneData=value=>JSON.parse(JSON.stringify(value));
  const pid='ruth-livingston';

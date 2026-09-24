@@ -1,5 +1,9 @@
 /* Faculty-controlled chart editing, staged releases, shift MARs, and blood scanning. */
 (function(){
+const level3RetiredAssessments=['chart-25d195d201d581188309ec0841b19586','chart-25d195d201d581788086cb6c706ac318','chart-25d195d201d581f594ffc056cb9a7d05','chart-262195d201d581a7aef3c901aeb3e21b','chart-277195d201d581008e81e9b208421d75'];
+// Carl/Karl ER vital signs are read-only; students chart new vitals in the Vitals / Flowsheet form.
+const level3VitalsRecords=['chart-262195d201d581c7adc3f86cdc38c563','chart-277195d201d5815286c2df3a01649aea'];
+const level3VitalsStart=JSON.parse(JSON.stringify((window.CHART_RECORDS||[]).filter(r=>level3VitalsRecords.includes(r.id))));
 const removeIds=new Set([
  'chart-284195d201d58119b8effd1fb54adbde',
  'chart-1d0195d201d5810a9acac8451e662014','chart-1d0195d201d5818b8449cd92cc20db7b',
@@ -11,6 +15,8 @@ const removeIds=new Set([
  ,'chart-283195d201d5808bbeb5e24d75f4d33f','chart-284195d201d581908c27c50dbf996e0f','chart-284195d201d5810a91e5ff040ed8a383','chart-28b195d201d5805ca4d1c8978c9278be','packet-amelia-hydromorphone',
  'chart-2d6195d201d58023be58fb267a940645'
  ,'chart-1d0195d201d581428555d6ceb118688e','admin-jane-postop-morphine','admin-jane-postop-ondansetron'
+ // Level 3 WDL physical assessments; students chart the Detailed Head-to-Toe Assessment instead.
+ ,...level3RetiredAssessments
 ]);
 const changes={
  'chart-2fd195d201d58013ab8bffdf475123e4':{title:'History and Physical',status:'released',content:'## History and Physical\n\n**Date of Admission:** Today  \n**Patient Name:** Jane Fowler  \n**Chief Complaint:** Pelvic pressure, bloating, and constipation  \n**DOB:** 01/28/XXXX  \n**Admitting Physician:** Dr. Smith  \n**Age/Sex:** 79-year-old female  \n**Source of History:** Patient and daughter\n\n### History of Present Illness\n\nJane Fowler has been experiencing pelvic pressure, bloating, and constipation. Her primary provider could palpate her right ovary. An abdominal CT scan showed a tumor with possible invasion of the right ovary. She is admitted for a total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging today.\n\n### Past Medical History\n\n- No history of surgeries\n- No significant medical history\n\n### Allergies\n\n- NKDA\n\n### Social History\n\n- Lives alone\n- No tobacco, alcohol, or drug use\n\n### Home Medications\n\n- Acetaminophen (Tylenol) 650 mg as needed\n- Polyethylene glycol 3350 (MiraLAX) daily\n- Docusate sodium (Colace) daily\n- Melatonin (Natrol) 3 mg every night\n- Escitalopram (Lexapro) 10 mg PO daily\n\n### Assessment\n\nShe is alert and oriented to time, person, place, and situation. Heart rate and rhythm are regular. Lungs are clear to auscultation; oxygen saturation is 97% on room air. The abdomen is slightly distended and tender to light palpation, with rebound tenderness present.\n\n### Plan\n\n1. Total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging.\n   - Cefazolin (Ancef) 2 g IV once on call to the operating room.\n2. Hydration and preoperative care.\n   - Lactated Ringer’s solution (LR) IV at 125 mL/hr.\n   - NPO.\n   - Sequential compression devices.\n   - Indwelling Foley catheter.\n3. Disposition.\n   - Admit to the medical-surgical floor for close monitoring.'},
@@ -574,6 +580,16 @@ window.migrateCarlProfile=function(){
  }
  state.carlProfileImportV1=true;
 };
+// Apply the Level 3 chart cleanup once to saved charts and their saved bases.
+function migrateLevel3Charts(){
+ if(state.level3ChartCleanupV1)return;
+ const current=Object.fromEntries(level3VitalsStart.map(r=>[r.id,r]));
+ for(const r of CHART_RECORDS)if(current[r.id])Object.assign(r,cloneData(current[r.id]));
+ for(const id of [...level3RetiredAssessments,...level3VitalsRecords])delete state.chartContentEdits[id];
+ state.customChartRecords=state.customChartRecords.filter(r=>!level3RetiredAssessments.includes(r.id));
+ for(const base of Object.values(state.simulationBases))if(base?.chartRecords)base.chartRecords=base.chartRecords.filter(r=>!level3RetiredAssessments.includes(r.id)).map(r=>current[r.id]?cloneData(current[r.id]):r);
+ state.level3ChartCleanupV1=true;
+}
 window.initializeAdminEnhancements=function(){
  state.chartContentEdits ||= {};state.customChartRecords ||= [];state.marVisibility ||= {};state.marHiddenRecords ||= {};state.simulationBases ||= {};
  for(const [id,edit] of Object.entries(state.chartContentEdits)){const r=CHART_RECORDS.find(x=>x.id===id);if(r){Object.assign(r,edit);r.content=compactContent(r.content);edit.content=r.content;}}
@@ -583,6 +599,7 @@ window.initializeAdminEnhancements=function(){
  migratePacketCharts();
  migrateCarlProfile();
  window.migrateRuthProfile?.();
+ migrateLevel3Charts();
  const baseRelease=releaseItem;releaseItem=function(id){const item=(state.releaseQueue||[]).find(x=>x.id===id),record=item?.chartRecordId&&CHART_RECORDS.find(r=>r.id===item.chartRecordId);if(record)item.kind=record.category==='orders'?'order':record.category==='mar'?'mar':'result';baseRelease(id);if(item&&item.status==='released'){if(item.kind==='chartdata'&&item.targetCollection&&item.rowData){const existing=state[item.targetCollection].find(x=>x.id===item.rowData.id);if(!existing)state[item.targetCollection].push(item.rowData);if(item.targetCollection==='medicationCatalog')Object.assign(existing||item.rowData,{releaseStatus:'released',status:(existing||item.rowData).status==='Pending'?'Due':(existing||item.rowData).status});}const n=(state.notifications||[]).find(x=>x.releaseItemId===item.id);if(n&&record?.category==='mar'){n.title='New MAR Sheet';n.type='mar';}sendReleaseMessage(item);liveSave('released_to_chart',{patientId:item.patientId,itemId:item.id,target:item.targetCollection||record?.category});}};
  const baseChartRecords=chartRecords;chartRecords=function(patientId,categories){return baseChartRecords(patientId,categories).filter(r=>isFaculty()||!state.marHiddenRecords[r.id]);};
  const baseNativeInput=nativeInput;nativeInput=function(label,type='text',options=null){

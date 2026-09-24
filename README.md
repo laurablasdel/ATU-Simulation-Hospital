@@ -17,7 +17,7 @@ No build step is needed for the website. `node_modules` is not needed. This pack
 Open the site, select Carl or Ruth, and open Faculty Live Control. The inherited default faculty PIN is `2026`. Change it in the application's settings before classroom use. It is a classroom interface control, not server authentication.
 
 * Carl: **Lab Results (Shapiro new)** starts pending. His original lab image stays visible. Release the new result when the scenario calls for it.
-* Ruth: baseline labs are visible. **Culture Results — Ruth**, **ICU Lab Results — Ruth**, and **Transfusion Orders — Ruth** start pending. Review the repeat chloride source discrepancy before releasing that report.
+* Ruth: baseline labs and **Ortho Orders** are visible. **ICU Orders** (release at ICU transfer; it also releases her ICU medications on the MAR), **Culture Results — Ruth**, **ICU Lab Results — Ruth**, and **Transfusion Orders — Ruth** start pending. Review the repeat chloride source discrepancy before releasing that report.
 * Both: source nursing notes are visible under Nursing Notes. Reset to Base restores the intended starting chart and pending releases.
 
 Faculty edits in the website are saved in that browser. They do **not** rewrite files in GitHub. To make permanent changes for all new users, edit the repository files and commit them. Existing saved charts may keep earlier faculty edits; export anything needed before resetting.

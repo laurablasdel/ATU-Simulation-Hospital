@@ -63,6 +63,9 @@ const chartMedicationLinks={
  'admin-stephanie-acetaminophen':['Acetaminophen'],
  'admin-stephanie-ceftriaxone':['Ceftriaxone']
 };
+if(window.RUTH_ICU_TRANSFER)chartMedicationLinks[RUTH_ICU_TRANSFER.ordersId]=RUTH_ICU_TRANSFER.release;
+// Orders that discontinue earlier MAR rows when faculty releases them.
+const chartMedicationDiscontinues=window.RUTH_ICU_TRANSFER?{[RUTH_ICU_TRANSFER.ordersId]:RUTH_ICU_TRANSFER.discontinue}:{};
 function seedLinkedMedications(){
  for(const [recordId,name,dose,frequency] of [['admin-stephanie-acetaminophen','Acetaminophen','650 mg',''],['admin-stephanie-ceftriaxone','Ceftriaxone','500 mg/100 mL','Every 12 hours']]){
   const r=CHART_RECORDS.find(x=>x.id===recordId);if(!r)continue;
@@ -216,7 +219,7 @@ function facultyLayout(){
 }
 window.initializeSimulationWorkflows=function(){
  initDrafts();seedLinkedMedications();ensureMedicationData();
- const originalRelease=releaseItem;releaseItem=function(id){const item=state.releaseQueue.find(x=>x.id===id);originalRelease(id);if(item?.status!=='released')return;const names=chartMedicationLinks[item.chartRecordId]||[];for(const med of state.medicationCatalog.filter(m=>m.patientId===item.patientId&&names.includes(m.name))){med.releaseStatus='released';if(med.status==='Pending')med.status='Due';for(const q of state.releaseQueue)if(q.rowData?.id===med.id&&q.targetCollection==='medicationCatalog'){q.status='released';q.releasedAt=nowLocal();}}if(names.length)liveSave('medication_orders_released',{patientId:item.patientId});};
+ const originalRelease=releaseItem;releaseItem=function(id){const item=state.releaseQueue.find(x=>x.id===id);originalRelease(id);if(item?.status!=='released')return;const names=chartMedicationLinks[item.chartRecordId]||[],stopped=chartMedicationDiscontinues[item.chartRecordId]||[];for(const med of state.medicationCatalog.filter(m=>m.patientId===item.patientId&&stopped.includes(m.name)))med.status='Discontinued';for(const med of state.medicationCatalog.filter(m=>m.patientId===item.patientId&&names.includes(m.name))){med.releaseStatus='released';if(med.status==='Pending')med.status='Due';for(const q of state.releaseQueue)if(q.rowData?.id===med.id&&q.targetCollection==='medicationCatalog'){q.status='released';q.releasedAt=nowLocal();}}if(names.length||stopped.length)liveSave('medication_orders_released',{patientId:item.patientId});};
  const originalChartDoc=renderChartDoc;renderChartDoc=function(content){return originalChartDoc(currentChartDates(content));};
  const cards=chartRecordCards;chartRecordCards=function(records){return cards(records.map(r=>({...r,content:currentChartDates(r.content)})));};
  const faculty=renderFaculty;renderFaculty=function(){faculty();facultyLayout();};
