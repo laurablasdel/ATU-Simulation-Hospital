@@ -8,6 +8,7 @@
 * Faculty Live Control no longer shows the student "unfinished entries" warning after an edit is saved. Each faculty card is saved by its own button. Student charting screens still warn before leaving.
 * Faculty MAR now shows the same medication table as students. Unreleased medications (such as Ruth's ICU medications) are listed separately under "Not Yet Released — Students Cannot See These".
 * Ruth's ICU norepinephrine now shows on the MAR as **Norepinephrine**, dose 2 mcg/min, IV infusion, continuous. The start and titration instructions appear as a note under the name. Saved charts with the old long entry are updated. Medication notes now display on the MAR.
+* Ruth's MAR always follows her ICU Orders. Before release, the ICU medications are hidden and LR/piperacillin-tazobactam are active. After release, it's the reverse. This holds even if **Update Base Patient** was clicked after the ICU release, which previously left the ICU medications on the MAR after a reset.
 * One-time migration updates charts and reset bases already saved in a browser. Reset defaults were updated. Test: `tests/level3-assessment-fixes.cjs`.
 
 ## Carl Shapiro

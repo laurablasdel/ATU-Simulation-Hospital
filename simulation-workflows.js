@@ -22,6 +22,8 @@ function resetToBase(id){
  state.customChartRecords=(state.customChartRecords||[]).filter(r=>r.patientId!==id).concat(records.filter(r=>!SIMULATION_DEFAULTS[id].chartRecords.some(x=>x.id===r.id)));
  state.releaseQueue=(state.releaseQueue||[]).filter(x=>x.patientId!==id).concat(copy(base.releaseQueue).map(q=>({...q,createdAt:nowLocal(),releasedAt:'',status:'pending',content:currentChartDates(q.content)})));
  state.marHiddenRecords||={};for(const rid of ids)delete state.marHiddenRecords[rid];Object.assign(state.marHiddenRecords,base.marHiddenRecords||{});state.marVisibility||={};state.marVisibility[id]=base.marVisibility!==false;state.scenarioStage||={};state.scenarioStage[id]=base.scenarioStage;
+ // A base saved after a release omits that release card; rebuild cards for records that are pending again.
+ seedChartPending();
  ensureMedicationData();state.patientResetEpochs||={};state.patientResetEpochs[id]=Date.now();clearPatientDrafts(id);liveSave('simulation_reset',{patientId:id});return true;
 }
 function updateBase(id){const patient=state.patients.find(p=>p.id===id),keys=Object.keys(SIMULATION_DEFAULTS[id].collections);const base={patient:copy(patient),collections:Object.fromEntries(keys.map(k=>[k,copy((state[k]||[]).filter(x=>x.patientId===id))])),chartRecords:copy(CHART_RECORDS.filter(r=>r.patientId===id)),releaseQueue:copy((state.releaseQueue||[]).filter(x=>x.patientId===id&&x.status==='pending')),scenarioStage:state.scenarioStage?.[id]||null,marVisibility:state.marVisibility?.[id]!==false,savedAt:new Date().toISOString()};state.simulationBases||={};state.simulationBases[id]=cleanBase(base);liveSave('base_patient_updated',{patientId:id});}

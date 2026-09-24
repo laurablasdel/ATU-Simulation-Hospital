@@ -46,6 +46,15 @@ try{
  assert(!mar.includes('After fluid bolus, if MAP'),'long order text no longer used as the MAR name');
  assert(!mar.includes("Lactated Ringer's at 75 mL/hr")&&!mar.includes('Piperacillin-tazobactam'),'ICU orders discontinue LR and piperacillin-tazobactam');
  w.resetToBase(ruth);checkRuthStart(w);
+ // Update Base Patient after the ICU release, then reset: the MAR must still follow the (now pending) ICU Orders.
+ w.releaseItem(s.releaseQueue.find(q=>q.chartRecordId===icu&&q.status==='pending').id);
+ w.updateBasePatient(ruth);w.resetToBase(ruth);
+ assert(!view(w,ruth,'orders').includes('Transfer to ICU'),'reset returns to ortho orders');
+ checkRuthStart(w);
+ w.sessionStorage.setItem('atuEhrTabMode','faculty');
+ w.releaseItem(s.releaseQueue.find(q=>q.chartRecordId===icu&&q.status==='pending').id);
+ assert(view(w,ruth,'mar').includes('Vancomycin'),'ICU medications release again after that reset');
+ w.resetToBase(ruth);checkRuthStart(w);
  // A chart saved before this change: ICU orders released through faculty edits and ICU medications active.
  const old=JSON.parse(JSON.stringify(s));
  for(const flag of ['ruthOrthoStartV1','level3ChartCleanupV1'])delete old[flag];
