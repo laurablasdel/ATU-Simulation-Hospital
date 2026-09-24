@@ -55,6 +55,11 @@ try{
  w.releaseItem(s.releaseQueue.find(q=>q.chartRecordId===icu&&q.status==='pending').id);
  assert(view(w,ruth,'mar').includes('Vancomycin'),'ICU medications release again after that reset');
  w.resetToBase(ruth);checkRuthStart(w);
+ // A faculty-renamed norepinephrine saved into the base after transfer must still follow ICU Orders.
+ w.releaseItem(s.releaseQueue.find(q=>q.chartRecordId===icu&&q.status==='pending').id);
+ s.medicationCatalog.find(m=>m.patientId===ruth&&m.name==='Norepinephrine').name='Norepinephrine 2 mcg/min';
+ w.updateBasePatient(ruth);w.resetToBase(ruth);checkRuthStart(w);
+ assert.equal(s.medicationCatalog.filter(m=>m.patientId===ruth&&/norepinephrine/i.test(m.name)).length,1,'one norepinephrine row');
  // A chart saved before this change: ICU orders released through faculty edits and ICU medications active.
  const old=JSON.parse(JSON.stringify(s));
  for(const flag of ['ruthOrthoStartV1','level3ChartCleanupV1'])delete old[flag];

@@ -57,20 +57,27 @@ window.migrateRuthOrthoStart=function(){
 // Ruth's MAR always follows her ICU Orders, even when a saved base or reset restored medications
 // in a different state: before release the ICU medications are hidden and the ortho ones active.
 window.syncRuthIcuTransfer=function(){
- const t=window.RUTH_ICU_TRANSFER,record=CHART_RECORDS.find(r=>r.id===t.ordersId);if(!record)return;
+ const t=window.RUTH_ICU_TRANSFER,pid='ruth-livingston',record=CHART_RECORDS.find(r=>r.id===t.ordersId);if(!record)return;
  const transferred=chartRecordReleased(record);
+ // Match by drug so renamed or faculty-added copies follow the ICU Orders too.
+ const icuDrug=name=>t.release.includes(name)||/norepinephrine|levophed|vancomycin|normal saline|sodium chloride 0\.9/i.test(name||'');
+ const orthoDrug=name=>t.discontinue.includes(name)||/lactated ringer|piperacillin/i.test(name||'');
+ // Keep one norepinephrine row: the standard entry, which the MAR list re-creates if it is renamed.
+ const norepi=(state.medicationCatalog||[]).filter(m=>m.patientId===pid&&/norepinephrine|levophed/i.test(m.name||''));
+ const keep=norepi.find(m=>m.name===window.RUTH_NOREPINEPHRINE.name)||norepi[0];
+ if(keep){Object.assign(keep,window.RUTH_NOREPINEPHRINE);if(norepi.length>1)state.medicationCatalog=state.medicationCatalog.filter(m=>!norepi.includes(m)||m===keep);}
  for(const med of state.medicationCatalog||[]){
-  if(med.patientId!=='ruth-livingston')continue;
-  if(t.release.includes(med.name)){
+  if(med.patientId!==pid)continue;
+  if(icuDrug(med.name)){
    if(transferred){med.releaseStatus='released';if(med.status==='Pending')med.status='Due';}
    else Object.assign(med,{status:'Pending',releaseStatus:'pending'});
-  }else if(t.discontinue.includes(med.name)){
+  }else if(orthoDrug(med.name)){
    if(transferred)med.status='Discontinued';
    else if(med.status==='Discontinued'){med.status='Active';med.releaseStatus='released';}
   }
  }
  // A reset returns pending queue items only; drop any released copies of ICU medications so they cannot re-release themselves.
- if(!transferred)state.releaseQueue=(state.releaseQueue||[]).filter(q=>!(q.patientId==='ruth-livingston'&&q.status==='released'&&q.targetCollection==='medicationCatalog'&&t.release.includes(q.rowData?.name)));
+ if(!transferred)state.releaseQueue=(state.releaseQueue||[]).filter(q=>!(q.patientId===pid&&q.status==='released'&&q.targetCollection==='medicationCatalog'&&icuDrug(q.rowData?.name)));
 };
 // Saved charts may hold the ICU norepinephrine order as one long MAR name; show the drug and rate, with titration in notes.
 window.RUTH_NOREPINEPHRINE={name:'Norepinephrine',dose:'2 mcg/min',frequency:'Continuous',scheduledTime:'Continuous',notes:'Start after fluid bolus if MAP <65 or SBP <100. Titrate by 2 mcg every 5 minutes to MAP >65 or SBP >100. Maximum 30 mcg/min.'};
