@@ -9,7 +9,7 @@ function client(){return {
 };}
 function start(){const w=boot(undefined,{supabaseUrl:'https://example.supabase.co',supabasePublishableKey:'test-public-key'});w.supabase={createClient:client};windows.push(w);return w;}
 (async()=>{try{
- const faculty=start(),student=start();await faculty.atuCloudInit();await student.atuCloudInit();
+ const faculty=start(),student=start();await faculty.atuCloudInit();student.testApp.state.vitals.push({id:'before-connection',patientId:'ruth-livingston',hr:'88'});await student.atuCloudInit();assert(student.testApp.state.vitals.some(x=>x.id==='before-connection'),'Joining preserves earlier local charting');
  student.sessionStorage.setItem('atuEhrTabMode','student');student.testApp.setPatient('charles-jones');student.testApp.setView('flowsheets');student.render();
  const field=student.document.getElementById('vComments');field.value='Unfinished bedside entry';field.dispatchEvent(new student.Event('input',{bubbles:true}));
  faculty.testApp.state.orders.push({id:'faculty-new',patientId:'charles-jones',text:'Assess patient',status:'Active'});
