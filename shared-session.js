@@ -70,7 +70,13 @@ window.initializeSharedSession=function(){
   host.querySelector('#sharedRetry').onclick=()=>atuCloudInit();
   host.querySelector('#sharedSignIn').onclick=async()=>{try{if(!atuSupabase)throw Error('Configure the hospital project first.');const {error}=await atuSupabase.auth.signInWithPassword({email:host.querySelector('#sharedEmail').value.trim(),password:host.querySelector('#sharedPassword').value});host.querySelector('#sharedPassword').value='';if(error)throw error;await atuCloudInit();host.querySelector('#sharedFeedback').textContent=atuCloudReady?'Connected.':'Signed in; check your simulation membership or connection.';}catch(e){host.querySelector('#sharedFeedback').textContent=e.message;}};
  };
- const refresh=()=>{window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();updateNotificationCount();if(!isFaculty())showNextNotification();};
+ let renderedState='',renderedEpoch=state.patientResetEpochs?.[activePatientId]||0;
+ const refresh=()=>{
+  const snapshot=JSON.stringify(state),epoch=state.patientResetEpochs?.[activePatientId]||0;
+  const editingFaculty=currentView==='faculty'&&document.activeElement?.matches('#view input,#view textarea,#view select');
+  if(snapshot!==renderedState&&(!editingFaculty||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
+  updateNotificationCount();if(!isFaculty())showNextNotification();
+ };
  async function read(){const {data,error}=await atuSupabase.from('ehr_sync').select('payload,revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;return data;}
  async function exchange(){
   if(!atuCloudReady||busy){pending=true;return;}busy=true;
