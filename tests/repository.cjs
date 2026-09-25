@@ -5,7 +5,7 @@ for(const [,script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g))new vm.Scr
 for(const [,url] of html.matchAll(/<script src="([^"]+)"/g))if(!url.startsWith('https:'))assert(fs.existsSync(path.join(root,url.split('?')[0])),'Missing '+url);
 for(const f of fs.readdirSync(root).filter(f=>/\.(js|html)$/.test(f)))assert(!/dfbctsvvkqendktkzejr|sb_publishable_xhff/.test(fs.readFileSync(path.join(root,f),'utf8')),'Original cloud connection in '+f);
 function config(p){const c={window:{},location:{pathname:p}};vm.runInNewContext(fs.readFileSync(path.join(root,'app-config.js'),'utf8'),c);return c.window.ATU_CONFIG;}
-assert.equal(config('/one/').supabaseUrl,'');assert.equal(config('/one/').supabasePublishableKey,'');assert.equal(config('/one/').reportRuntimeErrors,false);
+assert.equal(config('/one/').supabaseUrl,'https://ixjcltjdxwpewwopxbtl.supabase.co');assert(config('/one/').supabasePublishableKey.startsWith('sb_publishable_'));assert.equal(config('/one/').reportRuntimeErrors,false);
 assert.notEqual(config('/one/').storageKey,config('/two/').storageKey);assert.equal(config('/one/').storageKey,config('/one/index.html').storageKey);
 const ctx={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'simulation-defaults.js'),'utf8'),ctx);
 for(const pid of ['carl-shapiro','ruth-livingston']){
@@ -21,3 +21,4 @@ const w=require('./boot.cjs')();try{
  assert.equal(w.localStorage.getItem('another-site_student_drafts_v1'),externalDraft,'Reset must not clear another repository drafts');
 }finally{w.close();}
 console.log('PASS repository: JavaScript syntax, script paths, independent configuration, storage separation, patient list and profile defaults.');
+

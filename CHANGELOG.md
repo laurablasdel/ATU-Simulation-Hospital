@@ -1,3 +1,10 @@
+## September 25 — shared simulation and durable charting
+
+* Add authenticated shared sessions with conflict retries, reset protection, and live messages/alerts.
+* Keep chart drafts across browser sessions and preserve entered Stephanie vitals during startup.
+* Show orders, assessment history, and vital history above reference documents.
+* See SHARED-SIMULATION.md for setup, access limits, and verification.
+
 # Changes for the repository owner
 
 ## Level 3 chart fixes (September 24, 2026)
@@ -50,3 +57,4 @@ Original unrelated regression failures, reproduced on the untouched source revis
 These are pre-existing failures, not passing checks. No clinical validation of source values or new backend integration is claimed. See SOURCE-AUDIT.md before instructional release.
 
 An inherited reference to `assets/baby-boy-sung-chest-xray.png` has no matching file in the original repository. It is outside the Ruth/Carl update and remains an owner follow-up; no replacement image was invented.
+

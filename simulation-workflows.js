@@ -30,17 +30,17 @@ function updateBase(id){const patient=state.patients.find(p=>p.id===id),keys=Obj
 window.simBaseFor=baseFor;window.resetToBase=resetToBase;window.updateBasePatient=updateBase;
 // Drafts stay local to the browser tab; incomplete entries never enter the shared chart.
 let dirty=false,baseline='',rendering=false;
-const draftKey=()=>STORAGE_KEY+'_drafts_'+ATU_CLOUD_CLIENT;
+const draftKey=()=>STORAGE_KEY+'_drafts_durable_'+getTabMode();
 function fields(){return [...document.querySelectorAll('#view input,#view textarea,#view select')].filter(e=>!['file','button','submit'].includes(e.type)).map((e,i)=>({el:e,key:e.id||`${e.closest('form')?.dataset.record||'form'}:${e.name||i}`}));}
 function values(){return Object.fromEntries(fields().map(({el,key})=>[key,/checkbox|radio/.test(el.type)?el.checked:el.value]));}
-function drafts(){try{return JSON.parse(localStorage.getItem(draftKey())||'{}')}catch{return {}}}
+function drafts(){try{const current=localStorage.getItem(draftKey());if(current)return JSON.parse(current);const previous=localStorage.getItem(STORAGE_KEY+'_drafts_'+ATU_CLOUD_CLIENT);return JSON.parse(previous||'{}');}catch{return {}}}
 function key(){return activePatientId+'::'+currentView;}
 function clearPatientDrafts(id){for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(!k.startsWith(STORAGE_KEY+'_draft'))continue;try{const all=JSON.parse(localStorage.getItem(k)||'{}');for(const item of Object.keys(all))if(item.startsWith(id+'::'))delete all[item];localStorage.setItem(k,JSON.stringify(all));}catch{}}if(activePatientId===id){dirty=false;baseline=JSON.stringify(values());}}
 window.simHasDraft=()=>dirty;
-window.simRefreshFromShared=()=>{const d=drafts()[key()];if(d&&d.resetEpoch!==(state.patientResetEpochs?.[activePatientId]||0)){clearPatientDrafts(activePatientId);render();return;}if(dirty){updateNotificationCount();return;}render();};
+window.simRefreshFromShared=()=>{const d=drafts()[key()];if(d&&d.resetEpoch!==(state.patientResetEpochs?.[activePatientId]||0)){clearPatientDrafts(activePatientId);render();return;}if(dirty){updateNotificationCount();if(!isFaculty())showNextNotification();return;}render();};
 // Faculty Live Control saves each edit with its own button; student drafts do not apply there.
 const facultyScreen=()=>currentView==='faculty';
-function setupDraft(){if(rendering)return;if(facultyScreen()){const all=drafts();if(key() in all){delete all[key()];localStorage.setItem(draftKey(),JSON.stringify(all));}dirty=false;baseline='';return;}restoreCurrentViewDraft();baseline=JSON.stringify(values());for(const button of document.querySelectorAll('#view button')){if(/^(Save|Record Administration|Sign Note|Add I&O|Document Medication Administration)/i.test(button.textContent)&&!isFaculty())button.textContent='Complete and Save';} }
+function setupDraft(){window.prioritizeSavedHistory?.();if(rendering)return;if(facultyScreen()){const all=drafts();if(key() in all){delete all[key()];localStorage.setItem(draftKey(),JSON.stringify(all));}dirty=false;baseline='';return;}restoreCurrentViewDraft();baseline=JSON.stringify(values());for(const button of document.querySelectorAll('#view button')){if(/^(Save|Record Administration|Sign Note|Add I&O|Document Medication Administration)/i.test(button.textContent)&&!isFaculty())button.textContent='Complete and Save';} }
 function navigateGuard(event){const button=event.target.closest('aside button,.openPatient,#toggleMode');if(!button||!dirty)return;if(!confirm('This chart has unfinished entries. Click OK to save this work as a draft and leave the screen, or Cancel to stay and complete it.')){event.preventDefault();event.stopImmediatePropagation();return;}saveCurrentViewDraft();dirty=false;baseline=JSON.stringify(values());}
 function entryCount(){return studentCollections.reduce((n,k)=>n+(state[k]||[]).length,0)+(state.orders||[]).length;}
 function initDrafts(){
@@ -231,10 +231,11 @@ window.initializeSimulationWorkflows=function(){
  const faculty=renderFaculty;renderFaculty=function(){faculty();facultyLayout();};
  renderMAR=renderSimpleMAR;renderBloodAdministration=renderSimpleBlood;
  // Completion labels and draft restoration apply to direct form redraws as well as navigation.
- for(const name of ['renderFlowsheets','renderIO','renderNotes','renderEducation','renderAssessments','renderPEWS','renderLabor','renderPostpartum','renderSurgery']){
+ for(const name of ['renderOrders','renderFlowsheets','renderIO','renderNotes','renderEducation','renderAssessments','renderPEWS','renderLabor','renderPostpartum','renderSurgery']){
   if(typeof window[name]!=='function')continue;const fn=window[name];window[name]=function(...args){fn(...args);setupDraft();};
  }
  const previousRender=render;render=function(){rendering=true;try{previousRender();}finally{rendering=false;}setupDraft();};
  window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();};window.refreshSimulationRecords();
 };
 })();
+

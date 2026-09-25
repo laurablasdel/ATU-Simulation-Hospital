@@ -148,7 +148,8 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="chart-admin.js?v=20260923-carl-import-v1"></script>
 <script src="medication-system.js?v=20260918-simple-mar-morphine"></script>
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
-<script src="simulation-workflows.js?v=20260923-carl-import-v1"></script>
+<script src="simulation-workflows.js?v=20260925-saving"></script>
+<script src="shared-session.js?v=20260925"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -446,7 +447,7 @@ function loadState(){
      s.patients.forEach(p=>{if(PATIENT_LEVELS[p.id])p.level=PATIENT_LEVELS[p.id]});
      s.orders ||= [];s.assessments ||= [];s.vitals ||= [];s.io ||= [];s.notes ||= [];s.labs ||= [];s.mar ||= [];s.audit ||= [];s.laborProgress ||= [];s.postpartumRecovery ||= [];s.pphPads ||= [];s.pphMedications ||= [];s.bloodAdministration ||= [];s.surgicalChecklist ||= [];s.surgicalAssessments ||= [];s.scenarioStage ||= {};
      s.settings ||= {mode:"faculty",facultyPin:"2026"};s.releaseQueue ||= [];s.messages ||= [];s.notifications ||= [];s.diagnosticFiles ||= [];s.labPanels ||= [];s.pewsAssessments ||= [];
-     if(!s.settings.stephanieVitalsCleared20260916){s.vitals=s.vitals.filter(v=>v.patientId!=="stephanie-smith");s.settings.stephanieVitalsCleared20260916=true;atuStephanieVitalsMigrationDirty=true;}
+     s.settings.stephanieVitalsCleared20260916=true;
      return s;
    }
  }catch(e){}
@@ -753,7 +754,7 @@ async function atuCloudPull(){
   state=incoming;
   state.settings ||= {mode:"faculty",facultyPin:"2026"};
   state.releaseQueue ||= [];state.messages ||= [];state.notifications ||= [];state.diagnosticFiles ||= [];state.labPanels ||= [];state.vitals ||= [];
-  if(!state.settings.stephanieVitalsCleared20260916){state.vitals=state.vitals.filter(v=>v.patientId!=="stephanie-smith");state.settings.stephanieVitalsCleared20260916=true;atuStephanieVitalsMigrationDirty=true;}
+  state.settings.stephanieVitalsCleared20260916=true;
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   setTabMode(tabMode);
  }finally{atuCloudApplying=false}
@@ -787,7 +788,7 @@ async function atuCloudReceive(payload){
   state=row.payload;
   state.settings ||= {mode:"faculty",facultyPin:"2026"};
   state.releaseQueue ||= [];state.messages ||= [];state.notifications ||= [];state.diagnosticFiles ||= [];state.labPanels ||= [];state.vitals ||= [];
-  if(!state.settings.stephanieVitalsCleared20260916){state.vitals=state.vitals.filter(v=>v.patientId!=="stephanie-smith");state.settings.stephanieVitalsCleared20260916=true;atuStephanieVitalsMigrationDirty=true;}
+  state.settings.stephanieVitalsCleared20260916=true;
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   setTabMode(tabMode);
  }finally{atuCloudApplying=false}
@@ -1509,7 +1510,7 @@ function renderOrders(){
  <label>Entered By<input id="oEnteredBy" placeholder="Faculty/provider"></label></div>
  <div class="actions" style="margin-top:10px"><button id="saveOrder" class="primary">Enter Order</button></div>`)+
  panel("Order List",`<table><thead><tr><th>Time</th><th>Type</th><th>Order</th><th>Provider</th><th>Status</th><th>Entered By</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.time)}</td><td>${esc(r.type)}</td><td>${renderOrderContent(r.text)}</td><td>${esc(r.provider)}</td><td>${esc(r.status)}</td><td>${esc(r.enteredBy)}</td><td>${entryEditButton('orders',r.id)}</td></tr>`).join("")||'<tr><td colspan="7">No orders entered.</td></tr>'}</tbody></table>`);
- saveOrder.onclick=()=>{const r={id:uid("order"),patientId:activePatientId,time:oTime.value,provider:oProvider.value.trim(),type:oType.value,text:oText.value.trim(),status:oStatus.value,enteredBy:oEnteredBy.value.trim(),origin:isFaculty()?"faculty":"student"};if(!r.text||!r.provider){alert("Provider and order are required.");return}state.orders.push(r);audit("Order entered",activePatientId,`${r.type}: ${r.text}`);renderOrders()};
+ saveOrder.onclick=()=>{const r={id:uid("order"),patientId:activePatientId,time:oTime.value,provider:oProvider.value.trim(),type:oType.value,text:oText.value.trim(),status:oStatus.value,enteredBy:oEnteredBy.value.trim(),origin:isFaculty()?"faculty":"student"};if(!r.text||!r.provider){alert("Provider and order are required.");return}state.orders.push(r);audit("Order entered",activePatientId,`${r.type}: ${r.text}`);clearCurrentViewDraft();renderOrders()};
 }
 function renderLabs(){
  if(!requirePatient())return;const p=activePatient();
@@ -1835,8 +1836,10 @@ try{initializeNativeCharts()}catch(e){atuReportRuntimeError("Native charts: "+e.
 try{initializeAdminEnhancements()}catch(e){atuReportRuntimeError("Admin enhancements: "+e.message,"startup",0,0,e)}
 try{initializeMedicationSystem()}catch(e){atuReportRuntimeError("Medication system: "+e.message,"startup",0,0,e)}
 try{initializeSimulationWorkflows()}catch(e){atuReportRuntimeError("Simulation workflows: "+e.message,"startup",0,0,e)}
+initializeSharedSession();
 try{render()}catch(e){atuReportRuntimeError("Initial render: "+e.message,"startup",0,0,e)}
 atuCloudInit();
 </script>
 </body>
 </html>
+
