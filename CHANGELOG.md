@@ -7,6 +7,17 @@
 
 # Changes for the repository owner
 
+## Roles and provider notifications (September 26, 2026)
+
+* **Release alerts are acknowledged once.** Acknowledge now updates the current shared chart. Previously it updated a copy that the 5-second shared refresh had replaced, so the alert returned and students had to acknowledge it repeatedly. Each computer also remembers what it acknowledged, and a popup already handled on another computer closes itself.
+* **Observer Mode** for debrief-room computers. Observers browse the chart independently and view it read-only. Release notices appear briefly and close on their own. To set a computer up, open the site with `?mode=observer` or use Faculty Live Control → This Computer's Role. The faculty PIN is needed to leave Observer Mode.
+* **Provider Notification (SBAR)** screen. Students send an SBAR (Routine, Urgent or STAT) to the provider.
+  * **Faculty:** get a popup to accept it, with an optional provider response. The response reaches the student as a message alert.
+  * **Observers:** get a popup to close, wherever they are in the chart. It is the only thing observers need to close.
+  * **SBAR History:** each patient's SBARs are listed on the SBAR screen.
+  * **Reset:** resetting a patient clears that patient's SBARs.
+* Test: `tests/roles-sbar.cjs`. It covers a control-room, simulation-room and two debrief computers sharing one chart.
+
 ## Level 3 chart fixes (September 24, 2026)
 
 * Removed the WDL "Physical Assessment" form from Brody, Livingston, Shapiro, Sharp and Watkins. It showed raw text with nothing to chart except name and shift. Students use the Detailed Head-to-Toe Assessment instead.
