@@ -150,6 +150,7 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
 <script src="simulation-workflows.js?v=20260925-saving"></script>
 <script src="shared-session.js?v=20260925"></script>
+<script src="simulation-roles.js?v=20260926"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -1837,6 +1838,7 @@ try{initializeAdminEnhancements()}catch(e){atuReportRuntimeError("Admin enhancem
 try{initializeMedicationSystem()}catch(e){atuReportRuntimeError("Medication system: "+e.message,"startup",0,0,e)}
 try{initializeSimulationWorkflows()}catch(e){atuReportRuntimeError("Simulation workflows: "+e.message,"startup",0,0,e)}
 initializeSharedSession();
+try{initializeSimulationRoles()}catch(e){atuReportRuntimeError("Simulation roles: "+e.message,"startup",0,0,e)}
 try{render()}catch(e){atuReportRuntimeError("Initial render: "+e.message,"startup",0,0,e)}
 atuCloudInit();
 </script>

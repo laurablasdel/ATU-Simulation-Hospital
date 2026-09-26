@@ -1,7 +1,7 @@
 /* Simulation starting charts, durable drafts, and guided administration. */
 (function(){
 const copy=x=>JSON.parse(JSON.stringify(x));
-const studentCollections=['vitals','io','assessments','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','audit'];
+const studentCollections=['vitals','io','assessments','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','providerNotifications','audit'];
 const today=()=>nowLocal().slice(0,10);
 const shortDate=()=>{const [y,m,d]=today().split('-');return `${m}/${d}/${y}`;};
 function currentChartDates(text){return String(text||'').replace(/<tr/gi,'\n<tr').split(/\n/).map(line=>/\bDOB\b|date of birth|born|history of|past medical/i.test(line)?line:line.replace(/\b\d{1,2}\/\d{1,2}\/(?:\d{4}|\d{2})\b/g,shortDate()).replace(/\b\d{4}-\d{2}-\d{2}\b/g,today())).join('\n');}

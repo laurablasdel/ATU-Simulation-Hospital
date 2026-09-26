@@ -12,6 +12,20 @@ Reset Patient for New Sim clears the selected patient's student documentation, r
 
 Order List, Assessment History, and Vitals History now appear first, above reference charts and data-entry sections. Detailed saved assessment forms are included in Assessment History.
 
+## Rooms: faculty, simulation, and observers
+
+* **Control room (Faculty Mode):**
+  * Release content as usual.
+  * When a student sends an SBAR, a popup appears on any faculty screen. Type an optional provider response (sent to the student as a message) and click **Accept**.
+* **Simulation room (Student Mode):**
+  * Chart as usual.
+  * Each release shows one popup to acknowledge once.
+  * Use **Provider Notification (SBAR)** in the sidebar to notify the provider.
+* **Debrief room (Observer Mode):**
+  * **Setup:** open `…/?mode=observer`, or in Faculty Mode use **Faculty Live Control → This Computer's Role → Make this computer an Observer**. The computer stays an observer after the browser is reopened. The faculty PIN switches it back.
+  * **Chart access:** observers open any part of the chart independently but cannot chart.
+  * **Alerts:** releases show a brief notice that closes itself. An SBAR shows a popup to close. Observer laptops sign in with Shared connection like every other computer.
+
 ## Configuration and access
 
 `app-config.js` contains the hospital-owned project URL, a **publishable** key, and session ID. It contains no database password or server secret. `supabase-setup.sql` describes the table, membership policies, atomic save function, and realtime setup. Create hospital accounts in Supabase Authentication and explicitly approve each in `simulation_members`. Merely signing up does not grant chart access.
