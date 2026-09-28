@@ -18,6 +18,9 @@ function ensurePackages(){
    while(state.medicationPackages.some(p=>p.id===id))id='MED-'+hash.toString(36).toUpperCase()+(++n);
    const p={id,name:medicationNameForLabel(m.name),strength:'',form:'',orderKeys:[key]};state.medicationPackages.push(p);packages=[p];
   }
+  // Older automatically-created package drafts were unnamed and blocked Print All.
+  // Recover only their name from the linked order; do not infer strength or form.
+  for(const p of packages)if(!String(p.name||'').trim())p.name=medicationNameForLabel(m.name);
   // The relationship comes from package orderKeys, so it survives resets and order ID changes.
  }
  return state.medicationPackages;
