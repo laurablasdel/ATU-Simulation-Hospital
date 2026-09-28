@@ -154,9 +154,9 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
 <script src="vernon-profile.js?v=20260928-provider-workflow"></script>
 <script src="simulation-workflows.js?v=20260928-clear-resume"></script>
-<script src="shared-session.js?v=20260928-decision-queue"></script>
+<script src="shared-session.js?v=20260928-reduced-polling"></script>
 <script src="simulation-roles.js?v=20260928-provider-workflow"></script>
-<script src="student-session.js?v=20260928-area-switch"></script>
+<script src="student-session.js?v=20260928-clinical-areas"></script>
 <script src="simulation-audit.js?v=20260928-provider-workflow"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
@@ -1078,7 +1078,7 @@ function renderPatients(){
   <div class="note" style="margin:5px 0">Allergies: ${esc((p.allergies||[]).join(", "))}</div>
   <button class="primary openPatient" data-id="${esc(p.id)}">Open Chart</button>
  </div>`).join("")||'<div class="note">No patients assigned.</div>'}</div>`;
- const patientUnit=p=>['carl-shapiro','ruth-livingston'].includes(p.id)?'Medical Surgical and ICU':(p.unit||'Other');
+ const patientUnit=p=>({'carl-shapiro':'ICU','karl-sharp':'Medical Surgical','vernon-watkins':'Medical Surgical','ruth-livingston':'Medical Surgical and ICU'}[p.id]||(p.unit||'Other'));
  const patientGroups=getTabMode()==='student'?patientCards(visible):patientLevelTab===3
   ? [...new Set(visible.map(patientUnit))].map(unit=>`<h2 style="color:var(--green);margin:16px 0 8px">${esc(unit)}</h2>${patientCards(visible.filter(p=>patientUnit(p)===unit))}`).join("")
   : patientCards(visible);

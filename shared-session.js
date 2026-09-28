@@ -56,6 +56,7 @@ window.initializeSharedSession=function(){
  const scope=window.ATU_CONFIG?.sessionId||'simulation-state';
  // User decisions take the next available turn after an in-flight background sync.
  // Reserve the lock before resolving a waiter so polling cannot jump the queue.
+ let realtimeConnected=false,lastBackupCheck=0;
  const decisionWaiters=[];
  function acquireDecision(){
   if(!busy){busy=true;return Promise.resolve(true);}
@@ -181,8 +182,13 @@ window.initializeSharedSession=function(){
    const {data,error}=await atuSupabase.auth.getSession();if(error)throw error;
    if(!data.session){atuCloudReady=false;atuCloudBadge('Saved locally • sign in to share across computers');return;}
    atuCloudReady=true;
-   if(!atuCloudChannel)atuCloudChannel=atuSupabase.channel('hospital-'+scope).on('postgres_changes',{event:'UPDATE',schema:'public',table:'ehr_sync',filter:'item_id=eq.'+scope},()=>exchange()).subscribe(status=>{if(status==='SUBSCRIBED')exchange();});
-   clearInterval(pollTimer);pollTimer=setInterval(exchange,5000);await exchange();
+   if(!atuCloudChannel)atuCloudChannel=atuSupabase.channel('hospital-'+scope).on('postgres_changes',{event:'UPDATE',schema:'public',table:'ehr_sync',filter:'item_id=eq.'+scope},event=>{if(event?.new?.revision===revision&&equal(state,base))return;exchange();}).subscribe(status=>{realtimeConnected=status==='SUBSCRIBED';if(realtimeConnected)exchange();});
+   clearInterval(pollTimer);pollTimer=setInterval(()=>{
+    // Realtime carries releases and messages immediately. Poll only as a recovery check.
+    const interval=document.visibilityState==='hidden'?120000:(realtimeConnected?30000:15000);
+    if(Date.now()-lastBackupCheck<interval)return;
+    lastBackupCheck=Date.now();exchange();
+   },5000);lastBackupCheck=Date.now();await exchange();
   }catch(e){atuCloudReady=false;atuCloudBadge('Saved locally • connection setup needed');console.error(e);}
  };
  const resume=()=>{if(atuCloudReady)exchange();else atuCloudInit();};
