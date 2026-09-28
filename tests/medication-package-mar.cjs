@@ -10,7 +10,7 @@ try{
  for(const p of s.patients){
   render(p.id);assert(el('marRecognize'),'Scanner unavailable for '+p.name);
   const meds=w.medicationsForPatient(p.id,false).filter(m=>!w.medicationAdministrationBlock(m));assert(meds.length,p.name+' has no eligible test medication');
-  const before=s.mar.length,first=meds[0];el('marScanPatient').value=p.barcode;w.document.querySelector(`[data-medication-id="${first.id}"]`).click();assert.equal(s.mar.length,before);fillAndSave(first);
+  const before=s.mar.length,first=meds[0];el('marScanPatient').value=p.barcode;const prefix="manual-"+first.id;el(prefix+"-time").value="2026-09-24T09:00";el(prefix+"-student").value="TEST";if(el(prefix+"-verifier"))el(prefix+"-verifier").value="SECOND";if(el(prefix+"-dose"))el(prefix+"-dose").value="1 test unit";if(el(prefix+"-route"))el(prefix+"-route").value="Test route";w.document.querySelector(`[data-medication-id="${first.id}"]`).click();assert.equal(s.mar.length,before,"unchecked Given does not save");el(prefix+"-given").checked=true;w.document.querySelector(`[data-medication-id="${first.id}"]`).click();assert.equal(s.mar.length,before+1,el("marScanFeedback").textContent);assert.equal(el("marScanPatient").value,"");
   let count=0;for(const m of meds){if(w.medicationAdministrationBlock(m))continue;const before=s.mar.length;scan(p.id,m);assert.equal(s.mar.length,before,'Scan alone saved a dose');fillAndSave(m);count++;}
   coverage.push({patient:p.name,scannedOrders:count});
  }
