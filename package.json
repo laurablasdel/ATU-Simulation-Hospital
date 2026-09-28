@@ -5,7 +5,7 @@
   "description": "Static simulation hospital with Carl and Ruth profile updates",
   "scripts": {
     "preview": "node preview.cjs",
-    "test": "node tests/repository.cjs && node tests/carl-profile.cjs && node tests/ruth-profile.cjs && node tests/level3-assessment-fixes.cjs && node tests/shared-saving.cjs && node tests/shared-sync.cjs && node tests/roles-sbar.cjs && node tests/vernon-audit.cjs",
+    "test": "node tests/repository.cjs && node tests/carl-profile.cjs && node tests/ruth-profile.cjs && node tests/level3-assessment-fixes.cjs && node tests/shared-saving.cjs && node tests/shared-sync.cjs && node tests/roles-sbar.cjs && node tests/vernon-audit.cjs && node tests/student-session.cjs",
     "update:profiles": "node tests/update-profile-defaults.cjs"
   },
   "engines": {

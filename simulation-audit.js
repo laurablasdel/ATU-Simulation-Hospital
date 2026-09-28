@@ -4,7 +4,7 @@
  const collections=['orders','assessments','vitals','io','notes','labs','labPanels','mar','medicationCatalog','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','providerNotifications','diagnosticFiles','releaseQueue'];
  const labels={chartDocuments:'Chart documents',medicationCatalog:'Medication orders',orders:'Orders',assessments:'Assessments',vitals:'Vital signs',io:'Intake and output',notes:'Notes and education',labs:'Lab results',labPanels:'Lab panels',mar:'Medication administrations',chartEntries:'Chart forms',messages:'Messages',providerNotifications:'SBAR / provider communication',diagnosticFiles:'Diagnostic attachments',releaseQueue:'Faculty releases',simulationActivity:'Access and documentation timeline',audit:'Existing chart audit'};
  const sessionFor=pid=>pid+':'+(state.patientResetEpochs?.[pid]||'initial');
- let identity=null,known=new Map();
+ let known=new Map();
  window.formatChartTimestamp=function(value){
   const text=String(value??''),match=text.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/);
   if(!match)return text;
@@ -13,24 +13,13 @@
   const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));
   return `${parts.hour}:${parts.minute}_${parts.month}/${parts.day}/${parts.year}`;
  };
- function actor(pid){return getTabMode()==='student'&&identity?.patientId===pid&&identity.simulationId===sessionFor(pid)?identity.name:getTabMode()==='student'?'Student (name not recorded)':getTabMode()==='observer'?'Observer':'Faculty';}
+ function actor(pid){return getTabMode()==='student'?(window.studentSession?.()?.name||'Student (name not recorded)'):getTabMode()==='observer'?'Observer':'Faculty';}
  function addActivity(pid,type,details,extra={}){
   if(!pid)return;
   state.simulationActivity||=[];
-  state.simulationActivity.push({id:uid('activity'),patientId:pid,simulationId:sessionFor(pid),at:new Date().toISOString(),actor:actor(pid),role:getTabMode(),type,details,...extra});
+  state.simulationActivity.push({id:uid('activity'),patientId:pid,simulationId:sessionFor(pid),at:new Date().toISOString(),actor:actor(pid),role:getTabMode(),group:getTabMode()==='student'?(window.studentSession?.()?.group||''):'',area:getTabMode()==='student'?(window.studentSession?.()?.area||''):'',type,details,...extra});
  }
  window.recordChartAccess=function(pid,section,type='Section opened'){addActivity(pid,type,section);save();};
- window.checkInForChart=function(pid,open){
-  if(document.getElementById('studentCheckIn'))return;
-  const host=document.createElement('div');host.className='popupOverlay';host.id='studentCheckIn';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-labelledby','studentCheckInTitle');
-  host.innerHTML='<form class="popupCard"><div class="popupHead"><b id="studentCheckInTitle">Student chart check-in</b></div><div class="popupBody"><p>Enter your name each time you open a chart. It will appear in the simulation audit.</p><label>First Name<input name="firstName" autocomplete="off" maxlength="80" required></label><label>Last Name<input name="lastName" autocomplete="off" maxlength="80" required></label><p role="status" id="checkInFeedback"></p></div><div class="popupActions"><button class="primary" type="submit">Open Chart</button><button type="button" id="cancelCheckIn">Cancel</button></div></form>';
-  document.body.append(host);host.querySelector('input').focus();
-  const cancel=()=>{host.remove();document.querySelector(`.openPatient[data-id="${CSS.escape(pid)}"]`)?.focus();};
-  host.querySelector('#cancelCheckIn').onclick=cancel;
-  host.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();cancel();}if(e.key==='Tab'){const inputs=[...host.querySelectorAll('input,button')];if(e.shiftKey&&document.activeElement===inputs[0]){e.preventDefault();inputs.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===inputs.at(-1)){e.preventDefault();inputs[0].focus();}}};
-  host.querySelector('form').onsubmit=e=>{e.preventDefault();const first=host.querySelector('[name=firstName]').value.trim(),last=host.querySelector('[name=lastName]').value.trim();if(!first||!last){host.querySelector('#checkInFeedback').textContent='Enter both your first and last name.';return;}
-   identity={name:first+' '+last,patientId:pid,simulationId:sessionFor(pid)};host.remove();open();window.recordChartAccess(pid,'Patient Summary','Chart opened');};
- };
  function rowsSnapshot(){const map=new Map();for(const key of collections)for(const row of state[key]||[])if(row?.id&&row.patientId)map.set(key+':'+row.id,{key,row:clone(row)});for(const row of CHART_RECORDS)map.set('chartDocuments:'+row.id,{key:'chartDocuments',row:clone({...row,...state.chartContentEdits?.[row.id]})});return map;}
  function captureChanges(){
   const next=rowsSnapshot();
@@ -66,7 +55,7 @@
  }
  window.simulationReportHTML=function(report){
   const data=report.collections,events=data.simulationActivity||[],people=[...new Set(events.map(e=>e.actor).filter(Boolean))];
-  const timeline=events.slice().sort((a,b)=>a.at.localeCompare(b.at)).map(e=>`<tr><td>${esc(formatChartTimestamp(e.at))}</td><td>${esc(e.actor)}</td><td>${esc(e.type)}</td><td>${esc(e.details)}</td></tr>`).join('');
+  const timeline=events.slice().sort((a,b)=>a.at.localeCompare(b.at)).map(e=>`<tr><td>${esc(formatChartTimestamp(e.at))}</td><td>${esc(e.actor)}${e.group?'<br>Group: '+esc(e.group):''}${e.area?'<br>Area: '+esc(e.area):''}</td><td>${esc(e.type)}</td><td>${esc(e.details)}</td></tr>`).join('');
   const sections=Object.entries(data).filter(([key,rows])=>key!=='simulationActivity'&&rows.length).map(([key,rows])=>`<section><h2>${esc(labels[key]||key)} (${rows.length})</h2>${rows.map((row,i)=>`<article><h3>Record ${i+1}</h3>${valueHTML(row)}</article>`).join('')}</section>`).join('');
   const versions=events.filter(e=>e.record).map(e=>`<article><h3>${esc(formatChartTimestamp(e.at))} — ${esc(e.actor)} — ${esc(e.type)} — ${esc(e.details)}</h3>${valueHTML(e.record)}</article>`).join('');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Simulation chart audit — '+esc(report.patient.name)+'</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#172a38;max-width:1100px;margin:30px auto;padding:0 20px}h1,h2{color:#154c42}table{width:100%;border-collapse:collapse}td,th{border:1px solid #bdc9cb;padding:8px;text-align:left;vertical-align:top}article{border:1px solid #c9d6d6;padding:12px;margin:14px 0;overflow-wrap:anywhere}dl{display:grid;grid-template-columns:minmax(140px,25%) 1fr;gap:4px 12px}dt{font-weight:600}dd{margin:0;white-space:pre-wrap;min-width:0}dd dl{display:block}button{padding:10px}@media print{button{display:none}body{margin:0;font-size:10pt}h2,h3{break-after:avoid}tr{break-inside:avoid}}@page{size:letter;margin:.5in}</style></head><body>'+`<button onclick="window.print()">Print / Save as PDF</button><h1>Simulation chart audit</h1><p><b>${esc(report.patient.name)}</b> — MRN ${esc(report.patient.mrn)}</p><p>Simulation: ${esc(report.simulationId)}<br>Generated: ${esc(formatChartTimestamp(report.generatedAt))}<br>${report.endedAt?'Ended: '+esc(formatChartTimestamp(report.endedAt)):'Current simulation'}<br>Times: Central (24-hour clock)</p><p>Chart users recorded: ${esc(people.join(', ')||'No named accesses recorded')}</p><p>Access tracking begins with this update. Earlier section visits cannot be reconstructed. Current chart records include starting clinical information as well as saved simulation documentation; the timeline identifies actions recorded during this simulation. Unsaved drafts are not completed chart entries.</p><h2>Access and documentation timeline</h2><table><thead><tr><th>Time_Date</th><th>Who</th><th>Action</th><th>Section / details</th></tr></thead><tbody>${timeline||'<tr><td colspan="4">No tracked activity.</td></tr>'}</tbody></table>${sections}<h2>Documentation versions recorded during simulation</h2>${versions||'<p>No recorded changes.</p>'}<h2>Released chart documents</h2>${report.chartRecords.map(r=>`<article><h3>${esc(r.title)}</h3>${valueHTML(r.content,'content')}</article>`).join('')}</body></html>`;

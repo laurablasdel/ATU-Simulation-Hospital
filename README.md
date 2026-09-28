@@ -1,3 +1,7 @@
+## Student sign-in (September 28, 2026)
+
+In Student Mode, enter first and last name, optional clinical group/cohort, and a clinical area. Sign-in remains in the current browser tab across refreshes and chart changes until Sign Out (closing the tab ends that tab session). Sign Out preserves saved charts and does not disconnect the shared hospital connection. Names/group/area are recorded in the audit; clinical documentation fields stay blank. Area choices follow the reference repository units: Medical Surgical and ICU, Orthopedic Med-Surg, Progressive Care, Psychiatric, plus PEDS and OB for existing patients. Area filters use patient clinicalAreas when configured, then existing specialty/unit information. Ruth remains available under the combined Medical Surgical and ICU area and Orthopedic Med-Surg; Carl/Karl also appear under Progressive Care. This name check-in is separate from Supabase shared-connection authentication.
+
 # ATU Simulation Hospital — editable repository
 
 Prepared September 23, 2026 from `sescobar1/ATU-simulation-hospital`, revision `4a2e11a056a0817bc1df6dc5870234e0a9316138`, with Carl Shapiro and Ruth Livingston updates. The existing patients and application are included. See [SOURCE-AUDIT.md](SOURCE-AUDIT.md) for source discrepancies and unfinished attachments.

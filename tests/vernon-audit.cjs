@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),boot=require('./boot.cjs'),fs=require
 const windows=[],start=s=>{const w=boot(s);windows.push(w);return w;},clone=x=>JSON.parse(JSON.stringify(x));
 const pid='vernon-watkins',tick=()=>new Promise(r=>setImmediate(r));
 function view(w,id,name,mode='student'){w.setTabMode(mode);w.testApp.setPatient(id);w.testApp.setView(name);w.render();return w.document.getElementById('view');}
-function checkIn(w,id,first,last){w.checkInForChart(id,()=>{w.testApp.setPatient(id);w.testApp.setView('summary');w.render();});const f=w.document.querySelector('#studentCheckIn form');f.elements.firstName.value=first;f.elements.lastName.value=last;f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
+function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w.testApp.setPatient(id);w.testApp.setView('summary');w.render();});const f=w.document.querySelector('#studentCheckIn form');f.elements.area.value='Medical Surgical and ICU';f.elements.firstName.value=first;f.elements.lastName.value=last;f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
 (async()=>{try{
  const w=start(),s=w.testApp.state;
  assert.equal(w.formatChartTimestamp('2026-09-28T14:35'),'14:35_09/28/2026');
@@ -25,7 +25,7 @@ function checkIn(w,id,first,last){w.checkInForChart(id,()=>{w.testApp.setPatient
   assert(s.simulationActivity.some(e=>e.patientId===p.id&&e.actor==='Student '+p.id&&e.collection==='vitals'));
   assert.equal(root.querySelector('h2').textContent,'Vitals History');
  }
- w.setTabMode('student');w.checkInForChart(pid,()=>assert.fail('blank name accepted'));let f=w.document.querySelector('#studentCheckIn form');f.elements.firstName.value=' ';f.elements.lastName.value='Test';f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert(w.document.getElementById('studentCheckIn'));w.document.getElementById('cancelCheckIn').click();
+ w.setTabMode('student');w.signOutStudent();w.checkInForChart(pid,()=>assert.fail('blank name accepted'));let f=w.document.querySelector('#studentCheckIn form');f.elements.firstName.value=' ';f.elements.lastName.value='Test';f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert(w.document.getElementById('studentCheckIn'));w.setTabMode('faculty');w.render();
  checkIn(w,pid,'Alex','Nurse');view(w,pid,'flowsheets');w.document.querySelector('aside [data-view="orders"]').click();assert(s.simulationActivity.some(e=>e.patientId===pid&&e.type==='Section opened'&&e.actor==='Alex Nurse'));
  s.providerNotifications.push({id:'sbar-audit',patientId:pid,student:'AN',situation:'Breathing changed',recommendation:'Assess now',createdAt:'2026-09-28T14:35'});w.save();
  const first=w.buildSimulationReport(pid),html=w.simulationReportHTML(first);assert(html.includes('Alex Nurse')&&html.includes('Breathing changed')&&html.includes('Assess now'));

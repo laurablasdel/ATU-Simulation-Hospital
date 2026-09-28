@@ -15,7 +15,8 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
 (async()=>{try{
  const faculty=start(),sim=start(),obs1=start(),obs2=start();
  for(const w of windows)await w.atuCloudInit();
- sim.setTabMode('student');
+ sim.setTabMode('student');sim.render();
+ const login=sim.document.querySelector('#studentCheckIn form');login.elements.firstName.value='Test';login.elements.lastName.value='Student';login.elements.area.value='Medical Surgical and ICU';login.dispatchEvent(new sim.Event('submit',{bubbles:true,cancelable:true}));
  for(const o of [obs1,obs2]){o.testApp.setView('faculty');o.render();o.document.getElementById('makeObserver').click();assert.equal(o.getTabMode(),'observer');}
  assert.equal(obs1.document.getElementById('modeBadge').textContent,'Observer Mode • view only');
  for(const w of windows){w.testApp.setPatient(ruth);w.testApp.setView('summary');w.render();}
@@ -75,3 +76,4 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  assert(!row.payload.providerNotifications.some(s=>s.patientId===ruth),'reset clears SBARs');
  console.log('PASS roles and SBAR: single acknowledgement across shared refreshes, observer read-only with self-closing notices, SBAR to faculty and observers, provider response, reset.');
 }finally{windows.forEach(w=>w.close());}})().catch(e=>{console.error(e);process.exitCode=1});
+
