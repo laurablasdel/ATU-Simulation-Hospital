@@ -93,7 +93,7 @@ window.initializeSharedSession=function(){
      localStorage.setItem(STORAGE_KEY+'_before_first_join',JSON.stringify(state));
      saveCurrentViewDraft();
      const incoming=clone(row.payload),localEntries={...incoming};
-     for(const key of ['orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
+     for(const key of ['medicationPackages','orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
      localEntries.patientResetEpochs=clone(state.patientResetEpochs||{});
      state=mergeState({},localEntries,incoming);base=clone(row.payload);revision=row.revision;persist();checkpoint();refresh();
     }

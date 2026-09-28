@@ -1,3 +1,9 @@
+## September 28 barcode integration review
+
+Baseline: ef677b58. Existing administration persistence is state.mar via save/liveSave and Supabase shared-session synchronization. Previous four-digit medication codes identify patient-specific order records, with older MED strings retained as aliases. The new medication-package-data.js catalog centralizes MED package IDs; medication-packages.js resolves them to current-patient active orders and produces the same Code128 values on labels. Existing short patient codes and Code39 wristband printing remain supported. All levels use renderSimpleMAR in simulation-workflows.js; legacy early renderers remain overwritten by that existing shared renderer. Manual and scanned paths now call saveMedicationAdministration in medication-system.js. No new administration record format.
+
+Changed files: index.html script loading, medication-system.js shared validation/save and label-center integration, simulation-workflows.js shared MAR UI and scan-safe/order-specific drafts, shared-session.js first-join package preservation. Added shared package catalog/utilities, vendored JsBarcode with license, MAR/label/shared tests. Existing student login, area tabs, reports, profile releases, blood workflow and collaborator roles/SBAR remain intact.
+
 # Source comparison — September 23, 2026
 
 Source: [Level 3 ATU Simulation Hospital in Notion](https://app.notion.com/p/nursing-chart/Level-3-ATU-Simulation-Hospital-25d195d201d581fca4a1c907b113ccd6). Comparison target: original GitHub revision `4a2e11a056a0817bc1df6dc5870234e0a9316138`.

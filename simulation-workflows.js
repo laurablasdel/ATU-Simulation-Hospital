@@ -32,7 +32,7 @@ window.simBaseFor=baseFor;window.resetToBase=resetToBase;window.updateBasePatien
 // Drafts stay local to the browser tab; incomplete entries never enter the shared chart.
 let dirty=false,baseline='',rendering=false;
 const draftKey=()=>STORAGE_KEY+'_drafts_durable_'+getTabMode();
-function fields(){return [...document.querySelectorAll('#view input,#view textarea,#view select')].filter(e=>!['file','button','submit'].includes(e.type)).map((e,i)=>({el:e,key:e.id||`${e.closest('form')?.dataset.record||'form'}:${e.name||i}`}));}
+function fields(){return [...document.querySelectorAll('#view input,#view textarea,#view select')].filter(e=>!['file','button','submit'].includes(e.type)&&!e.id.startsWith('marScan')&&!['marConfirmGiven','marRepeatConfirmed'].includes(e.id)).map((e,i)=>({el:e,key:(e.closest('[data-medication-draft]')?.dataset.medicationDraft||'')+(e.id||`${e.closest('form')?.dataset.record||'form'}:${e.name||i}`)}));}
 function values(){return Object.fromEntries(fields().map(({el,key})=>[key,/checkbox|radio/.test(el.type)?el.checked:el.value]));}
 function drafts(){try{const current=localStorage.getItem(draftKey());if(current)return JSON.parse(current);const previous=localStorage.getItem(STORAGE_KEY+'_drafts_'+ATU_CLOUD_CLIENT);return JSON.parse(previous||'{}');}catch{return {}}}
 function key(){return activePatientId+'::'+currentView;}
@@ -112,32 +112,46 @@ function renderGuidedMAR(){
 // scanning remains available in the faculty barcode center for printing and
 // inventory, but it is not required to document a dose in simulation.
 function renderSimpleMAR(){
- seedLinkedMedications();ensureMedicationData();if(!requirePatient())return;
- const p=activePatient();
- if(p.id==='jane-fowler')window.normalizeJaneMAR?.();
+ seedLinkedMedications();ensureMedicationData();ensureMedicationPackages();if(!requirePatient())return;
+ const p=activePatient();if(p.id==='jane-fowler')window.normalizeJaneMAR?.();
  if(!isFaculty()&&state.marVisibility?.[p.id]===false){document.getElementById('view').innerHTML=panel('MAR','Hidden by faculty.');return;}
- const showPending=isFaculty(),meds=medicationsForPatient(p.id,showPending),administrations=(state.mar||[]).filter(row=>row.patientId===p.id).slice().reverse();
- // Faculty see the same MAR as students; unreleased medications are listed separately below it.
- const heldBack=meds.filter(m=>!medicationReleased(m));
- const cells=meds.filter(m=>medicationReleased(m)).map(m=>{
-  const released=medicationReleased(m),pending=!released;
-  const entryId=`marEntry-${m.id}`;
-  return `<tr data-mar-medication="${esc(m.id)}"><td><b>${esc(m.name)}</b>${pending?' <span class="pendingBadge">Pending</span>':''}${m.notes?`<div class="note" style="margin-top:4px">${esc(m.notes)}</div>`:''}</td><td>${esc(m.dose)}</td><td>${esc(m.route)}</td><td>${esc(m.scheduledTime||m.frequency)}</td><td><input id="${entryId}-time" type="datetime-local" ${pending?'disabled':''}></td><td><input id="${entryId}-student" aria-label="Initials for ${esc(m.name)}" maxlength="12" placeholder="Initials" ${pending?'disabled':''}></td><td><label style="display:flex;align-items:center;gap:6px"><input id="${entryId}-given" type="checkbox" style="width:auto" ${pending?'disabled':''}> Given</label></td><td><button class="primary saveSimpleMar" data-medication-id="${esc(m.id)}" ${pending?'disabled':''}>Save</button></td></tr>`;
- }).join('');
- document.getElementById('view').innerHTML=panel('Medication Administration Record',`
-  <div class="note">Enter the date and time, your initials, and check <b>Given</b> for each medication administered. Only released medications are visible to students.</div>
-  <div style="overflow-x:auto"><table class="simpleMAR"><thead><tr><th>Medication</th><th>Dose</th><th>Route</th><th>Due</th><th>Date / Time Given</th><th>Initials</th><th>Given</th><th></th></tr></thead><tbody>${cells||'<tr><td colspan="8">No released medications are available.</td></tr>'}</tbody></table></div>
- `)+(heldBack.length?panel('Not Yet Released — Students Cannot See These',`<div class="note">These medications appear on the student MAR only after faculty releases them in Faculty Live Control.</div><ul>${heldBack.map(m=>`<li><b>${esc(m.name)}</b> ${esc(m.dose)} ${esc(m.route)} ${esc(m.scheduledTime||m.frequency)}${m.notes?` — ${esc(m.notes)}`:''}</li>`).join('')}</ul>`):'')+panel('MAR Administration History',`<table><thead><tr><th>Date / Time</th><th>Medication</th><th>Dose / Route</th><th>Due</th><th>Given</th><th>Initials</th></tr></thead><tbody>${administrations.map(row=>`<tr><td>${esc(row.time)}</td><td><b>${esc(row.medication)}</b></td><td>${esc(row.dose)} ${esc(row.route)}</td><td>${esc(row.due)}</td><td>${esc(row.status)}</td><td>${esc(row.student)}</td></tr>`).join('')||'<tr><td colspan="6">No medications have been charted.</td></tr>'}</tbody></table>`);
- document.querySelectorAll('.saveSimpleMar').forEach(button=>button.onclick=()=>{
-  const med=meds.find(item=>item.id===button.dataset.medicationId),prefix=`marEntry-${med?.id}`;
-  if(!med||!medicationReleased(med)){alert('This medication has not been released by faculty.');return;}
-  const time=document.getElementById(`${prefix}-time`).value,student=document.getElementById(`${prefix}-student`).value.trim(),given=document.getElementById(`${prefix}-given`).checked;
-  if(!time||!student||!given){alert('Enter the date and time, initials, and check Given before saving.');return;}
-  state.mar.push({id:uid('mar'),patientId:p.id,medicationId:med.id,medication:med.name,dose:med.dose,route:med.route,due:med.scheduledTime||med.frequency,time,student,status:'Given',response:''});
-  clearCurrentViewDraft();audit('Medication administration',p.id,`${med.name} ${med.dose} given by ${student}`);liveSave('medication_administration_documented',{patientId:p.id,medicationId:med.id});renderMAR();
- });
+ const all=medicationsForPatient(p.id,true),meds=all.filter(m=>medicationReleased(m)),administrations=(state.mar||[]).filter(r=>r.patientId===p.id).slice().reverse();
+ document.getElementById('view').innerHTML=panel('Scan Medication',`<p>Scan the current patient's wristband before each medication, scan a package barcode, review the matching order, then confirm administration. Scanning alone never documents a dose.</p><div class="grid3"><label>Patient wristband / MRN<input id="marScanPatient" autocomplete="off" placeholder="Scan wristband"></label><label>Medication package barcode<input id="marScanMedication" autocomplete="off" placeholder="MED-… or existing label code"></label><button id="marRecognize">Find matching order</button></div><p id="marScanFeedback" role="status"></p><div id="marOrderChoices" class="feedback"></div>`)+panel('Medication Administration Record',`<div style="overflow:auto"><table class="simpleMAR"><thead><tr><th>Medication order</th><th>Ordered dose</th><th>Route</th><th>Due / Frequency</th><th>Last administration</th><th></th></tr></thead><tbody>${meds.map(m=>{const last=medicationAdministrationHistory(m).slice(-1)[0],block=medicationAdministrationBlock(m);return `<tr data-mar-medication="${esc(m.id)}"><td><b>${esc(m.name)}</b>${m.notes?`<p>${esc(m.notes)}</p>`:''}${block?`<p class="warn">${esc(block)}</p>`:''}</td><td>${esc(m.dose||'See order; enter administered dose')}</td><td>${esc(m.route||'Not specified')}</td><td>${esc(m.scheduledTime||m.frequency)}</td><td>${last?`${esc(last.status)} — ${esc(last.time)} — ${esc(last.student)}`:'Not documented'}</td><td><button class="saveSimpleMar" data-medication-id="${esc(m.id)}" ${block?'disabled':''}>Document manually</button></td></tr>`;}).join('')||'<tr><td colspan="6">No released medications.</td></tr>'}</tbody></table></div>`)+panel('Confirm Medication Administration','<div id="marConfirmation" class="feedback"><p>Select a medication manually or scan its package to continue.</p></div>')+(isFaculty()&&all.some(m=>!medicationReleased(m))?panel('Not Yet Released — Students Cannot See These',`<ul>${all.filter(m=>!medicationReleased(m)).map(m=>`<li>${esc(m.name)} ${esc(m.dose)}</li>`).join('')}</ul>`):'')+panel('MAR Administration History',`<table><thead><tr><th>Date / Time</th><th>Medication</th><th>Dose / Route</th><th>Status</th><th>Initials / Verifier</th><th>Notes</th></tr></thead><tbody>${administrations.map(r=>`<tr><td>${esc(r.time)}</td><td>${esc(r.medication)}</td><td>${esc(r.dose)} ${esc(r.route)}</td><td>${esc(r.status)}</td><td>${esc(r.student)}${r.verifiedBy?' / '+esc(r.verifiedBy):''}</td><td>${esc(r.response)}</td></tr>`).join('')||'<tr><td colspan="6">No administrations documented.</td></tr>'}</tbody></table>`);
+ const el=id=>document.getElementById(id),feedback=t=>el('marScanFeedback').textContent=t;
+ const signature=m=>JSON.stringify([m.id,m.name,m.dose,m.route,m.frequency,m.scheduledTime,m.status,m.releaseStatus]);
+ const invalidate=()=>{el('marConfirmation').innerHTML='<p>Codes changed. Find the matching order again.</p>';el('marOrderChoices').innerHTML='';feedback('');};
+ el('marScanPatient').addEventListener('input',invalidate);el('marScanMedication').addEventListener('input',invalidate);
+ function confirmOrder(m,method,resolved){
+  const patientCode=normalizeMedicationBarcode(el('marScanPatient').value);if(![p.barcode,p.mrn,state.shortBarcodeRegistry?.['patient:'+p.id],'PT-'+String(p.mrn).toUpperCase()].filter(Boolean).some(c=>normalizeMedicationBarcode(c)===patientCode)){feedback('Scan the current patient wristband before every administration.');return;}
+  const blocked=medicationAdministrationBlock(m);if(blocked){feedback(blocked);return;}
+  const previous=medicationAdministrationHistory(m),last=previous.slice(-1)[0],snapshot=signature(m),resetEpoch=state.patientResetEpochs?.[p.id]||0,submissionId=uid('administration'),patientBarcode=el('marScanPatient').value,medicationBarcode=el('marScanMedication').value;
+  el('marConfirmation').dataset.medicationDraft=m.id;
+  el('marConfirmation').innerHTML=`<h3>${esc(p.name)} — ${esc(m.name)}</h3><p>Ordered dose: ${esc(m.dose||'See medication order above')}. Route: ${esc(m.route||'not specified')}. ${esc(m.frequency||m.scheduledTime)}</p>${resolved?.package?`<p>Scanned package: ${esc(resolved.package.name||resolved.package.id)} ${esc(resolved.package.strength)} ${esc(resolved.package.form)} — ${esc(resolved.package.id)}</p>`:''}<div class="grid3"><label>Dose administered<input id="marConfirmDose" value="${esc(m.dose)}" placeholder="Amount administered, including units"></label><label>Route<input id="marConfirmRoute" value="${esc(m.route)}" ${m.route?'readonly':''}></label><label>Administration date/time<input id="marConfirmTime" type="datetime-local" value="${nowLocal()}"></label><label>Student / Initials<input id="marConfirmStudent" maxlength="60"></label><label>Independent verifier${m.highAlert?' (required)':''}<input id="marConfirmVerifier"></label><label>Response / Notes<textarea id="marConfirmNotes"></textarea></label></div>${last?`<p class="warn">Last given: ${esc(last.time)} by ${esc(last.student)}. Review timing and the order before another dose.</p><label><input type="checkbox" id="marRepeatConfirmed" style="width:auto"> I reviewed the previous administration; this is a new dose.</label>`:''}<label><input type="checkbox" id="marConfirmGiven" style="width:auto"> I confirm this medication was administered to ${esc(p.name)}.</label><button class="primary" id="marConfirmSave">Save administration</button><p id="marSaveFeedback" role="status"></p>`;
+  el('marConfirmSave').onclick=()=>{
+   const current=medicationsForPatient(p.id,false).find(x=>x.id===m.id);
+   if(!current||signature(current)!==snapshot||(state.patientResetEpochs?.[p.id]||0)!==resetEpoch){el('marSaveFeedback').textContent='The order changed. Select and review the current order again.';return;}
+   const result=saveMedicationAdministration({patientId:p.id,medicationId:m.id,method,patientBarcode,medicationBarcode,submissionId,resetEpoch,dose:el('marConfirmDose').value,route:el('marConfirmRoute').value,time:el('marConfirmTime').value,student:el('marConfirmStudent').value,verifiedBy:el('marConfirmVerifier').value,response:el('marConfirmNotes').value,confirmed:el('marConfirmGiven').checked,repeatConfirmed:!!el('marRepeatConfirmed')?.checked});
+   if(!result.ok){el('marSaveFeedback').textContent=result.error;return;}renderMAR();document.getElementById('marScanFeedback').textContent='Administration saved. Scan the patient wristband again for the next medication.';document.getElementById('marScanPatient').focus();
+  };
+  setupDraft();
+ }
+ document.querySelectorAll('.saveSimpleMar').forEach(b=>b.onclick=()=>{const m=medicationsForPatient(p.id,false).find(m=>m.id===b.dataset.medicationId);confirmOrder(m,'manual');});
+ el('marRecognize').onclick=()=>{
+  invalidate();const code=normalizeMedicationBarcode(el('marScanPatient').value);
+  if(![p.barcode,p.mrn,state.shortBarcodeRegistry?.['patient:'+p.id],'PT-'+String(p.mrn).toUpperCase()].filter(Boolean).some(c=>normalizeMedicationBarcode(c)===code)){feedback('Patient mismatch. Scan the current patient’s wristband. Nothing was documented.');return;}
+  const result=resolveMedicationBarcode(el('marScanMedication').value);if(result.error){feedback(result.error);return;}
+  const available=medicationsForPatient(p.id,false),matches=available.filter(m=>result.package?medicationMatchesPackage(m,result.package):m.id===result.legacyOrder.id&&m.patientId===result.legacyOrder.patientId).filter(m=>!medicationAdministrationBlock(m));
+  if(!matches.length){feedback('Barcode recognized, but there is no eligible active order for this patient. Check for pending, held, completed or unmatched orders. Nothing was documented.');return;}
+  if(matches.length===1){feedback('Medication identified. Review the order and confirm administration below.');confirmOrder(matches[0],'barcode',result);return;}
+  feedback('This package matches multiple active orders. Select the intended order; nothing has been documented.');
+  el('marOrderChoices').innerHTML=`<label>Matching medication order<select id="marMatchedOrder"><option value="">Choose an order</option>${matches.map(m=>`<option value="${esc(m.id)}">${esc(m.name)} — ${esc(m.dose)} ${esc(m.route)} — ${esc(m.frequency||m.scheduledTime)}</option>`).join('')}</select></label>`;
+  el('marMatchedOrder').onchange=()=>{el('marConfirmation').innerHTML='';const m=matches.find(m=>m.id===el('marMatchedOrder').value);if(m)confirmOrder(m,'barcode',result);};
+ };
+ el('marScanPatient').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();el('marScanMedication').focus();}};
+ el('marScanMedication').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();el('marRecognize').click();}};
  setupDraft();
 }
+
 const bloodChecks=['Provider order verified','Consent verified','Patient identity and unit number checked','ABO/Rh compatibility confirmed','Expiration and product appearance checked','Baseline assessment and vital signs recorded','Independent double check completed'];
 function renderGuidedBlood(){
  seedLinkedMedications();ensureMedicationData();if(!requirePatient())return;const p=activePatient(),units=(state.bloodUnits||[]).filter(u=>u.patientId===p.id&&u.status!=='Transfused');

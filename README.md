@@ -1,3 +1,11 @@
+## Barcode MAR and Avery 5160 medication labels
+
+The shared MAR now scans a patient wristband before every administration, matches MED- package barcodes to the current patient's released orders, and requires explicit confirmation. Manual and barcode entries use saveMedicationAdministration and the existing mar collection. Initials remain blank. Scans and confirmation checkboxes are never restored from drafts; documentation drafts are scoped to the selected medication. Completed saves clear both scan fields. Shared saves, audit attribution, and reset archives use the existing architecture.
+
+In Faculty Mode open a patient, then Medication & Barcode Center. The Avery 5160 section defaults to one label per named package, mixed across 30 positions per sheet. Select all, select this patient's packages, clear selection, choose individual quantities, and choose a starting position 1–30. Print preview is inline. Use US Letter, 100%/Actual size, no headers/footers. Print a plain-paper alignment test before labels. No ordered dose, patient instructions, or simulation warning is printed. Package strengths/forms are only supplied when supported by the provided sources; blank values are omitted and faculty may edit them.
+
+Verification: all 13 patients, 64 eligible medication orders, manual/scanned same-save path, ambiguous orders, wrong/unknown/unordered medication, repeat and one-time doses, verifier checks, reload/storage failures, shared MAR across three levels and retained reset audits. All 61 default Code128 labels decoded independently at 203/300/600 dpi; mixed sheets and starting position 8 tested. Physical Motorola scanner and Avery printer alignment remain to be tested by the user.
+
 ## Change Area and level tabs
 
 Students can use Change Area beside their name without signing out. Name/group remain unchanged, drafts are saved before leaving the current chart, and saved documentation stays with its patient. Level 1/2/3 tabs filter patients within the selected clinical area and show area-specific counts.
