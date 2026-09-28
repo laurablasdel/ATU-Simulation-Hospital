@@ -28,14 +28,15 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  assert.equal(popups(sim).length,1,'one release popup at a time');
  faculty.testApp.state.orders.push({id:'unrelated-change',patientId:'charles-jones',text:'Unrelated',status:'Active'});
  await faculty.atuCloudPush();await sim.atuCloudPush();
+ for(const o of [obs1,obs2]){o.showNextNotification();assert(o.document.querySelector('.observerToast'));assert(!o.document.querySelector('.toastClose'),'observers cannot dismiss');o.testApp.setView('inbox');o.render();assert(o.testApp.state.notifications.some(n=>!n.read),'observer inbox cannot acknowledge');}
  sim.document.getElementById('ackLivePopup').click();
  await syncAll();
  for(let i=0;i<5;i++){await sim.atuCloudPush();sim.showNextNotification();}
  assert.equal(popups(sim).length,0,'acknowledged once, the release does not come back');
  assert(row.payload.notifications.every(n=>n.read),'acknowledgement reached the shared chart');
 
- // Observers get a notice that closes itself, and nothing to acknowledge.
- for(const o of [obs1,obs2]){o.showNextNotification();assert.equal(popups(o).length,0,'observer is not blocked by releases');assert(o.document.querySelector('.observerToast'),'observer sees the release notice');}
+ // Student acknowledgement removes the notice from every observer.
+ for(const o of [obs1,obs2]){o.showNextNotification();assert.equal(popups(o).length,0);assert(!o.document.querySelector('.observerToast'));}
 
  // Observers browse independently and cannot chart.
  obs1.testApp.setView('flowsheets');obs1.render();obs2.testApp.setView('mar');obs2.render();
@@ -59,7 +60,8 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  const fp=popups(faculty).find(p=>p.dataset.alertKind==='sbar-faculty');assert(fp,'faculty get the SBAR popup');
  assert(fp.textContent.includes('Request fluid bolus and lactate'));
  obs2.testApp.setPatient(null);obs2.testApp.setView('patients');obs2.render();
- for(const o of [obs1,obs2]){o.showNextNotification();assert(popups(o).some(p=>p.dataset.alertKind==='sbar-observer'),'observer gets the SBAR popup anywhere in the chart');}
+ for(const o of [obs1,obs2]){o.showNextNotification();assert(o.document.querySelector('.observerToast')?.textContent.includes('BP 88/50'),'observer sees SBAR anywhere in the chart');}
+ sim.document.getElementById('ackLivePopup').click();await syncAll();for(const o of [obs1,obs2]){o.showNextNotification();assert(!o.document.querySelector('.observerToast'));}
  fp.querySelector('[data-sbar-response]').value='Give 500 mL NS bolus now, recheck BP in 15 minutes.';
  fp.querySelector('[data-accept-sbar]').click();
  await syncAll();
@@ -68,13 +70,12 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  sim.testApp.setView('summary');sim.render();sim.showNextNotification();
  const resp=popups(sim)[0];assert(resp&&resp.textContent.includes('Give 500 mL NS bolus now'),'student receives the provider response');
  resp.querySelector('#ackLivePopup').click();
- for(const o of [obs1,obs2]){const p=popups(o).find(x=>x.dataset.alertKind==='sbar-observer');p.querySelector('[data-close-sbar]').click();o.showNextNotification();assert.equal(popups(o).length,0,'the SBAR popup is the only thing observers close');}
  await syncAll();
  sim.testApp.setView('sbar');sim.render();assert(sim.document.querySelector('#view').textContent.includes('Accepted by provider'));
 
  // Reset for a new simulation clears that patient's SBARs.
  faculty.resetToBase(ruth);await syncAll();
  assert(!row.payload.providerNotifications.some(s=>s.patientId===ruth),'reset clears SBARs');
- console.log('PASS roles and SBAR: single acknowledgement across shared refreshes, observer read-only with self-closing notices, SBAR to faculty and observers, provider response, reset.');
+ console.log('PASS roles and SBAR: single acknowledgement across shared refreshes, observer notices cleared only by shared student acknowledgement, SBAR to faculty and observer notices, provider response, reset.');
 }finally{windows.forEach(w=>w.close());}})().catch(e=>{console.error(e);process.exitCode=1});
 

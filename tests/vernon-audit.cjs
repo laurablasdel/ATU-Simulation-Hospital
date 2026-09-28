@@ -9,6 +9,8 @@ function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w
  assert.equal(w.formatChartTimestamp('2026-09-28T19:35:00Z'),'14:35_09/28/2026');
  assert.equal(w.formatChartTimestamp('2026-01-28T20:35:00Z'),'14:35_01/28/2026');
  assert.equal(w.formatChartTimestamp('Today'),'Today');
+ w.setTabMode('faculty');const navBefore=(s.simulationActivity||[]).length;w.recordChartAccess(pid,'Orders');w.audit('Chart opened',pid,'Faculty visit');assert.equal((s.simulationActivity||[]).length,navBefore);assert(!s.audit.some(e=>e.details==='Faculty visit'));
+
  assert(view(w,pid,'labs').textContent.includes('Postop day 4'));
  const releases=w.VERNON_PROFILE_RECORDS.filter(r=>r.status==='pending');assert.equal(releases.length,4);
  for(const r of releases){assert(![...view(w,pid,r.category).querySelectorAll('details.chartRecord > summary')].some(el=>el.textContent===r.title));const q=s.releaseQueue.find(q=>q.chartRecordId===r.id);assert(q);w.setTabMode('faculty');w.releaseItem(q.id);assert(view(w,pid,r.category).textContent.includes(r.title));}

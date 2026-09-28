@@ -1,8 +1,8 @@
 /* Shared chart access, documentation audit, and retained per-simulation reports. */
 (function(){
  const clone=x=>JSON.parse(JSON.stringify(x));
- const collections=['orders','assessments','vitals','io','notes','labs','labPanels','mar','medicationCatalog','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','providerNotifications','diagnosticFiles','releaseQueue'];
- const labels={chartDocuments:'Chart documents',medicationCatalog:'Medication orders',orders:'Orders',assessments:'Assessments',vitals:'Vital signs',io:'Intake and output',notes:'Notes and education',labs:'Lab results',labPanels:'Lab panels',mar:'Medication administrations',chartEntries:'Chart forms',messages:'Messages',providerNotifications:'SBAR / provider communication',diagnosticFiles:'Diagnostic attachments',releaseQueue:'Faculty releases',simulationActivity:'Access and documentation timeline',audit:'Existing chart audit'};
+ const collections=['orders','assessments','vitals','io','notes','labs','labPanels','mar','medicationCatalog','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','providerNotifications','medicationOverrides','diagnosticFiles','releaseQueue'];
+ const labels={chartDocuments:'Chart documents',medicationCatalog:'Medication orders',orders:'Orders',assessments:'Assessments',vitals:'Vital signs',io:'Intake and output',notes:'Notes and education',labs:'Lab results',labPanels:'Lab panels',mar:'Medication administrations',chartEntries:'Chart forms',messages:'Messages',providerNotifications:'SBAR / provider communication',medicationOverrides:'Single-administration provider overrides',diagnosticFiles:'Diagnostic attachments',releaseQueue:'Faculty releases',simulationActivity:'Access and documentation timeline',audit:'Existing chart audit'};
  const sessionFor=pid=>pid+':'+(state.patientResetEpochs?.[pid]||'initial');
  let known=new Map();
  window.formatChartTimestamp=function(value){
@@ -19,7 +19,7 @@
   state.simulationActivity||=[];
   state.simulationActivity.push({id:uid('activity'),patientId:pid,simulationId:sessionFor(pid),at:new Date().toISOString(),actor:actor(pid),role:getTabMode(),group:getTabMode()==='student'?(window.studentSession?.()?.group||''):'',area:getTabMode()==='student'?(window.studentSession?.()?.area||''):'',type,details,...extra});
  }
- window.recordChartAccess=function(pid,section,type='Section opened'){addActivity(pid,type,section);save();};
+ window.recordChartAccess=function(pid,section,type='Section opened'){if(getTabMode()!=='student')return;addActivity(pid,type,section);save();};
  function rowsSnapshot(){const map=new Map();for(const key of collections)for(const row of state[key]||[])if(row?.id&&row.patientId)map.set(key+':'+row.id,{key,row:clone(row)});for(const row of CHART_RECORDS)map.set('chartDocuments:'+row.id,{key:'chartDocuments',row:clone({...row,...state.chartContentEdits?.[row.id]})});return map;}
  function captureChanges(){
   const next=rowsSnapshot();
@@ -54,7 +54,7 @@
   return esc(formatChartTimestamp(String(value)));
  }
  window.simulationReportHTML=function(report){
-  const data=report.collections,events=data.simulationActivity||[],people=[...new Set(events.map(e=>e.actor).filter(Boolean))];
+  const data=report.collections,events=(data.simulationActivity||[]).filter(e=>e.role==='student'||!['Chart opened','Section opened','Document opened','Attachment opened','Clinical area changed'].includes(e.type)),people=[...new Set(events.map(e=>e.actor).filter(Boolean))];
   const timeline=events.slice().sort((a,b)=>a.at.localeCompare(b.at)).map(e=>`<tr><td>${esc(formatChartTimestamp(e.at))}</td><td>${esc(e.actor)}${e.group?'<br>Group: '+esc(e.group):''}${e.area?'<br>Area: '+esc(e.area):''}</td><td>${esc(e.type)}</td><td>${esc(e.details)}</td></tr>`).join('');
   const sections=Object.entries(data).filter(([key,rows])=>key!=='simulationActivity'&&rows.length).map(([key,rows])=>`<section><h2>${esc(labels[key]||key)} (${rows.length})</h2>${rows.map((row,i)=>`<article><h3>Record ${i+1}</h3>${valueHTML(row)}</article>`).join('')}</section>`).join('');
   const versions=events.filter(e=>e.record).map(e=>`<article><h3>${esc(formatChartTimestamp(e.at))} — ${esc(e.actor)} — ${esc(e.type)} — ${esc(e.details)}</h3>${valueHTML(e.record)}</article>`).join('');

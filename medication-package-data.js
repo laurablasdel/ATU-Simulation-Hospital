@@ -570,3 +570,8 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
     ]
   }
 ];
+
+MEDICATION_PACKAGE_DEFAULTS.push(
+ {id:'MED-HEP10K',name:'Heparin',strength:'10,000 units/10 mL',form:'vial',orderKeys:[]},
+ {id:'MED-HEPINF',name:'Heparin',strength:'',form:'infusion bag',orderKeys:[]}
+);

@@ -96,3 +96,15 @@ Original application and existing assets: [ATU Simulation Hospital](https://gith
 - **Audit scope:** Section/document/attachment visits, saved documentation and revisions are recorded from this update onward. Reports also include the current chart, SBAR/provider responses, medication administrations, and released documents. Old unlogged visits and unsaved drafts cannot be reconstructed. Self-entered student names identify activity but are not individually authenticated identities. Private attachments remain in the hospital storage; reports retain their record metadata.
 - **Connection:** The email field defaults to Atusim1@atu.edu; the original approved account can still be entered. No password is stored in source code. Use Shared connection on each simulation computer and confirm the connected status. Refresh open hospital tabs after deployment so they use the same chart/audit version.
 
+
+## Medication workflow and shared alerts
+
+Student Mode scans the wristband and medication before the administration form appears immediately below verification. The manual date/time, initials, Given and Save rows remain in the MAR. A patient mismatch cannot be overridden. An unmatched medication offers Provider override with a required reason. Faculty identify the medication and authorize a dose and route for one administration, or deny the request. Students rescan and explicitly confirm administration after approval. Approval never documents a dose, releases a pending order, or creates a recurring order. High-alert verification is retained.
+
+Approvals and consumption use the existing shared revision-checked save transaction. A shared connection is required, and concurrent students cannot use the same authorization twice. Requests, decisions and administrations appear in the retained simulation audit. Reset invalidates old authorizations.
+
+Observers see all outstanding student alerts (including messages and SBAR notices), cannot dismiss them, and retain them until Student Mode acknowledges them. That acknowledgement clears them for all computers. Opening Messages in Observer Mode does not acknowledge messages. SBAR acknowledgement is separate from faculty accepting the SBAR.
+
+Student section/document/attachment navigation remains in the audit; faculty and observer navigation is excluded. Faculty releases, order/document changes, messages and override decisions remain recorded.
+
+Patient barcode sheets and selectable Avery 5160 medication labels include active and pending medication packages. Vernon’s pending Stat Orders now link the Heparin 10,000 units/10 mL vial and infusion bag to their shared package identifiers. The bag concentration remains unspecified in the supplied information. Printing does not release the medications. Future structured pending medication releases use the same package catalog.

@@ -3,6 +3,7 @@
 const copy=x=>JSON.parse(JSON.stringify(x));
 const orderKey=m=>String(m.name||'').trim().toLowerCase()+'|'+String(m.route||'').trim().toLowerCase();
  const cleanCode=value=>String(value||'').trim().replace(/^\](?:C[01]|A0)/,'').replace(/^\*(.*)\*$/,'$1').trim().toUpperCase();
+function medicationNameForLabel(name){return String(name||'').replace(/\s+\d.*$/,'').trim();}
 function ensurePackages(){
  state.medicationPackages ||= [];
  for(const p of window.MEDICATION_PACKAGE_DEFAULTS||[])if(!state.medicationPackages.some(x=>x.id===p.id))state.medicationPackages.push(copy(p));
@@ -15,7 +16,7 @@ function ensurePackages(){
    let hash=0;for(const c of key)hash=(Math.imul(hash,31)+c.charCodeAt(0))>>>0;
    let id='MED-'+hash.toString(36).toUpperCase(),n=0;
    while(state.medicationPackages.some(p=>p.id===id))id='MED-'+hash.toString(36).toUpperCase()+(++n);
-   const p={id,name:'',strength:'',form:'',orderKeys:[key]};state.medicationPackages.push(p);packages=[p];
+   const p={id,name:medicationNameForLabel(m.name),strength:'',form:'',orderKeys:[key]};state.medicationPackages.push(p);packages=[p];
   }
   // The relationship comes from package orderKeys, so it survives resets and order ID changes.
  }

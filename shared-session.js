@@ -83,6 +83,50 @@ window.initializeSharedSession=function(){
   updateNotificationCount();if(!isFaculty())showNextNotification();
  };
  async function read(){const {data,error}=await atuSupabase.from('ehr_sync').select('payload,revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;return data;}
+ // Approving and consuming a one-dose authorization must win the shared revision
+ // before reporting success. Offline or stale clients cannot spend an approval twice.
+ window.commitMedicationOverrideAction=async function(action,id,values,expected){
+  const fail=error=>({ok:false,error});
+  if(!atuCloudReady||!atuSupabase)return fail('Connect to the shared simulation before approving or using a provider override.');
+  if(busy)return fail('The chart is synchronizing. Wait a moment and try again.');
+  if(action==='decision'?!isFaculty():getTabMode()!=='student')return fail('This action is not available in this mode.');
+  if(action==='decision'&&(!['Approved','Denied'].includes(values.status)||!String(values.provider||'').trim()||values.status==='Approved'&&(!String(values.medication||'').trim()||!String(values.dose||'').trim()||!String(values.route||'').trim())))return fail('Enter the provider, medication, dose and route before approving.');
+  busy=true;
+  try{
+   for(let attempt=0;attempt<5;attempt++){
+    const remote=await read();
+    if(action==='decision'?!isFaculty():getTabMode()!=='student')throw Error('The device mode changed. Return to the correct mode and try again.');if(!remote)throw Error('The shared simulation could not be found.');
+    const request=(remote.payload.medicationOverrides||[]).find(r=>r.id===id);
+    if(!request)throw Error('This request is not yet shared or was reset. Wait for synchronization and scan again.');
+    if(request.resetEpoch!==(remote.payload.patientResetEpochs?.[request.patientId]||0)||request.resetEpoch!==(state.patientResetEpochs?.[request.patientId]||0))throw Error('This simulation was reset. The authorization is no longer valid.');
+    if(action==='decision'&&request.status!=='Pending')throw Error('Another faculty member has already handled this request.');
+    if(action==='consume'&&(request.status!=='Approved'||(remote.payload.mar||[]).some(m=>m.overrideId===id)))throw Error('This approval is no longer available; it may already have been used.');
+    if(action==='consume'&&['barcode','medication','dose','route','highAlert','decidedAt','provider'].some(k=>request[k]!==expected[k]))throw Error('The approval changed. Scan again and review the current authorization.');
+    if(action==='consume'&&(activePatientId!==request.patientId||!patientWristbandMatches(request.patientId,values.patientBarcode)))throw Error('Wrong patient. Scan the current patient wristband again.');
+    const sent=clone(state),merged=mergeState(base||{},sent,remote.payload),target=(merged.medicationOverrides||[]).find(r=>r.id===id);
+    if((merged.patientResetEpochs?.[request.patientId]||0)!==request.resetEpoch)throw Error('The patient was reset. Request a new authorization.');
+    const at=nowLocal(),actor=action==='decision'?values.provider:(window.studentSession?.()?.name||values.student),type=action==='decision'?'Medication override '+values.status.toLowerCase():'Medication administration';
+    if(action==='decision'){
+     Object.assign(target,values,{decidedAt:at});
+     merged.notifications||=[];merged.notifications.push({id:'override-decision:'+id,patientId:request.patientId,createdAt:at,type:'medication-override',title:'Provider override '+values.status.toLowerCase(),body:values.status==='Approved'?`${values.medication}: ${values.dose} ${values.route}. One administration authorized by ${values.provider}. Scan the patient and medication again to continue.${values.decisionNotes?' '+values.decisionNotes:''}`:`Request for ${request.barcode} denied by ${values.provider}.${values.decisionNotes?' '+values.decisionNotes:''}`,read:false});
+    }else{
+     if((merged.mar||[]).some(m=>m.overrideId===id))throw Error('This approval has already been used.');
+     merged.mar||=[];merged.mar.push(clone(values));Object.assign(target,{status:'Used',usedAt:at,administrationId:values.id});
+    }
+    const detail=action==='decision'?`${request.barcode}: ${values.status} by ${actor}. ${values.decisionNotes||''}`:`${values.medication} ${values.dose} ${values.route} given by ${values.student}; one-dose approval ${id}`;
+    merged.audit||=[];merged.audit.push({id:uid('audit'),patientId:request.patientId,at,type,details:detail,actor,role:getTabMode()});
+    merged.simulationActivity||=[];merged.simulationActivity.push({id:uid('activity'),patientId:request.patientId,simulationId:request.patientId+':'+(request.resetEpoch||'initial'),at:new Date().toISOString(),actor,role:getTabMode(),group:window.studentSession?.()?.group||'',type,details:detail,collection:action==='consume'?'mar':'medicationOverrides',recordId:action==='consume'?values.id:id,record:clone(action==='consume'?values:target)});
+    const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:remote.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});if(error)throw error;if(!data)continue;
+    state=mergeState(sent,state,merged);base=clone(merged);revision=remote.revision+1;
+    // The cloud commit is durable even if the browser cannot cache its result.
+    try{persist();checkpoint();}catch(e){atuCloudBadge('Saved to shared chart; browser storage unavailable');}
+    window.auditSharedStateReceived?.();updateNotificationCount();
+    return {ok:true,row:action==='consume'?values:target};
+   }
+   return fail('The shared chart is busy. Nothing was changed; try again.');
+  }catch(e){return fail(e.message||'Unable to reach the provider. Try again.');}
+  finally{busy=false;if(pending){pending=false;atuCloudSchedule();}}
+ };
  async function exchange(){
   if(!atuCloudReady||busy){pending=true;return;}busy=true;
   try{
@@ -93,7 +137,7 @@ window.initializeSharedSession=function(){
      localStorage.setItem(STORAGE_KEY+'_before_first_join',JSON.stringify(state));
      saveCurrentViewDraft();
      const incoming=clone(row.payload),localEntries={...incoming};
-     for(const key of ['medicationPackages','orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
+     for(const key of ['medicationPackages','orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','medicationOverrides','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
      localEntries.patientResetEpochs=clone(state.patientResetEpochs||{});
      state=mergeState({},localEntries,incoming);base=clone(row.payload);revision=row.revision;persist();checkpoint();refresh();
     }

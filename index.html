@@ -147,16 +147,17 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="chart-workflows.js?v=20260928"></script>
 <script src="chart-admin.js?v=20260923-carl-import-v1"></script>
 <script src="vendor/JsBarcode.code128.min.js"></script>
-<script src="medication-package-data.js?v=20260928-patient-labels"></script>
-<script src="medication-packages.js?v=20260928-patient-labels"></script>
-<script src="medication-system.js?v=20260928-patient-labels"></script>
+<script src="medication-package-data.js?v=20260928-provider-workflow"></script>
+<script src="medication-packages.js?v=20260928-provider-workflow"></script>
+<script src="medication-overrides.js?v=20260928-workflow"></script>
+<script src="medication-system.js?v=20260928-provider-workflow"></script>
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
-<script src="vernon-profile.js?v=20260928"></script>
-<script src="simulation-workflows.js?v=20260928-manual"></script>
-<script src="shared-session.js?v=20260928-patient-labels"></script>
-<script src="simulation-roles.js?v=20260926"></script>
+<script src="vernon-profile.js?v=20260928-provider-workflow"></script>
+<script src="simulation-workflows.js?v=20260928-provider-workflow"></script>
+<script src="shared-session.js?v=20260928-provider-workflow"></script>
+<script src="simulation-roles.js?v=20260928-provider-workflow"></script>
 <script src="student-session.js?v=20260928-area-switch"></script>
-<script src="simulation-audit.js?v=20260928-area-switch"></script>
+<script src="simulation-audit.js?v=20260928-provider-workflow"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -833,8 +834,9 @@ function save(){
  atuCloudSchedule();
 }
 function audit(type,patientId,details=""){
+ if(getTabMode()!=='student'&&/^(Chart opened|Section opened|Document opened|Attachment opened)$/.test(type))return;
  const p=state.patients.find(x=>x.id===patientId);
- state.audit.push({id:uid("audit"),at:nowLocal(),patientId,patientName:p?.name||"",type,details});
+ state.audit.push({id:uid("audit"),at:nowLocal(),patientId,patientName:p?.name||"",role:getTabMode(),actor:getTabMode()==='student'?(window.studentSession?.()?.name||'Student'):'Faculty',type,details});
  save();
  broadcastLive("chart_updated",{patientId,type,details});
 }
@@ -1593,7 +1595,7 @@ function renderInbox(){
  const p=activePatient();
  const msgs=(state.messages||[]).filter(m=>m.patientId===p.id).slice().reverse();
  const notifs=(state.notifications||[]).filter(n=>n.patientId===p.id).slice().reverse();
- if(!isFaculty()){
+ if(getTabMode()==='student'){
   let changed=false;
   for(const m of msgs)if(!m.read){m.read=true;changed=true}
   for(const n of notifs)if(n.type==="message"&&!n.read){n.read=true;changed=true}

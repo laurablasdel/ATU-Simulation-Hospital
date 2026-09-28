@@ -125,6 +125,7 @@ function migrateMollyAdmission(){
  state.mollyAdmissionReleasedV1=true;
 }
 function medicationReleased(med){
+ if(med?.sourceChartRecordId){const record=CHART_RECORDS.find(r=>r.id===med.sourceChartRecordId);if(record&&!chartRecordReleased(record))return false;}
  if(!med||med.status==='Discontinued'||med.status==='Pending'||med.releaseStatus==='pending')return false;
  return !(state.releaseQueue||[]).some(item=>item.patientId===med.patientId&&item.status==='pending'&&((item.targetCollection==='medicationCatalog'&&item.rowData?.id===med.id)||(med.sourceOrderId&&item.rowData?.id===med.sourceOrderId)||(item.rowData?.medicationId===med.id)));
 }
@@ -161,7 +162,9 @@ window.saveMedicationAdministration=function(input){
  if(!input.confirmed)return fail('Confirm administration before saving.');
  if(input.patientId!==activePatientId)return fail('The selected patient changed. Verify the current patient again.');
  if(!isFaculty()&&state.marVisibility?.[input.patientId]===false)return fail('The MAR is hidden by faculty.');
- const m=medicationsForPatient(input.patientId,false).find(m=>m.id===input.medicationId),blocked=medicationAdministrationBlock(m);if(blocked)return fail(blocked);
+ const override=input.overrideId?(state.medicationOverrides||[]).find(r=>r.id===input.overrideId):null;
+ if(input.overrideId&&(!override||getTabMode()!=='student'||override.patientId!==input.patientId||override.resetEpoch!==(state.patientResetEpochs?.[input.patientId]||0)||override.status!=='Approved'||override.barcode!==normalizeMedicationBarcode(input.medicationBarcode)))return fail('The provider approval does not match this patient and medication, or is no longer available.');
+ const m=override?medicationOverrideOrder(override):medicationsForPatient(input.patientId,false).find(m=>m.id===input.medicationId),blocked=medicationAdministrationBlock(m);if(blocked)return fail(blocked);
  const student=String(input.student||'').trim(),time=String(input.time||''),dose=String(input.dose||'').trim(),route=String(input.route||'').trim();
  if(!student||!time||!Number.isFinite(Date.parse(time))||!dose||!route)return fail('Enter administration date/time, initials, dose administered and route.');
  if(m.route&&route!==m.route)return fail('The administration route must match the selected order.');
@@ -170,7 +173,8 @@ window.saveMedicationAdministration=function(input){
   const patient=state.patients.find(p=>p.id===input.patientId),code=normalizeMedicationBarcode(input.patientBarcode);
   if(![patient.barcode,patient.mrn,state.shortBarcodeRegistry?.['patient:'+patient.id],'PT-'+String(patient.mrn).toUpperCase()].filter(Boolean).some(x=>normalizeMedicationBarcode(x)===code))return fail('Patient wristband mismatch. Nothing was documented.');
  }
- if(input.method==='barcode'){
+ if(override&&dose!==override.dose)return fail('The dose must match the provider’s one-administration authorization.');
+ if(input.method==='barcode'&&!override){
   const resolved=resolveMedicationBarcode(input.medicationBarcode);if(resolved.error)return fail(resolved.error);
   if(resolved.package?!medicationMatchesPackage(m,resolved.package):resolved.legacyOrder.id!==m.id||resolved.legacyOrder.patientId!==input.patientId)return fail('Medication barcode does not match this patient’s selected active order.');
  }
@@ -180,6 +184,7 @@ window.saveMedicationAdministration=function(input){
  const row={id:uid('mar'),patientId:input.patientId,medicationId:m.id,medication:m.name,dose,route,due:m.scheduledTime||m.frequency,time,student,status:'Given',response:String(input.response||'').trim(),verifiedBy:String(input.verifiedBy||'').trim(),submissionId:input.submissionId||uid('administration')};
  Object.assign(row,{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),patientScanMethod:'Scanner or entered code'});
  if(input.method==='barcode')Object.assign(row,{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),medicationBarcode:normalizeMedicationBarcode(input.medicationBarcode),patientScanMethod:'Scanner or entered code',medicationScanMethod:'Scanner or entered code'});
+ if(override){Object.assign(row,{overrideId:override.id,overrideProvider:override.provider,overrideReason:override.reason});return commitMedicationOverrideAction('consume',override.id,row,override);}
  state.mar ||= [];state.mar.push(row);
  try{save();}catch(e){state.mar=state.mar.filter(r=>r.id!==row.id);return fail('Unable to save in this browser. No administration was recorded. Check browser storage and try again.');}
  clearCurrentViewDraft();
@@ -254,8 +259,19 @@ function reconcileSmithTylenolMAR(){
  for(const order of state.orders||[])if(order.patientId==='stephanie-smith')correct(order);
  for(const item of state.releaseQueue||[])if(item.patientId==='stephanie-smith'&&['medicationCatalog','orders'].includes(item.targetCollection))correct(item.rowData);
 }
+function seedChartMedicationOrders(){
+ state.medicationCatalog||=[];
+ for(const definition of window.CHART_MEDICATION_DEFAULTS||[]){
+  const source=CHART_RECORDS.find(r=>r.id===definition.sourceChartRecordId);if(!source)continue;
+  const released=chartRecordReleased(source);let med=state.medicationCatalog.find(m=>m.id===definition.id);
+  if(!med){med={...definition,packageIds:[...definition.packageIds],status:released?'Due':'Pending',releaseStatus:released?'released':'pending'};state.medicationCatalog.push(med);}
+  if(released&&med.releaseStatus==='pending')Object.assign(med,{status:'Due',releaseStatus:'released'});
+ }
+ // Structured pending releases belong in the package list before they are released.
+ for(const item of state.releaseQueue||[])if(item.targetCollection==='medicationCatalog'&&item.rowData&&!state.medicationCatalog.some(m=>m.id===item.rowData.id))state.medicationCatalog.push({...item.rowData,patientId:item.patientId,releaseStatus:item.status==='released'?'released':'pending',status:item.status==='released'?'Due':'Pending'});
+}
 function ensureMedicationData(){
- state.medicationCatalog||=[];state.bloodUnits||=[];
+ state.medicationCatalog||=[];state.bloodUnits||=[];seedChartMedicationOrders();
  for(const p of state.patients)p.barcode||=`PT-${slug(p.mrn||p.name)}`;
  for(const [patientId,meds] of Object.entries(LEVEL3_MAR_MEDICATIONS||{}))for(const med of meds){const [name,route,due,previous,status,dose='',notes='']=med;if(!state.medicationCatalog.some(x=>x.patientId===patientId&&x.name===name))state.medicationCatalog.push({id:uid('med'),patientId,name,dose,route,frequency:due,scheduledTime:due,status:status||'Due',previouslyGiven:previous||'',provider:state.patients.find(x=>x.id===patientId)?.provider||'',highAlert:/insulin|warfarin|heparin|oxytocin|pitocin/i.test(name),barcode:`MED-${slug(name)}-${slug(state.patients.find(x=>x.id===patientId)?.mrn||patientId)}`,notes});}
  for(const order of state.orders||[]){

@@ -15,6 +15,11 @@
   record('25d195d201d580739aecc611389a3ff0','Stat Lab Results','labs','pending','## Vernon Watkins — Stat Lab Results\n\nTime: Today\n\n'+table(['Test / reference range','Result'],[['pH (7.35–7.45)','7.49*'],['PCO2 (35–45 mmHg)','31*'],['PO2 (80–100 mmHg)','58*'],['HCO3− (22–26 mEq/L)','24'],['D-dimer (<0.5 mcg/mL)','0.9*'],['CK-MB (0–4.9 ng/mL)','3.9'],['Troponin T (0–0.1 ng/mL)','0.09']])+'\n\n* Asterisks retained from source.'),
   record('25d195d201d58178bfb9ff0fb4ddd729','Nurse Driven Heparin Protocol','orders','pending','## Nurse Driven Heparin Protocol\n\n[Open / print the original heparin protocol](assets/vernon-heparin-protocol.pdf)\n\nOriginal physician order, including marked selections, starting-dose grids, and dosing nomogram.\n\n![Nurse Driven Heparin Protocol](assets/vernon-heparin-protocol.png)')
  ];
+ // Structured links make these pending orders available to the shared MAR and package printer.
+ window.CHART_MEDICATION_DEFAULTS=(window.CHART_MEDICATION_DEFAULTS||[]).concat([
+  {id:'vernon-heparin-bolus',patientId:pid,name:'Heparin bolus',dose:'',route:'IV',frequency:'Per released Nurse Driven Heparin Protocol',highAlert:true,packageIds:['MED-HEP10K'],sourceChartRecordId:'chart-25d195d201d580409b1cc83312b4cff6',notes:'Calculate and enter units from the released protocol. Vial: 10,000 units/10 mL.'},
+  {id:'vernon-heparin-infusion',patientId:pid,name:'Heparin infusion',dose:'',route:'IV infusion',frequency:'Continuous per released Nurse Driven Heparin Protocol',highAlert:true,packageIds:['MED-HEPINF'],sourceChartRecordId:'chart-25d195d201d580409b1cc83312b4cff6',notes:'Use the infusion bag. Enter the rate from the released protocol.'}
+ ]);
  // Only remove rows explicitly dated August 21; retain admission orders and later edits.
  const clean=content=>String(content||'').replace(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi,row=>/<td[^>]*>\s*0?8\/21/.test(row)?'':row);
  function cleanRecords(rows){for(const r of rows||[])if(r.patientId===pid&&r.category==='orders')r.content=clean(r.content);}
