@@ -152,8 +152,8 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="simulation-workflows.js?v=20260928-dropdowns"></script>
 <script src="shared-session.js?v=20260928-dropdowns"></script>
 <script src="simulation-roles.js?v=20260926"></script>
-<script src="student-session.js?v=20260928-areas"></script>
-<script src="simulation-audit.js?v=20260928-areas"></script>
+<script src="student-session.js?v=20260928-area-switch"></script>
+<script src="simulation-audit.js?v=20260928-area-switch"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -1067,7 +1067,7 @@ function renderPEWS(){
 }
 
 function renderPatients(){
- const levels=[1,2,3],visible=state.patients.filter(p=>(getTabMode()==='student'||Number(p.level||PATIENT_LEVELS[p.id])===patientLevelTab)&&studentPatientVisible(p));
+ const levels=[1,2,3],visible=state.patients.filter(p=>Number(p.level||PATIENT_LEVELS[p.id])===patientLevelTab&&studentPatientVisible(p));
  const patientCards=patients=>`<div class="patientCards">${patients.map(p=>`<div class="patientCard">
   <h3>${esc(p.name)}</h3><div class="note">MRN ${esc(p.mrn)} • DOB ${esc(p.dob)} • Room ${esc(p.room)} • ${esc(p.provider)}</div>
   <div class="note" style="margin:5px 0">Allergies: ${esc((p.allergies||[]).join(", "))}</div>
@@ -1078,7 +1078,7 @@ function renderPatients(){
   ? [...new Set(visible.map(patientUnit))].map(unit=>`<h2 style="color:var(--green);margin:16px 0 8px">${esc(unit)}</h2>${patientCards(visible.filter(p=>patientUnit(p)===unit))}`).join("")
   : patientCards(visible);
  document.getElementById("view").innerHTML=panel(getTabMode()==='student'?(studentSession()?.area||'Student Patients')+' — Patients':"Active Patients",`
- ${getTabMode()==='student'?'':`<div class="levelTabs" role="tablist" aria-label="Nursing level">${levels.map(level=>`<button class="levelTab ${level===patientLevelTab?"active":""}" role="tab" aria-selected="${level===patientLevelTab}" data-level="${level}">Level ${level}<span class="levelCount">${state.patients.filter(p=>Number(p.level||PATIENT_LEVELS[p.id])===level&&studentPatientVisible(p)).length}</span></button>`).join("")}</div>`}
+ <div class="levelTabs" role="tablist" aria-label="Nursing level">${levels.map(level=>`<button class="levelTab ${level===patientLevelTab?"active":""}" role="tab" aria-selected="${level===patientLevelTab}" data-level="${level}">Level ${level}<span class="levelCount">${state.patients.filter(p=>Number(p.level||PATIENT_LEVELS[p.id])===level&&studentPatientVisible(p)).length}</span></button>`).join("")}</div>
  ${patientGroups||'<p>No patients in this area at this level. Choose another level above.</p>'}`);
  document.querySelectorAll(".levelTab").forEach(b=>b.onclick=()=>{patientLevelTab=Number(b.dataset.level);renderPatients()});
  document.querySelectorAll(".openPatient").forEach(b=>b.onclick=()=>{const open=()=>{saveCurrentViewDraft();activePatientId=b.dataset.id;currentView="summary";audit("Chart opened",activePatientId,"Patient chart opened");render();};if(getTabMode()==='student')checkInForChart(b.dataset.id,open);else{open();window.recordChartAccess?.(activePatientId,'Patient Summary','Chart opened');}});

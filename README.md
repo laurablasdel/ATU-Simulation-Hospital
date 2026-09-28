@@ -1,3 +1,7 @@
+## Change Area and level tabs
+
+Students can use Change Area beside their name without signing out. Name/group remain unchanged, drafts are saved before leaving the current chart, and saved documentation stays with its patient. Level 1/2/3 tabs filter patients within the selected clinical area and show area-specific counts.
+
 ## Student areas and dropdown stability
 
 Student Mode opens a full-screen sign-in, then one census containing only the selected area across all levels. Medical Surgical: Charles Jones, Jane Fowler, Vincent Brody, Vernon Watkins. Baby Boy Sung stays under OB. ICU retains Ruth/Carl/Karl; Ortho retains Ruth and Progressive Care retains Carl/Karl. Shared refresh preserves expanded chart sections and defers chart redraw while an input, textarea or dropdown is focused, except when a patient reset must apply.

@@ -39,13 +39,21 @@
    identity=next;const callback=host.afterLogin;closeLogin();const firstPatient=state.patients.find(studentPatientVisible);if(firstPatient)patientLevelTab=Number(firstPatient.level||PATIENT_LEVELS[firstPatient.id]||1);currentView='patients';activePatientId=null;render();if(callback)callback();
   };
  }
+ function changeArea(){
+  if(!identity||document.getElementById('studentAreaDialog'))return;
+  const host=document.createElement('div');host.id='studentAreaDialog';host.className='popupOverlay';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-labelledby','areaDialogTitle');
+  host.innerHTML='<form class="popupCard"><div class="popupHead"><b id="areaDialogTitle">Change Clinical Area</b></div><div class="popupBody"><p>You will stay signed in. Your saved charting stays in its patient chart.</p><label>Clinical area<select name="area">'+areas.map(a=>'<option'+(a===identity.area?' selected':'')+'>'+esc(a)+'</option>').join('')+'</select></label><p role="status" id="areaFeedback"></p></div><div class="popupActions"><button type="button" id="cancelArea">Cancel</button><button type="submit" class="primary">Change Area</button></div></form>';
+  document.body.append(host);host.querySelector('select').focus();const close=()=>{host.remove();document.getElementById('studentChangeArea')?.focus();};host.querySelector('#cancelArea').onclick=close;
+  host.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close();}if(e.key==='Tab'){const controls=[...host.querySelectorAll('select,button')];if(e.shiftKey&&document.activeElement===controls[0]){e.preventDefault();controls.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===controls.at(-1)){e.preventDefault();controls[0].focus();}}};
+  host.querySelector('form').onsubmit=e=>{e.preventDefault();const area=e.target.elements.area.value;if(!areas.includes(area))return;try{saveCurrentViewDraft();sessionStorage.setItem(key(),JSON.stringify({...identity,area}));}catch{host.querySelector('#areaFeedback').textContent='Could not save the change. Please try again.';return;}if(activePatientId)recordChartAccess(activePatientId,'Changed area from '+identity.area+' to '+area,'Clinical area changed');identity={...identity,area};activePatientId=null;currentView='patients';const patients=state.patients.filter(studentPatientVisible);if(!patients.some(p=>Number(p.level||PATIENT_LEVELS[p.id])===patientLevelTab)&&patients.length)patientLevelTab=Number(patients[0].level||PATIENT_LEVELS[patients[0].id]||1);close();render();};
+ }
  function sessionControls(){
   document.getElementById('studentSessionControls')?.remove();
   if(getTabMode()!=='student'){closeLogin();return;}
   if(!identity){showLogin();return;}
   const controls=document.createElement('div');controls.id='studentSessionControls';controls.style='padding:8px 16px;background:#eef5f2;border-bottom:1px solid #bccbc4';
-  controls.innerHTML=`<b>${esc(identity.name)}</b> · ${identity.group?esc(identity.group)+' · ':''}${esc(identity.area)} <button id="studentSignOut">Sign Out</button>`;
-  document.querySelector('header').after(controls);controls.querySelector('button').onclick=signOutStudent;
+  controls.innerHTML=`<b>${esc(identity.name)}</b> · ${identity.group?esc(identity.group)+' · ':''}${esc(identity.area)} <button id="studentChangeArea">Change Area</button> <button id="studentSignOut">Sign Out</button>`;
+  document.querySelector('header').after(controls);controls.querySelector('#studentSignOut').onclick=signOutStudent;controls.querySelector('#studentChangeArea').onclick=changeArea;
  }
  window.initializeStudentSession=function(){
   try{const saved=JSON.parse(sessionStorage.getItem(key())||'null');if(saved?.area==='Medical Surgical and ICU')saved.area='Medical Surgical';if(saved&&typeof saved.name==='string'&&saved.name.trim()&&areas.includes(saved.area))identity=saved;}catch{}
