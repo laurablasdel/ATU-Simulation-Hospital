@@ -54,6 +54,19 @@ window.initializeSharedSession=function(){
  let base=null,revision=0,busy=false,pending=false,retryTimer=null,pollTimer=null,localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);
  try{const checkpoint=JSON.parse(localStorage.getItem(checkpointKey)||'null');base=checkpoint?.state;revision=checkpoint?.revision||0;}catch{}
  const scope=window.ATU_CONFIG?.sessionId||'simulation-state';
+ // User decisions take the next available turn after an in-flight background sync.
+ // Reserve the lock before resolving a waiter so polling cannot jump the queue.
+ const decisionWaiters=[];
+ function acquireDecision(){
+  if(!busy){busy=true;return Promise.resolve(true);}
+  return new Promise(resolve=>{const waiter={resolve,timer:null};waiter.timer=setTimeout(()=>{const i=decisionWaiters.indexOf(waiter);if(i>=0)decisionWaiters.splice(i,1);resolve(false);},15000);decisionWaiters.push(waiter);});
+ }
+ function releaseWork(){
+  const waiter=decisionWaiters.shift();
+  if(waiter){clearTimeout(waiter.timer);busy=true;waiter.resolve(true);return;}
+  busy=false;if(pending){pending=false;atuCloudSchedule();}
+ }
+
  const persist=()=>{try{const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);}catch(e){atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
  reloadSharedState=function(){const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored){state=mergeState(localBase,state,stored);localBase=clone(stored);}};
  const checkpoint=()=>localStorage.setItem(checkpointKey,JSON.stringify({state:base,revision}));
@@ -88,11 +101,11 @@ window.initializeSharedSession=function(){
  window.commitMedicationOverrideAction=async function(action,id,values,expected){
   const fail=error=>({ok:false,error});
   if(!atuCloudReady||!atuSupabase)return fail('Connect to the shared simulation before approving or using a provider override.');
-  if(busy)return fail('The chart is synchronizing. Wait a moment and try again.');
   if(action==='decision'?!isFaculty():getTabMode()!=='student')return fail('This action is not available in this mode.');
   if(action==='decision'&&(!['Approved','Denied'].includes(values.status)||!String(values.provider||'').trim()||values.status==='Approved'&&(!String(values.medication||'').trim()||!String(values.dose||'').trim()||!String(values.route||'').trim())))return fail('Enter the provider, medication, dose and route before approving.');
-  busy=true;
+  if(!await acquireDecision())return fail('The shared connection is taking too long to respond. Your decision has not been submitted. Check the connection and try again.');
   try{
+   if(!atuCloudReady||!atuSupabase)throw Error('The shared connection was lost. Reconnect before submitting the decision.');
    for(let attempt=0;attempt<5;attempt++){
     const remote=await read();
     if(action==='decision'?!isFaculty():getTabMode()!=='student')throw Error('The device mode changed. Return to the correct mode and try again.');if(!remote)throw Error('The shared simulation could not be found.');
@@ -125,7 +138,7 @@ window.initializeSharedSession=function(){
    }
    return fail('The shared chart is busy. Nothing was changed; try again.');
   }catch(e){return fail(e.message||'Unable to reach the provider. Try again.');}
-  finally{busy=false;if(pending){pending=false;atuCloudSchedule();}}
+  finally{releaseWork();}
  };
  async function exchange(){
   if(!atuCloudReady||busy){pending=true;return;}busy=true;
@@ -155,7 +168,7 @@ window.initializeSharedSession=function(){
    }
    atuCloudBadge('Shared: connected • saved');
   }catch(e){console.error('Shared simulation sync',e);atuCloudBadge('Saved locally • shared connection unavailable');document.getElementById('sharedFeedback')&&(document.getElementById('sharedFeedback').textContent=e.message);clearTimeout(retryTimer);retryTimer=setTimeout(()=>exchange(),10000);}
-  finally{busy=false;if(pending){pending=false;atuCloudSchedule();}}
+  finally{releaseWork();}
  }
  atuCloudPush=exchange;atuCloudPull=exchange;
  atuCloudReceive=()=>exchange();

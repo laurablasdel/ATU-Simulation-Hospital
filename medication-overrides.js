@@ -49,7 +49,7 @@
    if(!isFaculty())return;
    const get=selector=>host.querySelector(selector),provider=get('[data-override-provider]').value.trim(),medication=get('[data-override-name]').value.trim(),dose=get('[data-override-dose]').value.trim(),route=get('[data-override-route]').value.trim();
    if(!provider||status==='Approved'&&(!medication||!dose||!route)){get('[data-override-feedback]').textContent='Enter provider initials; approval also requires medication, dose with units, and route.';return;}
-   const buttons=host.querySelectorAll('[data-override-approve],[data-override-deny]');buttons.forEach(b=>b.disabled=true);
+   const buttons=host.querySelectorAll('[data-override-approve],[data-override-deny]');buttons.forEach(b=>b.disabled=true);get('[data-override-feedback]').textContent=status==='Denied'?'Saving denial…':'Saving approval…';
    const result=await commitMedicationOverrideAction('decision',r.id,{status,provider,medication,dose,route,highAlert:get('[data-override-high]').checked,decisionNotes:get('[data-override-notes]').value.trim()},r);
    if(!result.ok){get('[data-override-feedback]').textContent=result.error;buttons.forEach(b=>b.disabled=false);return;}
    host.remove();showNextNotification();
