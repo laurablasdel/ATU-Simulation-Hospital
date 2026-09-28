@@ -108,3 +108,9 @@ Observers see all outstanding student alerts (including messages and SBAR notice
 Student section/document/attachment navigation remains in the audit; faculty and observer navigation is excluded. Faculty releases, order/document changes, messages and override decisions remain recorded.
 
 Patient barcode sheets and selectable Avery 5160 medication labels include active and pending medication packages. Vernon’s pending Stat Orders now link the Heparin 10,000 units/10 mL vial and infusion bag to their shared package identifiers. The bag concentration remains unspecified in the supplied information. Printing does not release the medications. Future structured pending medication releases use the same package catalog.
+
+### Reconnection and local controls
+
+All modes share the same existing Supabase simulation connection. Focus, internet restoration, and return to a visible tab trigger a synchronization/reconnection attempt. Idle polling reads only revision metadata when nothing changed, reducing transfers on the free plan. Internet access and an approved hospital sign-in are still needed; sleeping/offline computers cannot receive live changes.
+
+The X on a faculty medication override request closes it locally without an approval, denial, or shared save. It remains closed in that tab across refreshes. Review closed medication requests reopens it; the shared request remains pending. Clear / Start over in the MAR removes the current patient/medication scans, matching result and unsaved confirmation fields. It preserves saved administrations, submitted requests, and manual MAR drafts.

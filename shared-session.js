@@ -80,7 +80,7 @@ window.initializeSharedSession=function(){
   const snapshot=JSON.stringify(state),epoch=state.patientResetEpochs?.[activePatientId]||0;
   const editingControl=document.activeElement?.matches('#view input,#view textarea,#view select');
   if(snapshot!==renderedState&&(!editingControl||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
-  updateNotificationCount();if(!isFaculty())showNextNotification();
+  updateNotificationCount();showNextNotification();
  };
  async function read(){const {data,error}=await atuSupabase.from('ehr_sync').select('payload,revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;return data;}
  // Approving and consuming a one-dose authorization must win the shared revision
@@ -131,6 +131,11 @@ window.initializeSharedSession=function(){
   if(!atuCloudReady||busy){pending=true;return;}busy=true;
   try{
    for(let attempt=0;attempt<5;attempt++){
+    // Idle devices check only the revision, avoiding repeated downloads of the whole chart.
+    if(base&&equal(state,base)){
+     const {data:head,error}=await atuSupabase.from('ehr_sync').select('revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;
+     if(head&&head.revision===revision){refresh();break;}
+    }
     const row=await read();if(!row)throw Error('No simulation session is assigned to this account.');
     if(!base&&row.revision>0){
      // Keep pre-connection documentation. Joining must not behave like a patient reset.
@@ -167,7 +172,11 @@ window.initializeSharedSession=function(){
    clearInterval(pollTimer);pollTimer=setInterval(exchange,5000);await exchange();
   }catch(e){atuCloudReady=false;atuCloudBadge('Saved locally • connection setup needed');console.error(e);}
  };
- window.addEventListener('online',()=>atuCloudInit());
+ const resume=()=>{if(atuCloudReady)exchange();else atuCloudInit();};
+ window.addEventListener('online',resume);window.addEventListener('focus',resume);window.addEventListener('pageshow',e=>{if(e.persisted)resume();});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resume();});
+ const previousMode=setTabMode;setTabMode=function(mode){previousMode(mode);if(atuCloudReady)atuCloudSchedule();};
+
 };
 })();
 
