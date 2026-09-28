@@ -1,3 +1,7 @@
+## Patient-specific label printing
+
+The top Print Patient Wristband + All Patient Medications button prints one patient wristband label followed by one label per unique package linked to that patient (including faculty-release orders) on Avery 5160 sheets. It uses all of that patient's packages regardless of the lower section's selection/quantity controls. The medication-label section now shows only packages linked to the current patient, with selection, copies, starting position and preview unchanged. Patient information appears only on the wristband, never medication package labels.
+
 ## Barcode MAR and Avery 5160 medication labels
 
 The shared MAR now scans a patient wristband before every administration, matches MED- package barcodes to the current patient's released orders, and requires explicit confirmation. Manual and barcode entries use saveMedicationAdministration and the existing mar collection. Initials remain blank. Scans and confirmation checkboxes are never restored from drafts; documentation drafts are scoped to the selected medication. Completed saves clear both scan fields. Shared saves, audit attribution, and reset archives use the existing architecture.
