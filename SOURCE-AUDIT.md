@@ -54,3 +54,16 @@ The heparin flowsheet, Watkins stat orders and Watkins stat lab sources were ide
 ## Completion boundary
 
 Carl's accessible profile sections have been checked and the missing note/release change implemented. Ruth's accessible profile sections have been checked with the explicit exceptions above. Ruth's original consent attachment, inaccessible instructor link, historical instructor attachments and clinical/source conflicts require owner/faculty follow-up. The repository is editable and runnable, but the Ruth chart is not a fully recovered standalone copy of every Notion attachment.
+
+# Vernon Watkins — September 28, 2026 recovery
+
+Source patient: https://app.notion.com/p/nursing-chart/Watkins-Vernon-04-09-xxxx-25d195d201d580e88008db32147d7d0c
+
+- Routine labs: `25d195d201d581278b56ca1765119f16`. Transcribed preop, postoperative day 3 and postoperative day 4 values and source flags; visible at simulation start.
+- Heparin Flowsheet: `303195d201d58008afd5fe58a12dc63e`. Original ten columns retained as an editable chart form. August 21 / aPTT 32 row omitted as previous-simulation documentation, per faculty instruction. Routine aPTT 32 remains in baseline labs.
+- Stat Orders: `25d195d201d580409b1cc83312b4cff6`. Transcribed source orders, renamed to Stat Orders; independent faculty release.
+- Stat Lab Results: `25d195d201d580739aecc611389a3ff0`. Transcribed ABG, D-dimer, CK-MB and troponin values; independent faculty release.
+- Nurse Driven Heparin Protocol: `25d195d201d58178bfb9ff0fb4ddd729`. Original one-page PDF supplied by faculty, unchanged, with a rendered preview. Checked DVT/PE bolus and infusion selections are preserved. Source nomogram prints overlapping 131–160 and ≥160 ranges; no clinical correction or automated dose calculation was introduced.
+- Medical Surgical Orders: `25d195d201d5816fbb23ff61a4a41d62`. Removed only the three imported August 21 telephone-order rows. Starting physician orders retained. Saved August 21 orders/notes are retained in a migration backup before removal from the active chart.
+- Vernon and Karl use the same vital-sign form, head-to-toe assessment, and history placement as Ruth and Carl. Vernon's imported baseline vitals are read-only; new vitals use the shared form.
+

@@ -29,7 +29,7 @@ function chartRecordCards(records){
   }
   const entries=(state.chartEntries||[]).filter(e=>e.patientId===activePatientId&&e.recordId===r.id);
   const history=entries.map(e=>`<details><summary>${esc(e.time)} • ${esc(e.student)} • ${esc(e.shift)}</summary>${e.snapshot||renderEntryValues(e.values)}</details>`).join('');
-  return `<details class="chartRecord" ${r.category==='summary'||i===0?'open':''}><summary>${esc(r.title)}</summary><div class="chartRecordBody">${body}${history}</div></details>`;
+  return `<details class="chartRecord" ${r.category==='summary'||i===0?'open':''}><summary>${esc(r.title)}</summary><div class="chartRecordBody">${history}${body}</div></details>`;
  }).join('');
 }
 function renderEntryValues(values){return `<dl>${Object.entries(values||{}).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;}
@@ -85,7 +85,8 @@ function initializeNativeCharts(){
   let snapshot='';if(form.matches('.recordEntry')){const copy=form.cloneNode(true);copy.querySelectorAll('input,select,textarea').forEach(el=>{const span=document.createElement('span');span.textContent=values[el.name]||'—';el.replaceWith(span);});copy.querySelectorAll('button,.entryFeedback').forEach(el=>el.remove());snapshot=copy.innerHTML;}
   state.chartEntries ||= [];state.chartEntries.push({id:uid('chart-entry'),patientId:activePatientId,recordId:form.dataset.record,time:values.time||nowLocal(),student:values.student.trim(),shift:values.shift.trim(),values,snapshot});
   audit('Chart form signed',activePatientId,`${values.student}: ${form.dataset.record}`);liveSave('chart_form_saved',{patientId:activePatientId});
-  const history=document.createElement('details');history.open=true;history.innerHTML=`<summary>Saved • ${esc(values.student)} • ${esc(values.shift)}</summary>${snapshot||renderEntryValues(values)}`;form.after(history);form.reset();form.querySelector('.entryFeedback').textContent=' Saved to this patient’s chart.';
+  const history=document.createElement('details');history.open=true;history.innerHTML=`<summary>Saved • ${esc(values.student)} • ${esc(values.shift)}</summary>${snapshot||renderEntryValues(values)}`;form.before(history);form.reset();form.querySelector('.entryFeedback').textContent=' Saved to this patient’s chart.';
  });
 }
+
 

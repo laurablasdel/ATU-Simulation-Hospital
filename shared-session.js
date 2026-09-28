@@ -26,12 +26,16 @@ function mergeState(base,local,remote){
   const le=local.patientResetEpochs?.[pid]||0,re=remote.patientResetEpochs?.[pid]||0;if(le===re)continue;
   const newer=le>re?local:remote;out.patientResetEpochs||={};out.patientResetEpochs[pid]=Math.max(le,re);
   for(const key of new Set([...Object.keys(local),...Object.keys(remote)])){
+   if(['simulationReports','simulationActivity'].includes(key))continue;
    if(Array.isArray(out[key]))out[key]=out[key].filter(row=>row?.patientId!==pid&&!(key==='patients'&&row?.id===pid)).concat(clone((newer[key]||[]).filter(row=>row?.patientId===pid||(key==='patients'&&row?.id===pid))));
    else if(out[key]&&typeof out[key]==='object'&&pid in out[key])out[key][pid]=clone(newer[key]?.[pid]);
   }
   const ids=new Set([...(local.customChartRecords||[]),...(remote.customChartRecords||[]),...(window.CHART_RECORDS||[])].filter(r=>r.patientId===pid).map(r=>r.id));
   for(const key of ['chartContentEdits','marHiddenRecords'])for(const id of ids){if(newer[key]?.[id]!==undefined){out[key]||={};out[key][id]=clone(newer[key][id]);}else if(out[key])delete out[key][id];}
- }return out;
+ }
+ // Audit records and completed reports are append-only across resets and older clients.
+ for(const key of ['simulationReports','simulationActivity']){const rows=new Map();for(const row of [...(base?.[key]||[]),...(remote?.[key]||[]),...(local?.[key]||[])])if(row?.id&&!rows.has(row.id))rows.set(row.id,clone(row));out[key]=[...rows.values()];}
+ return out;
 }
 window.ATUSharedMerge=mergeState;
 window.prioritizeSavedHistory=function(){
@@ -65,13 +69,14 @@ window.initializeSharedSession=function(){
   if(document.getElementById('sharedLogin'))return;
   const host=document.createElement('div');host.id='sharedLogin';host.className='popupOverlay';
   host.innerHTML='<div class="popupCard"><div class="popupHead"><b>Shared simulation connection</b></div><div class="popupBody"><p id="sharedInfo"></p><label>Email<input id="sharedEmail" type="email" autocomplete="username"></label><label>Password<input id="sharedPassword" type="password" autocomplete="current-password"></label><p id="sharedFeedback" role="status"></p></div><div class="popupActions"><button id="sharedSignIn">Connect</button><button id="sharedRetry">Retry connection</button><button id="sharedClose">Close</button></div></div>';
-  document.body.append(host);host.querySelector('#sharedInfo').textContent=ATU_SUPABASE_URL?'Use your approved simulation account on both computers. Simulation: '+scope:'The hospital’s shared project has not been configured yet. Chart entries are saved in this browser.';
+  document.body.append(host);host.querySelector('#sharedEmail').value='Atusim1@atu.edu';host.querySelector('#sharedInfo').textContent=ATU_SUPABASE_URL?'Use your approved simulation account on both computers. Simulation: '+scope:'The hospital’s shared project has not been configured yet. Chart entries are saved in this browser.';
   host.querySelector('#sharedClose').onclick=()=>host.remove();
   host.querySelector('#sharedRetry').onclick=()=>atuCloudInit();
   host.querySelector('#sharedSignIn').onclick=async()=>{try{if(!atuSupabase)throw Error('Configure the hospital project first.');const {error}=await atuSupabase.auth.signInWithPassword({email:host.querySelector('#sharedEmail').value.trim(),password:host.querySelector('#sharedPassword').value});host.querySelector('#sharedPassword').value='';if(error)throw error;await atuCloudInit();host.querySelector('#sharedFeedback').textContent=atuCloudReady?'Connected.':'Signed in; check your simulation membership or connection.';}catch(e){host.querySelector('#sharedFeedback').textContent=e.message;}};
  };
  let renderedState='',renderedEpoch=state.patientResetEpochs?.[activePatientId]||0;
  const refresh=()=>{
+  window.auditSharedStateReceived?.();
   const snapshot=JSON.stringify(state),epoch=state.patientResetEpochs?.[activePatientId]||0;
   const editingFaculty=currentView==='faculty'&&document.activeElement?.matches('#view input,#view textarea,#view select');
   if(snapshot!==renderedState&&(!editingFaculty||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
@@ -88,7 +93,7 @@ window.initializeSharedSession=function(){
      localStorage.setItem(STORAGE_KEY+'_before_first_join',JSON.stringify(state));
      saveCurrentViewDraft();
      const incoming=clone(row.payload),localEntries={...incoming};
-     for(const key of ['orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','audit'])localEntries[key]=clone(state[key]||[]);
+     for(const key of ['orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
      localEntries.patientResetEpochs=clone(state.patientResetEpochs||{});
      state=mergeState({},localEntries,incoming);base=clone(row.payload);revision=row.revision;persist();checkpoint();refresh();
     }
@@ -121,3 +126,4 @@ window.initializeSharedSession=function(){
  window.addEventListener('online',()=>atuCloudInit());
 };
 })();
+

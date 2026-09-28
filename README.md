@@ -62,3 +62,13 @@ Open `http://127.0.0.1:4173`. Stop the preview with Ctrl+C.
 ## Provenance
 
 Original application and existing assets: [ATU Simulation Hospital](https://github.com/sescobar1/ATU-simulation-hospital). Source comparison: the user's authorized Notion simulation workspace. This package does not grant new rights to the original code, branding, scenario documents or images. Preserve existing ownership and obtain any necessary redistribution authorization from their owner.
+
+# September 28 chart and debrief update
+
+- **Student chart check-in:** Student Mode asks for first and last name on each Open Chart click. The name identifies audit activity; it does not fill documentation fields or replace the shared connection login.
+- **Vernon:** Routine laboratory results are available immediately. Faculty Live Control has four separate releases: Nurse Driven Heparin Protocol, Heparin Flowsheet, Stat Orders, and Stat Lab Results. The protocol includes the original printable PDF. The released flowsheet saves through the existing chart-form workflow.
+- **History times:** `14:35_09/28/2026`. Timezone-qualified timestamps display in America/Chicago; existing timezone-free chart entries retain their entered wall time. Stored values and date/time controls are unchanged.
+- **Debrief / Audit:** Select a patient and choose Download Current Simulation. Open the downloaded HTML document in a browser; use Print / Save as PDF if desired. Reset Patient for New Sim archives that patient's completed report before clearing documentation. Prior reports appear under Previous simulations and synchronize with the shared chart. A failed local archive save stops the reset.
+- **Audit scope:** Section/document/attachment visits, saved documentation and revisions are recorded from this update onward. Reports also include the current chart, SBAR/provider responses, medication administrations, and released documents. Old unlogged visits and unsaved drafts cannot be reconstructed. Self-entered student names identify activity but are not individually authenticated identities. Private attachments remain in the hospital storage; reports retain their record metadata.
+- **Connection:** The email field defaults to Atusim1@atu.edu; the original approved account can still be entered. No password is stored in source code. Use Shared connection on each simulation computer and confirm the connected status. Refresh open hospital tabs after deployment so they use the same chart/audit version.
+

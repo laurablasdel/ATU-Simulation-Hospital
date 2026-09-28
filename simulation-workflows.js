@@ -9,6 +9,7 @@ function cleanBase(base){const result=copy(base);for(const k of studentCollectio
 function baseFor(id){return cleanBase(state.simulationBases?.[id]||SIMULATION_DEFAULTS[id]);}
 function resetToBase(id){
  const base=baseFor(id);if(!base)return false;
+ window.archiveSimulationReport?.(id);
  state.simulationResetArchives||={};state.simulationResetArchives[id]={at:new Date().toISOString(),collections:Object.fromEntries(Object.keys(base.collections).map(k=>[k,copy((state[k]||[]).filter(x=>x.patientId===id))]))};
  const previousPatient=state.patients.find(x=>x.id===id),previousMeds=(state.medicationCatalog||[]).filter(x=>x.patientId===id);
  state.patients=state.patients.map(p=>p.id===id?{...copy(base.patient),barcode:previousPatient?.barcode||base.patient.barcode}:p);
@@ -24,7 +25,7 @@ function resetToBase(id){
  state.marHiddenRecords||={};for(const rid of ids)delete state.marHiddenRecords[rid];Object.assign(state.marHiddenRecords,base.marHiddenRecords||{});state.marVisibility||={};state.marVisibility[id]=base.marVisibility!==false;state.scenarioStage||={};state.scenarioStage[id]=base.scenarioStage;
  // A base saved after a release omits that release card; rebuild cards for records that are pending again.
  seedChartPending();
- ensureMedicationData();state.patientResetEpochs||={};state.patientResetEpochs[id]=Date.now();clearPatientDrafts(id);liveSave('simulation_reset',{patientId:id});return true;
+ ensureMedicationData();state.patientResetEpochs||={};state.patientResetEpochs[id]=Math.max(Date.now(),(state.patientResetEpochs[id]||0)+1);clearPatientDrafts(id);window.auditSharedStateReceived?.();liveSave('simulation_reset',{patientId:id});return true;
 }
 function updateBase(id){const patient=state.patients.find(p=>p.id===id),keys=Object.keys(SIMULATION_DEFAULTS[id].collections);const base={patient:copy(patient),collections:Object.fromEntries(keys.map(k=>[k,copy((state[k]||[]).filter(x=>x.patientId===id))])),chartRecords:copy(CHART_RECORDS.filter(r=>r.patientId===id)),releaseQueue:copy((state.releaseQueue||[]).filter(x=>x.patientId===id&&x.status==='pending')),scenarioStage:state.scenarioStage?.[id]||null,marVisibility:state.marVisibility?.[id]!==false,savedAt:new Date().toISOString()};state.simulationBases||={};state.simulationBases[id]=cleanBase(base);liveSave('base_patient_updated',{patientId:id});}
 window.simBaseFor=baseFor;window.resetToBase=resetToBase;window.updateBasePatient=updateBase;
@@ -235,7 +236,8 @@ window.initializeSimulationWorkflows=function(){
   if(typeof window[name]!=='function')continue;const fn=window[name];window[name]=function(...args){fn(...args);setupDraft();};
  }
  const previousRender=render;render=function(){rendering=true;try{previousRender();}finally{rendering=false;}setupDraft();};
- window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();};window.refreshSimulationRecords();
+ window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();window.migrateVernonProfile?.();};window.refreshSimulationRecords();
 };
 })();
+
 

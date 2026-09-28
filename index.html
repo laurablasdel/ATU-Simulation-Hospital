@@ -144,13 +144,15 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="chart-data.js?v=20260923-carl-import-v1"></script>
 <script src="ruth-profile.js?v=20260923"></script>
-<script src="chart-workflows.js?v=20260917"></script>
+<script src="chart-workflows.js?v=20260928"></script>
 <script src="chart-admin.js?v=20260923-carl-import-v1"></script>
 <script src="medication-system.js?v=20260918-simple-mar-morphine"></script>
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
-<script src="simulation-workflows.js?v=20260925-saving"></script>
-<script src="shared-session.js?v=20260925"></script>
+<script src="vernon-profile.js?v=20260928"></script>
+<script src="simulation-workflows.js?v=20260928"></script>
+<script src="shared-session.js?v=20260928"></script>
 <script src="simulation-roles.js?v=20260926"></script>
+<script src="simulation-audit.js?v=20260928"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -1078,7 +1080,7 @@ function renderPatients(){
  <div class="levelTabs" role="tablist" aria-label="Nursing level">${levels.map(level=>`<button class="levelTab ${level===patientLevelTab?"active":""}" role="tab" aria-selected="${level===patientLevelTab}" data-level="${level}">Level ${level}<span class="levelCount">${state.patients.filter(p=>Number(p.level||PATIENT_LEVELS[p.id])===level).length}</span></button>`).join("")}</div>
  ${patientGroups}`);
  document.querySelectorAll(".levelTab").forEach(b=>b.onclick=()=>{patientLevelTab=Number(b.dataset.level);renderPatients()});
- document.querySelectorAll(".openPatient").forEach(b=>b.onclick=()=>{saveCurrentViewDraft();activePatientId=b.dataset.id;currentView="summary";audit("Chart opened",activePatientId,"Patient chart opened");render()});
+ document.querySelectorAll(".openPatient").forEach(b=>b.onclick=()=>{const open=()=>{saveCurrentViewDraft();activePatientId=b.dataset.id;currentView="summary";audit("Chart opened",activePatientId,"Patient chart opened");render();};if(getTabMode()==='student')checkInForChart(b.dataset.id,open);else{open();window.recordChartAccess?.(activePatientId,'Patient Summary','Chart opened');}});
 }
 function renderSummary(){
  if(!requirePatient())return;const p=activePatient();
@@ -1820,15 +1822,15 @@ function renderFaculty(){
 function renderDebrief(){
  if(!isFaculty()){currentView="patients";render();return}
  const opts=state.patients.map(p=>`<option value="${esc(p.id)}" ${p.id===activePatientId?"selected":""}>${esc(p.name)} — ${esc(p.mrn)}</option>`).join("");
- document.getElementById("view").innerHTML=panel("Debrief / Audit",`<div class="grid"><label>Patient<select id="dPatient">${opts}</select></label><div style="align-self:end"><button id="buildDebrief" class="primary">Build Debrief</button></div></div><div id="dResult" style="margin-top:10px"></div>`);
- buildDebrief.onclick=()=>{const id=dPatient.value,p=state.patients.find(x=>x.id===id),a=state.audit.filter(x=>x.patientId===id),counts={assess:state.assessments.filter(x=>x.patientId===id).length,orders:state.orders.filter(x=>x.patientId===id).length,notes:state.notes.filter(x=>x.patientId===id).length,vitals:state.vitals.filter(x=>x.patientId===id).length};
+ document.getElementById("view").innerHTML=panel("Debrief / Audit",`<div class="grid"><label>Patient<select id="dPatient">${opts}</select></label><div style="align-self:end"><button id="buildDebrief" class="primary">Build Debrief</button></div></div><div id="dResult" role="status" style="margin-top:10px"></div>`);
+ document.getElementById("buildDebrief").onclick=()=>{const id=document.getElementById("dPatient").value,p=state.patients.find(x=>x.id===id),a=state.audit.filter(x=>x.patientId===id),counts={assess:state.assessments.filter(x=>x.patientId===id).length,orders:state.orders.filter(x=>x.patientId===id).length,notes:state.notes.filter(x=>x.patientId===id).length,vitals:state.vitals.filter(x=>x.patientId===id).length};
  const janeDebrief=id==="jane-fowler"?`<div class="patientCard" style="margin-top:10px"><b>Jane Fowler Debrief Focus</b><br><span class="note">
  • Recognize opioid adverse effects and respiratory depression.<br>
  • Explain interventions for respiratory depression and bag-mask ventilation.<br>
  • Review assessment findings, missed cues, response to Narcan, and stability after treatment.<br>
  • Reflect on what went well and what would be handled differently next time.
  </span></div>`:"";
- dResult.innerHTML=`<div class="success"><b>${esc(p.name)}</b> — MRN ${esc(p.mrn)}</div><div class="grid4" style="margin:10px 0"><div class="kpi"><span class="note">Assessments</span><br><b>${counts.assess}</b></div><div class="kpi"><span class="note">Orders</span><br><b>${counts.orders}</b></div><div class="kpi"><span class="note">Notes</span><br><b>${counts.notes}</b></div><div class="kpi"><span class="note">Vitals</span><br><b>${counts.vitals}</b></div></div><table><thead><tr><th>Time</th><th>Event</th><th>Details</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.at)}</td><td>${esc(x.type)}</td><td>${esc(x.details)}</td></tr>`).join("")||'<tr><td colspan="3">No activity.</td></tr>'}</tbody></table>`;};
+ document.getElementById("dResult").innerHTML=`<div class="success"><b>${esc(p.name)}</b> — MRN ${esc(p.mrn)}</div><div class="grid4" style="margin:10px 0"><div class="kpi"><span class="note">Assessments</span><br><b>${counts.assess}</b></div><div class="kpi"><span class="note">Orders</span><br><b>${counts.orders}</b></div><div class="kpi"><span class="note">Notes</span><br><b>${counts.notes}</b></div><div class="kpi"><span class="note">Vitals</span><br><b>${counts.vitals}</b></div></div><table><thead><tr><th>Time</th><th>Event</th><th>Details</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.at)}</td><td>${esc(x.type)}</td><td>${esc(x.details)}</td></tr>`).join("")||'<tr><td colspan="3">No activity.</td></tr>'}</tbody></table>`;};
 }
 document.querySelectorAll("aside button").forEach(b=>b.onclick=()=>{if(!isFaculty()&&b.classList.contains("facultyOnly")){alert("Faculty Mode is required.");return}saveCurrentViewDraft();currentView=b.dataset.view;render()});
 document.getElementById("toggleMode").onclick=toggleMode;
@@ -1839,9 +1841,11 @@ try{initializeMedicationSystem()}catch(e){atuReportRuntimeError("Medication syst
 try{initializeSimulationWorkflows()}catch(e){atuReportRuntimeError("Simulation workflows: "+e.message,"startup",0,0,e)}
 initializeSharedSession();
 try{initializeSimulationRoles()}catch(e){atuReportRuntimeError("Simulation roles: "+e.message,"startup",0,0,e)}
+try{initializeSimulationAudit()}catch(e){atuReportRuntimeError("Simulation audit: "+e.message,"startup",0,0,e)}
 try{render()}catch(e){atuReportRuntimeError("Initial render: "+e.message,"startup",0,0,e)}
 atuCloudInit();
 </script>
 </body>
 </html>
+
 
