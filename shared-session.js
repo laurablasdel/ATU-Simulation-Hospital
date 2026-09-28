@@ -78,8 +78,8 @@ window.initializeSharedSession=function(){
  const refresh=()=>{
   window.auditSharedStateReceived?.();
   const snapshot=JSON.stringify(state),epoch=state.patientResetEpochs?.[activePatientId]||0;
-  const editingFaculty=currentView==='faculty'&&document.activeElement?.matches('#view input,#view textarea,#view select');
-  if(snapshot!==renderedState&&(!editingFaculty||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
+  const editingControl=document.activeElement?.matches('#view input,#view textarea,#view select');
+  if(snapshot!==renderedState&&(!editingControl||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
   updateNotificationCount();if(!isFaculty())showNextNotification();
  };
  async function read(){const {data,error}=await atuSupabase.from('ehr_sync').select('payload,revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;return data;}

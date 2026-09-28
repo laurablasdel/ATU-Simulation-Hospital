@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),boot=require('./boot.cjs'),fs=require
 const windows=[],start=s=>{const w=boot(s);windows.push(w);return w;},clone=x=>JSON.parse(JSON.stringify(x));
 const pid='vernon-watkins',tick=()=>new Promise(r=>setImmediate(r));
 function view(w,id,name,mode='student'){w.setTabMode(mode);w.testApp.setPatient(id);w.testApp.setView(name);w.render();return w.document.getElementById('view');}
-function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w.testApp.setPatient(id);w.testApp.setView('summary');w.render();});const f=w.document.querySelector('#studentCheckIn form');f.elements.area.value='Medical Surgical and ICU';f.elements.firstName.value=first;f.elements.lastName.value=last;f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
+function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w.testApp.setPatient(id);w.testApp.setView('summary');w.render();});const f=w.document.querySelector('#studentCheckIn form');f.elements.area.value='Medical Surgical';f.elements.firstName.value=first;f.elements.lastName.value=last;f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));}
 (async()=>{try{
  const w=start(),s=w.testApp.state;
  assert.equal(w.formatChartTimestamp('2026-09-28T14:35'),'14:35_09/28/2026');

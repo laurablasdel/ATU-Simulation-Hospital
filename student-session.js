@@ -1,13 +1,13 @@
 /* Student identity is local to this tab; shared connection remains separate. */
 (function(){
- const areas=['Medical Surgical and ICU','Orthopedic Med-Surg','Progressive Care','Psychiatric','PEDS','OB'];
+ const areas=['Medical Surgical','ICU','Orthopedic Med-Surg','Progressive Care','Psychiatric','PEDS','OB'];
  let identity=null;
  const key=()=>STORAGE_KEY+'_student_session';
  window.studentSession=()=>identity?{...identity}:null;
  window.studentPatientAreas=function(p){
   if(Array.isArray(p.clinicalAreas)&&p.clinicalAreas.length)return p.clinicalAreas;
   const unit=String(p.unit||'');
-  const mapped={'ruth-livingston':['Medical Surgical and ICU','Orthopedic Med-Surg'],'carl-shapiro':['Medical Surgical and ICU','Progressive Care'],'karl-sharp':['Medical Surgical and ICU','Progressive Care']};
+  const mapped={'charles-jones':['Medical Surgical'],'jane-fowler':['Medical Surgical'],'vincent-brody':['Medical Surgical'],'vernon-watkins':['Medical Surgical'],'baby-boy-sung':['OB'],'ruth-livingston':['ICU','Orthopedic Med-Surg'],'carl-shapiro':['Medical Surgical and ICU','Progressive Care'],'karl-sharp':['Medical Surgical and ICU','Progressive Care']};
   if(mapped[p.id])return mapped[p.id];
   if(/psych/i.test(unit))return ['Psychiatric'];
   if(/ortho/i.test(unit))return ['Orthopedic Med-Surg','Medical Surgical and ICU'];
@@ -29,8 +29,8 @@
  };
  function showLogin(after){
   const existing=document.getElementById('studentCheckIn');if(existing){if(after)existing.afterLogin=after;return;}
-  const host=document.createElement('div');host.id='studentCheckIn';host.className='popupOverlay';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-labelledby','studentCheckInTitle');host.afterLogin=after;
-  host.innerHTML=`<form class="popupCard" autocomplete="off"><div class="popupHead"><b id="studentCheckInTitle">Student Sign In</b></div><div class="popupBody"><p>Sign in for your simulation. Your name, group, and area will appear in the audit. Documentation fields remain blank.</p><label>First Name<input name="firstName" maxlength="80" required autocomplete="given-name"></label><label>Last Name<input name="lastName" maxlength="80" required autocomplete="family-name"></label><label>Clinical group / cohort (optional)<input name="group" maxlength="100" placeholder="e.g., Level 3 — Group A"></label><label>Clinical area<select name="area" required><option value="">Select your area</option>${areas.map(a=>`<option>${esc(a)}</option>`).join('')}</select></label><p id="checkInFeedback" role="status"></p></div><div class="popupActions"><button type="button" id="loginFaculty">Faculty Mode</button><button type="submit" class="primary">Sign In</button></div></form>`;
+  const host=document.createElement('div');host.id='studentCheckIn';host.className='popupOverlay studentLoginScreen';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-labelledby','studentCheckInTitle');host.afterLogin=after;
+  host.innerHTML=`<form class="popupCard" autocomplete="off"><div class="popupHead"><b id="studentCheckInTitle">ATU Simulation Hospital — Student Sign In</b></div><div class="popupBody"><p>Sign in for your simulation. Your name, group, and area will appear in the audit. Documentation fields remain blank.</p><label>First Name<input name="firstName" maxlength="80" required autocomplete="given-name"></label><label>Last Name<input name="lastName" maxlength="80" required autocomplete="family-name"></label><label>Clinical group / cohort (optional)<input name="group" maxlength="100" placeholder="e.g., Level 3 — Group A"></label><label>Clinical area<select name="area" required><option value="">Select your area</option>${areas.map(a=>`<option>${esc(a)}</option>`).join('')}</select></label><p id="checkInFeedback" role="status"></p></div><div class="popupActions"><button type="button" id="loginFaculty">Faculty Mode</button><button type="submit" class="primary">Sign In</button></div></form>`;
   document.body.append(host);host.querySelector('#loginFaculty').onclick=()=>toggleMode();document.querySelector('aside')?.setAttribute('inert','');document.getElementById('view')?.setAttribute('inert','');host.querySelector('input').focus();
   host.onkeydown=e=>{if(e.key==='Tab'){const controls=[...host.querySelectorAll('input,select,button')];if(e.shiftKey&&document.activeElement===controls[0]){e.preventDefault();controls.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===controls.at(-1)){e.preventDefault();controls[0].focus();}}};
   host.querySelector('form').onsubmit=e=>{e.preventDefault();const f=e.target.elements,first=f.firstName.value.trim(),last=f.lastName.value.trim(),area=f.area.value;if(!first||!last||!areas.includes(area)){host.querySelector('#checkInFeedback').textContent='Enter your first and last name and select a clinical area.';return;}
@@ -48,7 +48,8 @@
   document.querySelector('header').after(controls);controls.querySelector('button').onclick=signOutStudent;
  }
  window.initializeStudentSession=function(){
-  try{const saved=JSON.parse(sessionStorage.getItem(key())||'null');if(saved&&typeof saved.name==='string'&&saved.name.trim()&&areas.includes(saved.area))identity=saved;}catch{}
+  try{const saved=JSON.parse(sessionStorage.getItem(key())||'null');if(saved?.area==='Medical Surgical and ICU')saved.area='Medical Surgical';if(saved&&typeof saved.name==='string'&&saved.name.trim()&&areas.includes(saved.area))identity=saved;}catch{}
+  const style=document.createElement('style');style.textContent='.studentLoginScreen{background:#edf1f3;overflow:auto;padding:32px 18px}.studentLoginScreen .popupCard{width:min(560px,100%);max-height:calc(100dvh - 64px);overflow:auto}.studentLoginScreen label{display:block;margin-top:12px}.studentLoginScreen .popupHead{padding:22px 20px}.studentLoginScreen .popupBody{padding:20px}';document.head.append(style);
   const previous=render;render=function(...args){const result=previous(...args);sessionControls();return result;};
   sessionControls();
  };

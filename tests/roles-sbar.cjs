@@ -16,7 +16,7 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  const faculty=start(),sim=start(),obs1=start(),obs2=start();
  for(const w of windows)await w.atuCloudInit();
  sim.setTabMode('student');sim.render();
- const login=sim.document.querySelector('#studentCheckIn form');login.elements.firstName.value='Test';login.elements.lastName.value='Student';login.elements.area.value='Medical Surgical and ICU';login.dispatchEvent(new sim.Event('submit',{bubbles:true,cancelable:true}));
+ const login=sim.document.querySelector('#studentCheckIn form');login.elements.firstName.value='Test';login.elements.lastName.value='Student';login.elements.area.value='Medical Surgical';login.dispatchEvent(new sim.Event('submit',{bubbles:true,cancelable:true}));
  for(const o of [obs1,obs2]){o.testApp.setView('faculty');o.render();o.document.getElementById('makeObserver').click();assert.equal(o.getTabMode(),'observer');}
  assert.equal(obs1.document.getElementById('modeBadge').textContent,'Observer Mode • view only');
  for(const w of windows){w.testApp.setPatient(ruth);w.testApp.setView('summary');w.render();}
@@ -48,6 +48,7 @@ async function syncAll(){for(let i=0;i<2;i++)for(const w of windows)await w.atuC
  // SBAR from the simulation room.
  sim.testApp.setView('sbar');sim.render();
  const f=sim.document.getElementById('sbarForm');
+ const dropdown=f.elements.urgency;dropdown.focus();faculty.testApp.state.orders.push({id:'dropdown-refresh-test',patientId:ruth,text:'Shared update while choosing urgency',status:'Active'});await syncAll();assert(dropdown.isConnected,'focused dropdown is not replaced by shared refresh');assert.equal(sim.document.activeElement,dropdown);dropdown.blur();
  const fill={student:'JS',urgency:'Urgent',situation:'BP 88/50, HR 118',background:'80F POD 5 R hip ORIF',assessment:'Possible sepsis',recommendation:'Request fluid bolus and lactate'};
  for(const [k,v] of Object.entries(fill))f.elements.namedItem(k).value=v;
  f.dispatchEvent(new sim.Event('submit',{bubbles:true,cancelable:true}));
