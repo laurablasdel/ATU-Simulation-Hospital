@@ -963,12 +963,29 @@ function render(){
  if(currentView==="pews")renderPEWS();
  if(currentView==="flowsheets")renderFlowsheets();
  if(currentView==="io")renderIO();
- if(currentView===oseModule();
+ if(currentView==="notes")renderNotes();
+ if(currentView==="education")renderEducation();
+ if(currentView==="orders")renderOrders();
+ if(currentView==="labs")renderLabs();
+ if(currentView==="mar")renderMAR();
+ if(currentView==="glucose")renderGlucoseModule();
  if(currentView==="blood")renderBloodAdministration();
  if(currentView==="imported")renderImportedChart();
  if(currentView==="history")renderHistory();
  if(currentView==="inbox")renderInbox();
- if(currentView==="facultyentId===activePatientId)}
+ if(currentView==="faculty")renderFaculty();
+ if(currentView==="barcodes")renderBarcodeCenter();
+ if(currentView==="debrief")renderDebrief();
+ appendImportedForView(currentView);
+ applyMode();
+ restoreCurrentViewDraft();
+}
+function requirePatient(){
+ if(activePatient())return true;
+ document.getElementById("view").innerHTML=panel("Select a Patient",`<div class="warn">Choose a patient from Patient List first.</div>`);
+ return false;
+}
+function patientRows(arr){return arr.filter(x=>x.patientId===activePatientId)}
 
 
 function renderPEWS(){
@@ -983,7 +1000,8 @@ function renderPEWS(){
  const cardiovascular=[
   ["0","Pink color OR capillary refill 1–2 seconds."],
   ["1","Pale color OR capillary refill about 3 seconds."],
- bradycardia."]
+  ["2","Gray color OR capillary refill about 4 seconds OR heart rate 20 beats/min above the normal range for age."],
+  ["3","Gray / mottled color OR capillary refill 5 seconds or longer OR heart rate 30 beats/min above the normal range for age OR bradycardia."]
  ];
  const respiratory=[
   ["0","Respiratory rate and effort within the expected range for age; no retractions."],
@@ -1007,7 +1025,10 @@ function renderPEWS(){
   </div>
   <div class="pewsGrid">
    <label><b>Behavior</b><select id="pewsBehavior">${opts(behavior,"Behavior")}</select></label>
-   <label><b>EWS TOTAL: <strong id="pewsTotal">—</strong> <span id="pewsMath" class="note"></span></div>
+   <label><b>Cardiovascular</b><select id="pewsCardio">${opts(cardiovascular,"Cardiovascular")}</select></label>
+   <label><b>Respiratory</b><select id="pewsResp">${opts(respiratory,"Respiratory")}</select></label>
+  </div>
+  <div class="pewsTotal">PEWS TOTAL: <strong id="pewsTotal">—</strong> <span id="pewsMath" class="note"></span></div>
   <div id="pewsRisk" class="pewsRisk pewsNeutral"><div class="pewsRiskTitle">Complete all 3 categories to calculate risk level.</div></div>
   <div class="pewsTraffic">
    <div class="pewsTrafficCard pewsGreen"><b>GREEN (0–3)</b><span>Low Risk / Stable</span></div>
@@ -1073,7 +1094,37 @@ function renderPatients(){
 function renderSummary(){
  if(!requirePatient())return;const p=activePatient();
  const counts={orders:patientRows(state.orders).length,assess:patientRows(state.assessments).length,vitals:patientRows(state.vitals).length,notes:patientRows(state.notes).length,labs:patientRows(state.labs).length};
- conmary",`<div class="grid3">
+ const psychQuick=p.id==="david-carter"?panel("Psychiatric Snapshot",`<div class="grid3"><div><b>28 years</b><br><span class="note">Age</span></div><div><b>91 kg / 155 cm</b><br><span class="note">Weight / height</span></div><div><b>NKDA</b><br><span class="note">Allergies</span></div><div><b>Schizophrenia</b><br><span class="note">Primary diagnosis</span></div><div style="grid-column:span 2"><b>Current presentation</b><br><span class="note">Brought in by police after a violent outburst; active hallucinations and delusions.</span></div></div>`):"";
+ const surgicalQuick=p.id==="jane-fowler"?panel("Surgical Snapshot",`
+ <div class="grid3">
+  <div><b>79 years</b><br><span class="note">Age</span></div>
+  <div><b>NKDA</b><br><span class="note">Allergies</span></div>
+  <div><b>Full Code</b><br><span class="note">Code status</span></div>
+  <div><b>Ovarian cancer</b><br><span class="note">Primary diagnosis</span></div>
+  <div><b>TAH-BSO</b><br><span class="note">Procedure</span></div>
+ </div>`):"";
+ const prenatalQuick=p.id==="amelia-sung"?panel("Prenatal Information",`
+ <div class="grid4">
+  <div><b>G2 P1</b><br><span class="note">Obstetric history</span></div>
+  <div><b>39 weeks</b><br><span class="note">Gestational age</span></div>
+  <div><b>O+</b><br><span class="note">Blood type</span></div>
+  <div><b>GBS Positive</b><br><span class="note">Third trimester</span></div>
+  <div><b>Male fetus</b><br><span class="note">Baby sex</span></div>
+  <div><b>Diet controlled</b><br><span class="note">Gestational diabetes</span></div>
+  <div><b>Breastfeeding</b><br><span class="note">Feeding plan</span></div>
+  <div><b>No pain medication</b><br><span class="note">Pain plan</span></div>
+ </div>
+ <div class="note" style="margin-top:8px"><b>Previous pregnancy:</b> Vaginal delivery of a 9 lb 1 oz male with heavy bleeding.</div>`):"";
+ const obSnapshot=p.id==="amelia-sung"?panel("L&D Snapshot",`<div class="warn"><b>ALLERGIES:</b> Shellfish / Penicillin</div><div class="grid3" style="margin-top:8px">
+ <div><b>39 weeks</b><br><span class="note">Gestation</span></div><div><b>G2 P1</b><br><span class="note">Obstetric history</span></div><div><b>GBS Positive</b><br><span class="note">Prenatal status</span></div>
+ <div><b>Complete / 100% / -2</b><br><span class="note">Current cervical exam</span></div><div><b>FHR 140 — Category I</b><br><span class="note">Fetal assessment</span></div><div><b>Q3 min × 45 sec — strong</b><br><span class="note">Contractions</span></div>
+ <div><b>AROM — clear</b><br><span class="note">Membranes</span></div><div><b>Diet controlled</b><br><span class="note">Gestational diabetes</span></div><div><b>Shoulder dystocia</b><br><span class="note">Simulation complication</span></div></div>`):"";
+ document.getElementById("view").innerHTML=
+ psychQuick+
+ surgicalQuick+
+ prenatalQuick+
+ obSnapshot+
+ (p.id==="jane-fowler"?"":panel("Patient Summary",`<div class="grid3">
   <div class="kpi"><span class="note">Active Orders</span><br><b>${counts.orders}</b></div>
   <div class="kpi"><span class="note">Assessments</span><br><b>${counts.assess}</b></div>
   <div class="kpi"><span class="note">Vitals Entries</span><br><b>${counts.vitals}</b></div>
@@ -1104,7 +1155,22 @@ function renderPrenatal(){
  panel("OB Admission Snapshot",`<div class="warn"><b>ALLERGIES:</b> Shellfish / Penicillin</div><div class="grid3" style="margin-top:10px">
  <div><b>Age</b><br>36 years</div><div><b>Gestation</b><br>39 weeks</div><div><b>G / P</b><br>G2 P1</div>
  <div><b>Admission</b><br>Active labor / gestational diabetes</div><div><b>GBS</b><br>Positive</div><div><b>Fetus</b><br>Male</div>
- <div><b>Pain Plan</b><br>None</dode)}</div><div><b>Provider</b><br>${esc(x.provider)}</div><div><b>PPH Risk</b><br>${esc(x.pphRisk)}</div><div><b>Baby Sex</b><br>${esc(x.babySex)}</div>
+ <div><b>Pain Plan</b><br>None</div><div><b>Feeding Plan</b><br>Breastfeeding</div><div><b>Preferences</b><br>Delayed cord clamping; skin-to-skin</div></div>`)+
+ panel("Patient Information",`<div class="grid3"><div><b>Name</b><br>${esc(d.patientInformation.name)}</div><div><b>DOB</b><br>${esc(d.patientInformation.dob)}</div><div><b>Age</b><br>${esc(d.patientInformation.age)}</div><div><b>Insurance</b><br>${esc(d.patientInformation.insurance)}</div><div><b>Emergency Contact</b><br>${esc(d.patientInformation.emergencyContact)}</div><div><b>Phone</b><br>${esc(d.patientInformation.phone)}</div></div>`)+
+ panel("Current Pregnancy / Obstetric History",`<div class="grid3"><div><b>LMP</b><br>${esc(d.pregnancy.lmp)}</div><div><b>EDD</b><br>${esc(d.pregnancy.edd)}</div><div><b>Gestational Age</b><br>${esc(d.pregnancy.gestationalAge)}</div><div><b>Blood Type</b><br>${esc(d.pregnancy.bloodType)}</div><div><b>G / P</b><br>G${esc(d.obstetric.gravida)} P${esc(d.obstetric.para)}</div><div><b>Living Children</b><br>${esc(d.obstetric.living)}</div></div><div class="note" style="margin-top:8px"><b>Previous pregnancy:</b> ${esc(d.obstetric.previous)}</div>`)+
+ panel("Medical / Prenatal History",`<div class="grid"><div><b>Conditions</b><br>${esc(d.medical.conditions)}</div><div><b>Surgeries</b><br>${esc(d.medical.surgeries)}</div><div><b>Medications</b><br>${esc(d.medical.medications)}</div><div><b>Allergies</b><br>${esc(d.medical.allergies)}</div></div>`)+
+ panel("Prenatal Visits",`<table><thead><tr><th>Visit</th><th>Weeks</th><th>Weight</th><th>BP</th><th>Fundal Height</th><th>FHR</th><th>Notes</th></tr></thead><tbody>${AMELIA_PRENATAL_VISITS.map(v=>`<tr><td>${esc(v.visit)}</td><td>${esc(v.weeks)}</td><td>${esc(v.weight)}</td><td>${esc(v.bp)}</td><td>${esc(v.fundal)}</td><td>${esc(v.fhr)}</td><td>${esc(v.notes)}</td></tr>`).join("")}</tbody></table>`)+
+ panel("Prenatal Labs / Ultrasound",`<div class="grid"><div><b>First Trimester</b><br>${esc(d.prenatalLabs.first)}</div><div><b>Second Trimester</b><br>${esc(d.prenatalLabs.second)}</div><div><b>Third Trimester</b><br>${esc(d.prenatalLabs.third)}</div><div><b>Ultrasound</b><br>${esc(d.ultrasound)}</div></div>`)+
+ panel("Birth Plan / Risk Assessment",`<div class="grid"><div><b>Birth Plan</b><br>${esc(d.birthPlan)}</div><div><b>Risk Factors</b><br>${esc(d.risk)}</div></div>`);
+}
+
+function renderLabor(){
+ if(!requirePatient())return;const p=activePatient();
+ if(p.id!=="amelia-sung"){document.getElementById("view").innerHTML=panel("Labor & Delivery",`<div class="note">No L&D baseline loaded for this patient yet.</div>`);return}
+ const x=AMELIA_LD_BASELINE;
+ document.getElementById("view").innerHTML=
+ panel("Labor & Delivery Information",`<div class="grid4">
+ <div><b>Code</b><br>${esc(x.code)}</div><div><b>Provider</b><br>${esc(x.provider)}</div><div><b>PPH Risk</b><br>${esc(x.pphRisk)}</div><div><b>Baby Sex</b><br>${esc(x.babySex)}</div>
  <div><b>GBS</b><br>${esc(x.gbs)}</div><div><b>Blood Type</b><br>${esc(x.bloodType)}</div><div><b>Weight</b><br>${esc(x.weight)}</div><div><b>Tdap</b><br>${esc(x.tdap)}</div>
  <div><b>Gestational Diabetes</b><br>${esc(x.gestationalDiabetes)}</div><div><b>Labor Onset</b><br>${esc(x.laborOnset)}</div><div><b>Amniotic Fluid</b><br>${esc(x.fluid)}</div><div><b>Effacement</b><br>${esc(x.effacement)}</div>
  <div><b>Station</b><br>${esc(x.station)}</div><div><b>Dilation</b><br>${esc(x.dilation)}</div><div><b>Contractions</b><br>${esc(x.contractions)}</div><div><b>FHR</b><br>${esc(x.fhr)} — ${esc(x.fhrCategory)}</div>
@@ -1167,10 +1233,15 @@ function renderSurgery(){
  </fieldset>
  <fieldset><legend>Consents and Required Documents</legend>
   <div class="grid">${preopCheck("surgicalConsent","Surgical consent signed, dated, timed, and matches procedure",3)}${preopCheck("anesthesiaConsent","Anesthesia consent signed, dated, and timed",4)}${preopCheck("bloodConsent","Blood administration consent signed, dated, and timed",5)}${preopCheck("sterilizationConsent","Sterilization consent signed, dated, and timed")}${preopCheck("historyPhysical","History and physical present on chart")}</div>
-  <div class="grid3" style="margin-top:8px"><label>Code Status<select id="jpf-codeStatus" class="janePreopField" data-key="codeStatus">${preopOptions(preopValue("codeStatus"),["Full Code verified","DNR / limitations verified","Order discrepancy — provider notified"])}</select></label><label>Advance Directiveeted"])}</select></label>
+  <div class="grid3" style="margin-top:8px"><label>Code Status<select id="jpf-codeStatus" class="janePreopField" data-key="codeStatus">${preopOptions(preopValue("codeStatus"),["Full Code verified","DNR / limitations verified","Order discrepancy — provider notified"])}</select></label><label>Advance Directives<select id="jpf-advanceDirectives" class="janePreopField" data-key="advanceDirectives">${preopOptions(preopValue("advanceDirectives"),["None","On chart","Patient declined","Not applicable"])}</select></label><label>Fall Risk<select id="jpf-fallRisk" class="janePreopField" data-key="fallRisk">${preopOptions(preopValue("fallRisk"),["No","Yes — precautions initiated"])}</select></label></div>
+ </fieldset>
+ <fieldset><legend>Labs, Medications, and NPO Status</legend>
+  <div class="grid3">
+   <label>Admission Labs<select id="jpf-labs" class="janePreopField" data-key="labs">${preopOptions(preopValue("labs"),["Reviewed — no critical results","Reviewed — abnormal results reported","Results pending","Not completed"])}</select></label>
    <label>Pregnancy Test (hCG)<select id="jpf-hcg" class="janePreopField" data-key="hcg">${preopOptions(preopValue("hcg"),["Negative","Positive — provider notified","Pending","Not applicable"])}</select></label>
    <label>NPO Status<select id="jpf-npo" class="janePreopField" data-key="npo">${preopOptions(preopValue("npo"),["Verified and documented","Not verified","NPO violation — surgery notified"])}</select></label>
-   <label>Last Solid FoodanePreopField" data-key="lastClearLiquids" type="datetime-local" value="${esc(preopValue("lastClearLiquids"))}"></label>
+   <label>Last Solid Food<input id="jpf-lastSolid" class="janePreopField" data-key="lastSolid" type="datetime-local" value="${esc(preopValue("lastSolid")||preopValue("lastIntake"))}"></label>
+   <label>Last Clear Liquids<input id="jpf-lastClearLiquids" class="janePreopField" data-key="lastClearLiquids" type="datetime-local" value="${esc(preopValue("lastClearLiquids"))}"></label>
    <label>Antibiotic<select id="jpf-antibiotic" class="janePreopField" data-key="antibiotic">${preopOptions(preopValue("antibiotic"),["Cefazolin (Ancef) infusing","Cefazolin (Ancef) completed","Held — provider notified","Not administered"])}</select></label>
    <label>Antibiotic Start Time<input id="jpf-antibioticTime" class="janePreopField" data-key="antibioticTime" type="time" value="${esc(preopValue("antibioticTime"))}"></label>
   </div>
