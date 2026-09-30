@@ -154,10 +154,11 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="simulation-defaults.js?v=20260923-carl-import-v1"></script>
 <script src="vernon-profile.js?v=20260928-provider-workflow"></script>
 <script src="simulation-workflows.js?v=20260928-clear-resume"></script>
-<script src="shared-session.js?v=20260928-reduced-polling"></script>
+<script src="cloud-records.js?v=20260930-record-sync"></script>
+<script src="shared-session.js?v=20260930-record-sync"></script>
 <script src="simulation-roles.js?v=20260928-provider-workflow"></script>
 <script src="student-session.js?v=20260928-clinical-areas"></script>
-<script src="simulation-audit.js?v=20260928-provider-workflow"></script>
+<script src="simulation-audit.js?v=20260930-record-sync-20260928-provider-workflow"></script>
 <script>
 const DATA_VERSION="6.3-student-draft-autosave";
 const ATU_ERROR_ENDPOINT=window.ATU_CONFIG?.reportRuntimeErrors && window.ATU_CONFIG?.supabaseUrl ? window.ATU_CONFIG.supabaseUrl+"/rest/v1/ehr_events" : "";
@@ -1820,9 +1821,12 @@ function renderFaculty(){
   audit("Simulation reset",id,"Patient chart returned to starting state; baseline scenario data restored");
   liveSave("simulation_reset",{patientId:id});renderFaculty();
  };
- downloadBackup.onclick=()=>{
-  const blob=new Blob([JSON.stringify({application:"ATU Simulation Hospital EHR",version:"v4",exportedAt:new Date().toISOString(),data:state},null,2)],{type:"application/json"});
+ downloadBackup.onclick=async()=>{
+  try{
+  const exportState={...state,simulationReports:await Promise.all((state.simulationReports||[]).map(r=>window.loadSimulationReport?loadSimulationReport(r):r))};
+  const blob=new Blob([JSON.stringify({application:"ATU Simulation Hospital EHR",version:"v4",exportedAt:new Date().toISOString(),data:exportState},null,2)],{type:"application/json"});
   const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=`ATU_EHR_Backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(u)
+  }catch(error){alert("Backup could not be completed: "+error.message);}
  };
 }
 function renderDebrief(){
@@ -1854,5 +1858,6 @@ atuCloudInit();
 </script>
 </body>
 </html>
+
 
 

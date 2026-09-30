@@ -1,7 +1,8 @@
 /* Shared persistence uses the existing chart state and save functions. */
 (function(){
 const clone=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
-const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+const equal=(a,b)=>stable(a)===stable(b);
 function mergeValue(base,local,remote){
  if(equal(local,base))return clone(remote);
  if(equal(remote,base)||equal(local,remote))return clone(local);
@@ -21,6 +22,7 @@ function mergeValue(base,local,remote){
  return clone(local===undefined?remote:local);
 }
 function mergeState(base,local,remote){
+ if(window.normalizeCloudReports){base=normalizeCloudReports(base);local=normalizeCloudReports(local);remote=normalizeCloudReports(remote);}
  const out=mergeValue(base||{},local||{},remote||{}),epochs={...local.patientResetEpochs,...remote.patientResetEpochs};
  for(const pid of Object.keys(epochs)){
   const le=local.patientResetEpochs?.[pid]||0,re=remote.patientResetEpochs?.[pid]||0;if(le===re)continue;
@@ -68,9 +70,9 @@ window.initializeSharedSession=function(){
   busy=false;if(pending){pending=false;atuCloudSchedule();}
  }
 
- const persist=()=>{try{const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);}catch(e){atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
+ const persist=()=>{try{if(window.normalizeCloudReports)state=normalizeCloudReports(state);const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);}catch(e){atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
  reloadSharedState=function(){const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored){state=mergeState(localBase,state,stored);localBase=clone(stored);}};
- const checkpoint=()=>localStorage.setItem(checkpointKey,JSON.stringify({state:base,revision}));
+ const checkpoint=()=>{if(window.normalizeCloudReports)base=normalizeCloudReports(base);localStorage.setItem(checkpointKey,JSON.stringify({state:base,revision}));};
  const oldClear=clearCurrentViewDraft;clearCurrentViewDraft=function(){save();oldClear();};
  const oldRender=render;render=function(){oldRender();prioritizeSavedHistory();};
  const oldOrders=renderOrders;renderOrders=function(){oldOrders();prioritizeSavedHistory();};
@@ -131,7 +133,7 @@ window.initializeSharedSession=function(){
     merged.audit||=[];merged.audit.push({id:uid('audit'),patientId:request.patientId,at,type,details:detail,actor,role:getTabMode()});
     merged.simulationActivity||=[];merged.simulationActivity.push({id:uid('activity'),patientId:request.patientId,simulationId:request.patientId+':'+(request.resetEpoch||'initial'),at:new Date().toISOString(),actor,role:getTabMode(),group:window.studentSession?.()?.group||'',type,details:detail,collection:action==='consume'?'mar':'medicationOverrides',recordId:action==='consume'?values.id:id,record:clone(action==='consume'?values:target)});
     const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:remote.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});if(error)throw error;if(!data)continue;
-    state=mergeState(sent,state,merged);base=clone(merged);revision=remote.revision+1;
+    state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??remote.revision+1;
     // The cloud commit is durable even if the browser cannot cache its result.
     try{persist();checkpoint();}catch(e){atuCloudBadge('Saved to shared chart; browser storage unavailable');}
     window.auditSharedStateReceived?.();updateNotificationCount();
@@ -164,7 +166,7 @@ window.initializeSharedSession=function(){
     if(equal(merged,row.payload)){base=clone(row.payload);revision=row.revision;state=mergeState(sent,state,merged);persist();checkpoint();refresh();break;}
     const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:row.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});if(error)throw error;
     if(!data){if(attempt===4)throw Error('The shared chart is busy. Changes remain saved locally and will retry.');continue;}
-    saveCurrentViewDraft();state=mergeState(sent,state,merged);base=clone(merged);revision=row.revision+1;persist();checkpoint();refresh();
+    saveCurrentViewDraft();state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??row.revision+1;persist();checkpoint();refresh();
     if(!equal(state,base))pending=true;break;
    }
    atuCloudBadge('Shared: connected • saved');
@@ -178,7 +180,7 @@ window.initializeSharedSession=function(){
   if(!ATU_SUPABASE_URL||!ATU_SUPABASE_KEY){atuCloudBadge('Saved locally • shared project not configured');return;}
   try{
    if(!window.supabase?.createClient)throw Error('Connection library unavailable.');
-   atuSupabase||=window.supabase.createClient(ATU_SUPABASE_URL,ATU_SUPABASE_KEY);
+   if(!atuSupabase){const raw=window.supabase.createClient(ATU_SUPABASE_URL,ATU_SUPABASE_KEY);atuSupabase=window.ATU_CONFIG?.recordSync?window.createRecordSyncClient(raw,scope):raw;}
    const {data,error}=await atuSupabase.auth.getSession();if(error)throw error;
    if(!data.session){atuCloudReady=false;atuCloudBadge('Saved locally • sign in to share across computers');return;}
    atuCloudReady=true;
@@ -198,4 +200,5 @@ window.initializeSharedSession=function(){
 
 };
 })();
+
 

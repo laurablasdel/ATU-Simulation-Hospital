@@ -6,13 +6,15 @@
   "scripts": {
     "preview": "node preview.cjs",
     "test": "node tests/repository.cjs && node tests/carl-profile.cjs && node tests/ruth-profile.cjs && node tests/level3-assessment-fixes.cjs && node tests/shared-saving.cjs && node tests/shared-sync.cjs && node tests/roles-sbar.cjs && node tests/vernon-audit.cjs && node tests/student-session.cjs && node tests/medication-package-mar.cjs && node tests/medication-labels.cjs && node tests/medication-shared.cjs && node tests/medication-overrides.cjs && node tests/patient-package-coverage.cjs && node tests/scan-reset-sync.cjs",
-    "update:profiles": "node tests/update-profile-defaults.cjs"
+    "update:profiles": "node tests/update-profile-defaults.cjs",
+    "test:record-sync": "node tests/record-sync.cjs"
   },
   "engines": {
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "devDependencies": {
     "jsdom": "30.0.1",
-    "@zxing/library": "0.23.0"
+    "@zxing/library": "0.23.0",
+    "@electric-sql/pglite": "0.5.8"
   }
 }

@@ -4,6 +4,7 @@ window.ATU_CONFIG = {
   supabaseUrl: 'https://ixjcltjdxwpewwopxbtl.supabase.co',
   supabasePublishableKey: 'sb_publishable_ForzPEUYNrqGmdSVPZdTEg_Xf32Ko63',
   sessionId: 'simulation-state',
+  recordSync: true,
   reportRuntimeErrors: false,
   storageKey: 'atuSimulationHospitalEHRv1:' + location.pathname.replace(/index\.html$/, '')
 };
