@@ -27,11 +27,33 @@ function cleanPatientOverview(value){
   return /<(?:img|video|iframe)\b/i.test(body)||!!body.replace(/<[^>]*>/g,'').replace(/&nbsp;|[\s\-_*#|]/g,'').trim();
  }).join('\n');
 }
+// Flatten the imported two-row pediatric I/O heading without changing saved entries.
+function inputOutputEntryTable(html){
+ const container=document.createElement('div');container.innerHTML=html;
+ for(const table of container.querySelectorAll('table')){
+  const rows=Array.from(table.rows),top=rows[0],sub=rows[1];
+  const text=cell=>(cell?.textContent||'').replace(/\*/g,'').trim();
+  if(!top||!sub||top.cells.length!==10||sub.cells.length!==10||
+   !/^Date$/i.test(text(top.cells[0]))||!/^Time$/i.test(text(top.cells[1]))||
+   !/^Intake$/i.test(text(top.cells[2]))||!/^Output$/i.test(text(top.cells[5])))continue;
+  const labels=Array.from(top.cells,(cell,i)=>i<2?text(cell):`${i<5?'Intake':'Output'} — ${text(sub.cells[i]).replace(/\s+/g,' ')}`);
+  const head=document.createElement('thead'),heading=document.createElement('tr');
+  labels.forEach(label=>{const th=document.createElement('th');th.scope='col';th.textContent=label;heading.append(th);});head.append(heading);
+  const body=document.createElement('tbody'),entry=document.createElement('tr');entry.className='ioEntryRow';
+  labels.forEach((label,i)=>{const cell=document.createElement('td'),input=document.createElement('input');input.name=`io-${i+1}`;input.type=i===0?'date':i===1?'time':'text';input.setAttribute('aria-label',label);cell.append(input);entry.append(cell);});body.append(entry);
+  // Source observations remain visible; new documentation uses only the blank row.
+  rows.slice(2).forEach(row=>{Array.from(row.cells).forEach(cell=>{if(!text(cell))cell.textContent='—';});body.append(row);});
+  table.replaceChildren(head,body);
+  const hint=document.createElement('p');hint.textContent='Enter new intake and output in the blank row. Existing chart observations are shown below.';table.before(hint);
+ }
+ return container.innerHTML;
+}
 function chartRecordCards(records){
  return records.map((r,i)=>{
   if(r.category==='summary')r={...r,content:cleanPatientOverview(r.content)};
   const editable=['assessments','flowsheets','io'].includes(r.category)&&/_{3,}|<td>\s*<\/td>|\[ \]/.test(r.content);
   let body=r.category==='orders'?renderOrderContent(r.content):['summary','notes'].includes(r.category)&&!/<table\b/i.test(r.content)?r.content.split(/\n\s*\n/).filter(x=>x.trim()).map(text=>`<section class="chartTextSection" style="margin:0 0 12px;padding:8px;border-bottom:1px solid #d5dfe4">${renderChartDoc(text)}</section>`).join(''):renderChartDoc(r.content),n=0;
+  if(r.category==='io')body=inputOutputEntryTable(body);
   if(editable){
    body=body.replace(/_{3,}/g,()=>`<input aria-label="Response ${++n} in ${esc(r.title)}" name="field-${n}" style="display:inline-block;width:130px;margin:3px">`)
     .replace(/☐|☑/g,()=>`<input type="checkbox" aria-label="Selection ${++n} in ${esc(r.title)}" name="field-${n}" style="width:auto">`)
