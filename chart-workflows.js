@@ -17,8 +17,19 @@ function renderOrderContent(value){
  return source.split(/\r?\n/).map(line=>line.trim()).filter(Boolean)
   .map(line=>`<div class="orderLine" style="display:block;margin:0 0 6px">${renderChartDoc(line.replace(/^[-•]\s*/,''))}</div>`).join('');
 }
+function cleanPatientOverview(value){
+ const source=String(value||'').replace(/<\/?columns?\b[^>]*>/gi,'');
+ const lines=source.split('\n');
+ return lines.filter((line,i)=>{
+  if(!/^\s*#{1,6}\s*(?:History|Physicians?[’']?\s+(?:documents|documentation)|Diagnostics|Nursing)\s*$/i.test(line))return true;
+  let end=i+1;while(end<lines.length&&!/^\s*#{1,6}\s+/.test(lines[end]))end++;
+  const body=lines.slice(i+1,end).join('\n');
+  return /<(?:img|video|iframe)\b/i.test(body)||!!body.replace(/<[^>]*>/g,'').replace(/&nbsp;|[\s\-_*#|]/g,'').trim();
+ }).join('\n');
+}
 function chartRecordCards(records){
  return records.map((r,i)=>{
+  if(r.category==='summary')r={...r,content:cleanPatientOverview(r.content)};
   const editable=['assessments','flowsheets','io'].includes(r.category)&&/_{3,}|<td>\s*<\/td>|\[ \]/.test(r.content);
   let body=r.category==='orders'?renderOrderContent(r.content):['summary','notes'].includes(r.category)&&!/<table\b/i.test(r.content)?r.content.split(/\n\s*\n/).filter(x=>x.trim()).map(text=>`<section class="chartTextSection" style="margin:0 0 12px;padding:8px;border-bottom:1px solid #d5dfe4">${renderChartDoc(text)}</section>`).join(''):renderChartDoc(r.content),n=0;
   if(editable){

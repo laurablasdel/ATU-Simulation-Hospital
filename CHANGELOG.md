@@ -69,3 +69,9 @@ These are pre-existing failures, not passing checks. No clinical validation of s
 
 An inherited reference to `assets/baby-boy-sung-chest-xray.png` has no matching file in the original repository. It is outside the Ruth/Carl update and remains an owner follow-up; no replacement image was invented.
 
+
+
+## September 30 — Overview, Stephanie orders, and blood labels
+Empty History, Physicians' documents/documentation, Diagnostics, and Nursing headings are hidden only in patient overviews; populated content remains. Stephanie's D5 1/2 NS is available on the MAR at 150 mL/hr IV infusion. Her existing faculty-release PRBC order is one unit, and ceftriaxone is 500 mg/100 mL IV every six hours. Saved order copies and reset defaults are migrated without rewriting historical administrations.
+
+Blood products share the medication package catalog and MAR save path. Patient label selections and combined wristband sheets include relevant blood packages even before release. Only actionable released transfusion orders permit MAR matching; type/crossmatch and blood-bank forms alone do not authorize administration. Existing individual blood units have Avery 5160 labels that also scan in the MAR, with wrong-patient and previously-used unit blocking. Document bags individually and retain independent verification and the separate transfusion-monitoring form.

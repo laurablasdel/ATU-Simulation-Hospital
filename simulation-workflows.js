@@ -72,10 +72,10 @@ if(window.RUTH_ICU_TRANSFER)chartMedicationLinks[RUTH_ICU_TRANSFER.ordersId]=RUT
 // Orders that discontinue earlier MAR rows when faculty releases them.
 const chartMedicationDiscontinues=window.RUTH_ICU_TRANSFER?{[RUTH_ICU_TRANSFER.ordersId]:RUTH_ICU_TRANSFER.discontinue}:{};
 function seedLinkedMedications(){
- for(const [recordId,name,dose,frequency] of [['admin-stephanie-acetaminophen','Acetaminophen','650 mg',''],['admin-stephanie-ceftriaxone','Ceftriaxone','500 mg/100 mL','Every 12 hours']]){
+ for(const [recordId,name,dose,frequency] of [['admin-stephanie-acetaminophen','Acetaminophen','650 mg',''],['admin-stephanie-ceftriaxone','Ceftriaxone','500 mg/100 mL','Every 6 hours']]){
   const r=CHART_RECORDS.find(x=>x.id===recordId);if(!r)continue;
   let med=state.medicationCatalog.find(m=>m.patientId===r.patientId&&new RegExp(name+'|'+(name==='Acetaminophen'?'Tylenol':name),'i').test(m.name));
-  if(!med){const released=chartRecordReleased(r);med={id:'med-'+recordId,patientId:r.patientId,name,dose,route:'',frequency,status:released?'Due':'Pending',releaseStatus:released?'released':'pending',provider:'Henderson',sourceChartRecordId:recordId};state.medicationCatalog.push(med);}
+  if(!med){const released=chartRecordReleased(r);med={id:'med-'+recordId,patientId:r.patientId,name,dose,route:name==='Ceftriaxone'?'IV':'',frequency,status:released?'Due':'Pending',releaseStatus:released?'released':'pending',provider:'Henderson',sourceChartRecordId:recordId};state.medicationCatalog.push(med);}
   med.sourceChartRecordId=recordId;
  }
 }
@@ -146,6 +146,7 @@ function renderSimpleMAR(){
   invalidate();const code=normalizeMedicationBarcode(el('marScanPatient').value);
   if(![p.barcode,p.mrn,state.shortBarcodeRegistry?.['patient:'+p.id],'PT-'+String(p.mrn).toUpperCase()].filter(Boolean).some(c=>normalizeMedicationBarcode(c)===code)){mismatch('Patient mismatch. Scan the current patient’s wristband. This cannot be overridden. Nothing was documented.');return;}
   const result=resolveMedicationBarcode(el('marScanMedication').value),approval=findMedicationOverride(p.id,el('marScanMedication').value);
+  if(result.bloodUnit&&(result.bloodUnit.patientId!==p.id||['Started','Transfused'].includes(result.bloodUnit.status)||(state.mar||[]).some(r=>r.bloodUnitId===result.bloodUnit.id))){mismatch('Blood unit mismatch or already administered. Verify the blood bag assigned to this patient. Nothing was documented.');return;}
   if(approval){feedback('Provider approval found for one administration. Review and confirm below.');confirmOrder(medicationOverrideOrder(approval),'barcode',result);return;}
   if(result.error){mismatch(result.error,true);return;}
   const available=medicationsForPatient(p.id,false),matches=available.filter(m=>result.package?medicationMatchesPackage(m,result.package):m.id===result.legacyOrder.id&&m.patientId===result.legacyOrder.patientId).filter(m=>!medicationAdministrationBlock(m));
@@ -189,7 +190,7 @@ function renderGuidedBlood(){
 function renderSimpleBlood(){
  ensureMedicationData();if(!requirePatient())return;
  const p=activePatient();
- if(!['fatima-sanogo','stephanie-smith'].includes(p.id)){document.getElementById('view').innerHTML=panel('Blood Administration','No blood administration record is assigned to this patient.');return;}
+ if(!window.bloodLabelMedications?.(p.id).length){document.getElementById('view').innerHTML=panel('Blood Administration','No blood administration record is assigned to this patient.');return;}
  const units=(state.bloodUnits||[]).filter(unit=>unit.patientId===p.id&&unit.status!=='Transfused');
  const rows=(state.bloodAdministration||[]).filter(row=>row.patientId===p.id).slice().reverse();
  document.getElementById('view').innerHTML=panel('Blood Verification and Administration',`
@@ -258,7 +259,7 @@ window.initializeSimulationWorkflows=function(){
   if(typeof window[name]!=='function')continue;const fn=window[name];window[name]=function(...args){fn(...args);setupDraft();};
  }
  const previousRender=render;render=function(){rendering=true;try{previousRender();}finally{rendering=false;}setupDraft();};
- window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();window.migrateVernonProfile?.();};window.refreshSimulationRecords();
+ window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();window.migrateVernonProfile?.();window.migrateStephanieOrders?.();};window.refreshSimulationRecords();
 };
 })();
 

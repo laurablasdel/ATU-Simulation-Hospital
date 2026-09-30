@@ -200,8 +200,8 @@ const added=[
  {id:'admin-sanogo-pph-meds',patientId:'fatima-sanogo',title:'Postpartum Hemorrhage Medication Orders',category:'orders',status:'pending',content:'If hemorrhage is suspected, call MD with assessment findings and bleeding amounts for specific medication orders. Expected orders from Dr. Darnell:\n\n1. Methylergonovine (Methergine) 0.2 mg IM every 2–4 hours as needed. Do not administer with elevated blood pressure.\n2. Carboprost tromethamine (Hemabate) 250 mcg IM every 15–90 minutes as needed; maximum approximately 2 mg total. Specific provider order required before administration.\n3. Misoprostol (Cytotec) 800 mcg rectally; 600–1000 mcg PR / SL / PO as needed per protocol. Specific provider order required before administration.\n4. Tranexamic acid (Cyklokapron; TXA) 1 g IV over 10 minutes once postpartum hemorrhage is diagnosed. May repeat 1 g after 30 minutes–24 hours if bleeding persists, per protocol. Specific provider order required before administration.'},
  {id:'admin-sanogo-followup',patientId:'fatima-sanogo',title:'Postpartum Hemorrhage Follow-up Orders',category:'orders',status:'pending',content:'Provider: Dr. Darnell/KR\n\n- CBC in 6 hours\n- Foley catheter\n- Fundus checks every 15 minutes'},
  {id:'admin-stephanie-chest-xray',patientId:'stephanie-smith',title:'Chest X-Ray',category:'orders',status:'pending',content:'Provider: Henderson\n\nChest X-Ray.'},
- {id:'admin-stephanie-prbc-2units',patientId:'stephanie-smith',title:'Infuse 2 Units PRBC',category:'orders',status:'pending',content:'Provider: Henderson\n\nInfuse 2 units packed red blood cells (PRBCs). Complete blood-product verification and transfusion monitoring per protocol.'},
- {id:'admin-stephanie-ceftriaxone',patientId:'stephanie-smith',title:'Ceftriaxone 500 mg/100 mL q12h',category:'orders',status:'pending',content:'Provider: Henderson\n\nCeftriaxone 500 mg/100 mL every 12 hours.'},
+ {id:'admin-stephanie-prbc-2units',patientId:'stephanie-smith',title:'Infuse 1 Unit PRBC',category:'orders',status:'pending',content:'Provider: Henderson\n\nInfuse 1 unit of packed red blood cells (PRBCs). Complete blood-product verification and transfusion monitoring per protocol.'},
+ {id:'admin-stephanie-ceftriaxone',patientId:'stephanie-smith',title:'Ceftriaxone 500 mg/100 mL IV every 6 hours',category:'orders',status:'pending',content:'Provider: Henderson\n\nCeftriaxone 500 mg/100 mL IV every 6 hours.'},
  {id:'admin-stephanie-acetaminophen',patientId:'stephanie-smith',title:'Acetaminophen 650 mg',category:'orders',status:'pending',content:'Provider: Henderson\n\nAcetaminophen 650 mg.'},
  {id:'admin-stephanie-cbc-am',patientId:'stephanie-smith',title:'CBC in AM',category:'orders',status:'pending',content:'Provider: Henderson\n\nCBC in AM.'}
 ];
@@ -723,3 +723,4 @@ window.initializeAdminEnhancements=function(){
  const baseRender=render;render=function(){baseRender();compactRenderedView();};
 };
 })();
+

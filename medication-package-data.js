@@ -221,7 +221,7 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
     "id": "MED-0024",
     "name": "Dextrose 5% / sodium chloride 0.45%",
     "strength": "",
-    "form": "",
+    "form": "infusion bag",
     "orderKeys": [
       "dextrose 5% in 0.45% sodium chloride (d5 1/2 ns)|iv infusion"
     ]
@@ -563,10 +563,11 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
   {
     "id": "MED-0061",
     "name": "Ceftriaxone",
-    "strength": "",
-    "form": "",
+    "strength": "500 mg/100 mL",
+    "form": "infusion bag",
     "orderKeys": [
-      "ceftriaxone|"
+      "ceftriaxone|",
+      "ceftriaxone|iv"
     ]
   }
 ];

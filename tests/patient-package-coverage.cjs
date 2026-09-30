@@ -4,7 +4,7 @@ const w=boot();try{
  for(const p of s.patients){
   w.testApp.setPatient(p.id);w.testApp.setView('barcodes');w.render();w.document.getElementById('printPatientMedSheet').click();
   const doc=new w.DOMParser().parseFromString(combined,'text/html'),printed=new Set([...doc.querySelectorAll('[data-package]')].map(e=>e.dataset.package));
-  const medications=s.medicationCatalog.filter(m=>m.patientId===p.id),expected=new Set(medications.flatMap(m=>w.packagesForMedication(m).map(p=>p.id)));
+  const medications=s.medicationCatalog.filter(m=>m.patientId===p.id).concat(w.bloodLabelMedications(p.id)),expected=new Set(medications.flatMap(m=>w.packagesForMedication(m).map(p=>p.id)));
   assert.deepEqual(printed,expected,p.name+' all active and future-release medication packages');assert.equal(doc.querySelectorAll('.wristbandLabel').length,1);
   assert.deepEqual(new Set([...w.document.querySelectorAll('[data-package-row]')].map(e=>e.dataset.packageRow)),expected,p.name+' label selection matches patient');
   for(const m of medications)assert(w.packagesForMedication(m).length&&w.packagesForMedication(m).every(p=>p.name),p.name+': '+m.name);
