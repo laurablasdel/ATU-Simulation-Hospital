@@ -4,6 +4,17 @@ function renderChartDoc(value){
  const token=html=>`CHARTTOKEN${tokens.push(html)-1}END`;
  let source=String(value||'').replace(/<\/?(?:p|li)[^>]*>/gi,'\n').replace(/<br\s*\/?>/gi,'\n').replace(/!\[([^\]]*)\]\((assets\/[A-Za-z0-9_.\/-]+)\)/g,(_,alt,path)=>token(`<a href="${esc(path)}" target="_blank" rel="noopener"><img src="${esc(path)}" alt="${esc(alt||'Patient chart attachment')}" loading="lazy" style="display:block;max-width:100%;max-height:800px;object-fit:contain;margin:12px auto"></a>`));
  source=source.replace(/\[([^\]]+)\]\((assets\/[A-Za-z0-9_.\/-]+|https:\/\/[^\s)]+)\)/g,(_,label,url)=>token(`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`));
+ const lines=source.split(/\r?\n/),cells=line=>line.trim().replace(/^\||\|$/g,'').split('|').map(x=>x.trim());
+ for(let i=0;i<lines.length-1;i++){
+  if(!/^\s*\|.*\|\s*$/.test(lines[i])||!/^\s*\|.*\|\s*$/.test(lines[i+1]))continue;
+  const headers=cells(lines[i]),separator=cells(lines[i+1]);
+  if(headers.length!==separator.length||!separator.every(x=>/^:?-{3,}:?$/.test(x)))continue;
+  let end=i+2;const rows=[];
+  while(end<lines.length&&/^\s*\|.*\|\s*$/.test(lines[end])&&cells(lines[end]).length===headers.length)rows.push(cells(lines[end++]));
+  const table='<table><thead><tr>'+headers.map(x=>`<th scope="col">${esc(x)}</th>`).join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>`<td>${esc(x)}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+  lines.splice(i,end-i,token(table));
+ }
+ source=lines.join('\n');
  let html=legacyRenderChartDoc(source).replace(/(^|<br>)#\s+([^<]+)/g,'$1<h3>$2</h3>');
  return html.replace(/CHARTTOKEN(\d+)END/g,(_,i)=>tokens[Number(i)]||'');
 }
@@ -30,9 +41,18 @@ function cleanPatientOverview(value){
 // Flatten the imported two-row pediatric I/O heading without changing saved entries.
 function inputOutputEntryTable(html){
  const container=document.createElement('div');container.innerHTML=html;
- for(const table of container.querySelectorAll('table')){
+ for(const [tableIndex,table] of Array.from(container.querySelectorAll('table')).entries()){
   const rows=Array.from(table.rows),top=rows[0],sub=rows[1];
   const text=cell=>(cell?.textContent||'').replace(/\*/g,'').trim();
+  // Imported blank rows may have been removed during chart cleanup.
+  if(rows.length===1&&top.cells.length>1&&/^Time$/i.test(text(top.cells[0]))){
+   const labels=Array.from(top.cells,text),head=document.createElement('thead'),heading=document.createElement('tr'),body=document.createElement('tbody'),entry=document.createElement('tr');
+   entry.className='ioEntryRow';
+   labels.forEach((label,i)=>{
+    const th=document.createElement('th');th.scope='col';th.textContent=label;heading.append(th);
+    const td=document.createElement('td'),input=document.createElement('input');input.name=`io-table-${tableIndex+1}-${i+1}`;input.type=i===0?'time':'text';input.setAttribute('aria-label',`${label} — I/O table ${tableIndex+1}`);td.append(input);entry.append(td);
+   });head.append(heading);body.append(entry);table.replaceChildren(head,body);continue;
+  }
   if(!top||!sub||top.cells.length!==10||sub.cells.length!==10||
    !/^Date$/i.test(text(top.cells[0]))||!/^Time$/i.test(text(top.cells[1]))||
    !/^Intake$/i.test(text(top.cells[2]))||!/^Output$/i.test(text(top.cells[5])))continue;
@@ -51,9 +71,9 @@ function inputOutputEntryTable(html){
 function chartRecordCards(records){
  return records.map((r,i)=>{
   if(r.category==='summary')r={...r,content:cleanPatientOverview(r.content)};
-  const editable=['assessments','flowsheets','io'].includes(r.category)&&/_{3,}|<td>\s*<\/td>|\[ \]/.test(r.content);
+  let editable=['assessments','flowsheets','io'].includes(r.category)&&/_{3,}|<td>\s*<\/td>|\[ \]/.test(r.content);
   let body=r.category==='orders'?renderOrderContent(r.content):['summary','notes'].includes(r.category)&&!/<table\b/i.test(r.content)?r.content.split(/\n\s*\n/).filter(x=>x.trim()).map(text=>`<section class="chartTextSection" style="margin:0 0 12px;padding:8px;border-bottom:1px solid #d5dfe4">${renderChartDoc(text)}</section>`).join(''):renderChartDoc(r.content),n=0;
-  if(r.category==='io')body=inputOutputEntryTable(body);
+  if(r.category==='io'){body=inputOutputEntryTable(body);editable=editable||body.includes('class="ioEntryRow"');}
   if(editable){
    body=body.replace(/_{3,}/g,()=>`<input aria-label="Response ${++n} in ${esc(r.title)}" name="field-${n}" style="display:inline-block;width:130px;margin:3px">`)
     .replace(/☐|☑/g,()=>`<input type="checkbox" aria-label="Selection ${++n} in ${esc(r.title)}" name="field-${n}" style="width:auto">`)
