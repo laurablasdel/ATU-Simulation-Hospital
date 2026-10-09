@@ -1,3 +1,12 @@
+## October 9, 2026 — scan existing MAR orders and confirm shared saves
+
+* Wristband followed by medication scanning opens a unique matching order automatically, including scanners without an Enter suffix. Ambiguous package matches still require choosing the intended existing order.
+* Ordered dose and route are read-only in scan confirmation; missing order details require correction by faculty. A scan never records administration.
+* Explicit scheduled clock times use a 60-minute allowance. Early/late flags appear during review and in history, without faculty approval. PRN, continuous, now and narrative instructions are not assigned an invented clock schedule.
+* Confirmations recheck the shared order and history, then await a revision-protected Supabase save. Offline failures preserve the review. Retries reuse the submission identifier; concurrent confirmations and duplicate scheduled slots are rejected.
+* Uses the existing configured laurablasdel Supabase project and record-sync functions. No database migration is needed. Older open browser versions must reload to receive the new confirmation behavior.
+* Validation: existing repository suite, new MAR confirmation regressions, and PostgreSQL record-sync tests. Physical classroom scanners and a live authenticated classroom save still require a deployment smoke test.
+
 ## September 25 — shared simulation and durable charting
 
 * Add authenticated shared sessions with conflict retries, reset protection, and live messages/alerts.

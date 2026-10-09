@@ -99,6 +99,49 @@ window.initializeSharedSession=function(){
   updateNotificationCount();showNextNotification();
  };
  async function read(){const {data,error}=await atuSupabase.from('ehr_sync').select('payload,revision,updated_by').eq('collection','app').eq('item_id',scope).maybeSingle();if(error)throw error;return data;}
+ // Commit ordinary administrations against the latest shared revision, just as
+ // one-dose approvals do. Scans and failed requests never create local MAR rows.
+ window.commitMedicationAdministration=async function(input,expected){
+  const fail=error=>({ok:false,error});
+  if(!atuCloudReady||!atuSupabase)return fail('Connect to the shared simulation before confirming administration. Nothing was recorded.');
+  if(!await acquireDecision())return fail('The shared chart is busy. Keep this review open and try again.');
+  const submissionId=input.submissionId||uid('administration');
+  try{
+   for(let attempt=0;attempt<5;attempt++){
+    const remote=await read();if(!remote)throw Error('The shared simulation could not be found.');
+    const prior=(remote.payload.mar||[]).find(r=>r.submissionId===submissionId);
+    if(prior){
+     if(prior.patientId!==input.patientId||prior.medicationId!==input.medicationId||prior.dose!==input.dose||prior.route!==input.route||prior.time!==input.time||prior.student!==input.student.trim())throw Error('This submission was already used for a different administration. Scan again.');
+     state=mergeState(base||{},state,remote.payload);base=clone(remote.payload);revision=remote.revision;
+     try{persist();checkpoint();}catch{}
+     window.auditSharedStateReceived?.();
+     return {ok:true,row:prior};
+    }
+    const sent=clone(state);let checked;
+    try{
+     state=clone(remote.payload);
+     checked=saveMedicationAdministration({...input,submissionId,validateOnly:true});
+    }finally{state=sent;}
+    if(!checked.ok)throw Error(checked.error);
+    if(checked.order!==expected.order)throw Error('The shared order changed. Scan again and review its current dose, route and timing.');
+    if(checked.previousIds.some(id=>!expected.previousIds.includes(id)))throw Error('Another administration was just saved for this order. Refresh and review it before giving another dose.');
+    const merged=mergeState(base||{},sent,remote.payload),row=checked.row;
+    if((merged.patientResetEpochs?.[input.patientId]||0)!==(remote.payload.patientResetEpochs?.[input.patientId]||0))throw Error('The simulation was reset. Scan again.');
+    merged.mar||=[];merged.mar.push(row);
+    const at=nowLocal(),actor=window.studentSession?.()?.name||row.student,details=`${row.medication} ${row.dose} ${row.route} given by ${row.student}`;
+    merged.audit||=[];merged.audit.push({id:uid('audit'),at,patientId:row.patientId,type:'Medication administration',details,actor,role:getTabMode()});
+    merged.simulationActivity||=[];merged.simulationActivity.push({id:uid('activity'),patientId:row.patientId,simulationId:row.patientId+':'+(input.resetEpoch||'initial'),at:new Date().toISOString(),actor,role:getTabMode(),group:window.studentSession?.()?.group||'',type:'Medication administration',details,collection:'mar',recordId:row.id,record:clone(row)});
+    const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:remote.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});
+    if(error)throw error;if(!data)continue;
+    state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??remote.revision+1;
+    try{persist();checkpoint();}catch{atuCloudBadge('Saved to shared chart; browser storage unavailable');}
+    window.auditSharedStateReceived?.();
+    return {ok:true,row};
+   }
+   return fail('The shared chart changed repeatedly. Review the order and try again.');
+  }catch(e){return fail('Save not confirmed: '+(e.message||'connection unavailable')+'. Keep this review open and retry; the same submission will not be added twice.');}
+  finally{releaseWork();}
+ };
  // Approving and consuming a one-dose authorization must win the shared revision
  // before reporting success. Offline or stale clients cannot spend an approval twice.
  window.commitMedicationOverrideAction=async function(action,id,values,expected){

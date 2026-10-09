@@ -158,6 +158,28 @@ window.medicationAdministrationBlock=function(m){
  if(/\bonce\b|one[- ]time|loading dose|\bstat\b/i.test(text)&&!/may repeat|every|daily|then/i.test(text)&&medicationAdministrationHistory(m).length)return 'This one-time medication has already been administered.';
  return '';
 };
+// Only explicit clock times are scheduled slots. Never invent a schedule for
+// PRN, continuous, "now", or narrative instructions.
+window.medicationTiming=function(m,time){
+ const source=String(m.scheduledTime||'').trim(),at=new Date(time);
+ const unscheduled={timingStatus:'Not scheduled',timingNote:'No fixed clock time in this order; review its frequency and instructions.'};
+ if(!Number.isFinite(at.getTime()))return {timingStatus:'Invalid time',timingNote:'Enter a valid administration date and time.'};
+ if(!source||/\b(?:PRN|as needed|continuous|now|on call)\b/i.test(source))return unscheduled;
+ let candidates=[];
+ if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(source))candidates=[new Date(source)];
+ else{
+  const slots=source.split(/\s*[,;/]\s*/);
+  for(const slot of slots){
+   const match=slot.trim().match(/^(\d{1,2}):?(\d{2})\s*(AM|PM)?$/i);if(!match)return unscheduled;
+   let hour=Number(match[1]),minute=Number(match[2]);if(minute>59||hour>23||match[3]&&(hour<1||hour>12))return unscheduled;
+   if(match[3])hour=hour%12+(/PM/i.test(match[3])?12:0);
+   for(const day of [-1,0,1]){const due=new Date(at);due.setDate(due.getDate()+day);due.setHours(hour,minute,0,0);candidates.push(due);}
+  }
+ }
+ const due=candidates.filter(d=>Number.isFinite(d.getTime())).sort((a,b)=>Math.abs(a-at)-Math.abs(b-at))[0];if(!due)return unscheduled;
+ const minutes=(at-due)/60000,status=minutes < -60?'Early':minutes > 60?'Late':'On time';
+ return {timingStatus:status,scheduledFor:due.toISOString(),timingDifferenceMinutes:Math.round(minutes),timingAllowanceMinutes:60,timingNote:`${status}: scheduled ${due.toLocaleString()}. Allowed window: 60 minutes before or after. ${status==='On time'?'':'Review the timing before confirming; faculty approval is not required.'}`};
+};
 window.saveMedicationAdministration=function(input){
  const fail=error=>({ok:false,error});
  if(input.resetEpoch!==undefined&&input.resetEpoch!==(state.patientResetEpochs?.[input.patientId]||0))return fail('The simulation was reset. Scan again for the new simulation.');
@@ -170,6 +192,7 @@ window.saveMedicationAdministration=function(input){
  const student=String(input.student||'').trim(),time=String(input.time||''),dose=String(input.dose||'').trim(),route=String(input.route||'').trim();
  if(!student||!time||!Number.isFinite(Date.parse(time))||!dose||!route)return fail('Enter administration date/time, initials, dose administered and route.');
  if(m.route&&route!==m.route)return fail('The administration route must match the selected order.');
+ if(m.dose&&dose!==m.dose)return fail('The administered dose must match the existing order. Ask faculty to clarify a different dose.');
  if(m.highAlert&&(!input.verifiedBy?.trim()||input.verifiedBy.trim().toLowerCase()===student.toLowerCase()))return fail('A different independent verifier is required for this high-alert medication.');
  if(m.bloodProduct&&!/^1\s*unit$/i.test(dose))return fail('Document one blood bag at a time: enter 1 unit. Complete transfusion monitoring per protocol.');
  {
@@ -185,13 +208,17 @@ window.saveMedicationAdministration=function(input){
   if(resolved.package?!medicationMatchesPackage(m,resolved.package):resolved.legacyOrder.id!==m.id||resolved.legacyOrder.patientId!==input.patientId)return fail('Medication barcode does not match this patient’s selected active order.');
  }
  const previous=medicationAdministrationHistory(m);
+ const timing=medicationTiming(m,time);
+ if(timing.scheduledFor&&previous.some(r=>(r.scheduledFor||medicationTiming(m,r.time).scheduledFor)===timing.scheduledFor))return fail('This scheduled dose is already documented. No duplicate was added.');
  if(previous.some(r=>r.time===time)||(input.submissionId&&(state.mar||[]).some(r=>r.submissionId===input.submissionId)))return fail('This administration is already saved. No duplicate was added.');
  if(previous.length&&!input.repeatConfirmed)return fail('Review the previous administration and confirm this is a new dose.');
  const row={id:uid('mar'),patientId:input.patientId,medicationId:m.id,medication:m.name,dose,route,due:m.scheduledTime||m.frequency,time,student,status:'Given',response:String(input.response||'').trim(),verifiedBy:String(input.verifiedBy||'').trim(),submissionId:input.submissionId||uid('administration')};
- Object.assign(row,{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),patientScanMethod:'Scanner or entered code'});
+ Object.assign(row,medicationTiming(m,time),{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),patientScanMethod:'Scanner or entered code'});
  if(bloodUnit)Object.assign(row,{bloodUnitId:bloodUnit.id,bloodUnitNumber:bloodUnit.unitNumber,bloodType:bloodUnit.unitType});
  if(input.method==='barcode')Object.assign(row,{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),medicationBarcode:normalizeMedicationBarcode(input.medicationBarcode),patientScanMethod:'Scanner or entered code',medicationScanMethod:'Scanner or entered code'});
  if(override){Object.assign(row,{overrideId:override.id,overrideProvider:override.provider,overrideReason:override.reason});return commitMedicationOverrideAction('consume',override.id,row,override);}
+ if(input.validateOnly)return {ok:true,row,order:JSON.stringify(m),previousIds:previous.map(r=>r.id)};
+ if(window.ATU_CONFIG?.supabaseUrl)return commitMedicationAdministration(input,{order:JSON.stringify(m),previousIds:previous.map(r=>r.id)});
  state.mar ||= [];state.mar.push(row);
  try{save();}catch(e){state.mar=state.mar.filter(r=>r.id!==row.id);return fail('Unable to save in this browser. No administration was recorded. Check browser storage and try again.');}
  clearCurrentViewDraft();
