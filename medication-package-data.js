@@ -87,7 +87,7 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
   },
   {
     "id": "MED-0010",
-    "name": "Naloxone",
+    "name": "Naloxone (Narcan)",
     "strength": "0.4 mg/mL",
     "form": "injection",
     "orderKeys": [

@@ -1,5 +1,6 @@
 ## October 9, 2026 — scan existing MAR orders and confirm shared saves
 
+* Label Naloxone as Naloxone (Narcan), including previously saved generic-name catalogs. Retain MED-0010, package strength, form and existing order links.
 * Wristband followed by medication scanning opens a unique matching order automatically, including scanners without an Enter suffix. Ambiguous package matches still require choosing the intended existing order.
 * Ordered dose and route are read-only in scan confirmation; missing order details require correction by faculty. A scan never records administration.
 * Explicit scheduled clock times use a 60-minute allowance. Early/late flags appear during review and in history, without faculty approval. PRN, continuous, now and narrative instructions are not assigned an invented clock schedule.
