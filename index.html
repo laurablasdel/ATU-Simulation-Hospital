@@ -421,6 +421,7 @@ function importedPanel(categories,title="Chart Record"){
  return records.length?panel(title,`<div class="note">Patient records and forms are available directly in this chart.</div>${chartRecordCards(records)}`):"";
 }
 function appendImportedForView(view){
+ if(view==='mar'&&(document.getElementById('marReleasedDocuments')||(!isFaculty()&&state.marVisibility?.[activePatientId]===false)))return;
  const map={summary:["summary","notes","documents"],prenatal:["prenatal"],labor:["labor"],surgery:["surgery"],assessments:["assessments"],flowsheets:["flowsheets"],io:["io"],orders:["orders"],labs:["labs"],mar:["mar"]};
  if(!map[view]||!activePatient())return;
  document.getElementById("view").insertAdjacentHTML(view==="mar"?"beforeend":"afterbegin",importedPanel(map[view],view==="summary"?"Patient Overview & Provider Documentation":"Chart Record"));
