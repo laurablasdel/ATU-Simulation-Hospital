@@ -262,7 +262,13 @@ window.initializeSimulationWorkflows=function(){
  initDrafts();seedLinkedMedications();ensureMedicationData();
  const originalRelease=releaseItem;releaseItem=function(id){const item=state.releaseQueue.find(x=>x.id===id);originalRelease(id);if(item?.status!=='released')return;const names=chartMedicationLinks[item.chartRecordId]||[],stopped=chartMedicationDiscontinues[item.chartRecordId]||[];for(const med of state.medicationCatalog.filter(m=>m.patientId===item.patientId&&stopped.includes(m.name)))med.status='Discontinued';for(const med of state.medicationCatalog.filter(m=>m.patientId===item.patientId&&names.includes(m.name))){med.releaseStatus='released';if(med.status==='Pending')med.status='Due';for(const q of state.releaseQueue)if(q.rowData?.id===med.id&&q.targetCollection==='medicationCatalog'){q.status='released';q.releasedAt=nowLocal();}}if(names.length||stopped.length)liveSave('medication_orders_released',{patientId:item.patientId});};
  const originalChartDoc=renderChartDoc;renderChartDoc=function(content){return originalChartDoc(currentChartDates(content));};
- const cards=chartRecordCards;chartRecordCards=function(records){return cards(records.map(r=>({...r,content:currentChartDates(r.content)})));};
+ const cards=chartRecordCards;chartRecordCards=function(records){return cards(records.map(r=>{
+  let content=currentChartDates(r.content);
+  // Remove packet example administrations, including copies in saved charts.
+  // Real student administrations remain in the separate MAR history.
+  if(r.id==='chart-2d6195d201d58077a080faf182983607')content=content.replace(/<td>\s*(?:14:26\/SF|14:45\/SF|14:31\/SF|Running)\s*<\/td>/gi,'<td></td>');
+  return {...r,content};
+ }));};
  const faculty=renderFaculty;renderFaculty=function(){faculty();facultyLayout();};
  renderMAR=renderSimpleMAR;renderBloodAdministration=renderSimpleBlood;
  // Completion labels and draft restoration apply to direct form redraws as well as navigation.
