@@ -109,6 +109,13 @@ function renderGuidedMAR(){
  setupDraft();
 }
 // Shared MAR: verify, match, confirm, then save. Manual rows use the same persistence path.
+function clearJanePostopExamples(){
+ const id='chart-2d6195d201d58077a080faf182983607';
+ const clean=row=>{if(row&&typeof row.content==='string')row.content=row.content.replace(/<td>\s*(?:14:26\/SF|14:45\/SF|14:31\/SF|Running)\s*<\/td>/gi,'<td></td>');};
+ const cleanRows=rows=>(rows||[]).filter(r=>r.id===id||r.chartRecordId===id).forEach(clean);
+ cleanRows(CHART_RECORDS);cleanRows(state.releaseQueue);cleanRows(state.customChartRecords);clean(state.chartContentEdits?.[id]);
+ for(const base of [state.simulationBases?.['jane-fowler'],SIMULATION_DEFAULTS['jane-fowler']])if(base){cleanRows(base.chartRecords);cleanRows(base.releaseQueue);}
+}
 function renderSimpleMAR(){
  seedLinkedMedications();ensureMedicationData();ensureMedicationPackages();if(!requirePatient())return;
  const p=activePatient();if(p.id==='jane-fowler')window.normalizeJaneMAR?.();
@@ -269,14 +276,14 @@ window.initializeSimulationWorkflows=function(){
   if(r.id==='chart-2d6195d201d58077a080faf182983607')content=content.replace(/<td>\s*(?:14:26\/SF|14:45\/SF|14:31\/SF|Running)\s*<\/td>/gi,'<td></td>');
   return {...r,content};
  }));};
- const faculty=renderFaculty;renderFaculty=function(){faculty();facultyLayout();};
+ const faculty=renderFaculty;renderFaculty=function(){clearJanePostopExamples();faculty();facultyLayout();};
  renderMAR=renderSimpleMAR;renderBloodAdministration=renderSimpleBlood;
  // Completion labels and draft restoration apply to direct form redraws as well as navigation.
  for(const name of ['renderOrders','renderFlowsheets','renderIO','renderNotes','renderEducation','renderAssessments','renderPEWS','renderLabor','renderPostpartum','renderSurgery']){
   if(typeof window[name]!=='function')continue;const fn=window[name];window[name]=function(...args){fn(...args);setupDraft();};
  }
  const previousRender=render;render=function(){rendering=true;try{previousRender();}finally{rendering=false;}setupDraft();};
- window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();window.migrateVernonProfile?.();window.migrateStephanieOrders?.();};window.refreshSimulationRecords();
+ window.refreshSimulationRecords=function(){for(const [pid,defaults] of Object.entries(SIMULATION_DEFAULTS)){const base=state.simulationBases?.[pid]||defaults;for(const collection of ['orders','labs','labPanels']){const baselineIds=new Set((base.collections[collection]||[]).map(r=>r.id));for(const row of state[collection]||[])if(baselineIds.has(row.id))for(const field of ['time','date'])if(typeof row[field]==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row[field]))row[field]=today()+row[field].slice(10);}}for(const r of CHART_RECORDS){const edit=state.chartContentEdits?.[r.id];if(edit)Object.assign(r,edit);}for(const r of state.customChartRecords||[])if(!CHART_RECORDS.some(x=>x.id===r.id))CHART_RECORDS.push(copy(r));window.migrateCarlProfile?.();window.migrateRuthProfile?.();window.migrateVernonProfile?.();window.migrateStephanieOrders?.();clearJanePostopExamples();};window.refreshSimulationRecords();
 };
 })();
 
