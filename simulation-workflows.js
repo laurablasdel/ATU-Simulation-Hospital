@@ -109,7 +109,23 @@ function renderGuidedMAR(){
  setupDraft();
 }
 // Shared MAR: verify, match, confirm, then save. Manual rows use the same persistence path.
+function updateJaneOxygenTarget(){
+ const correct=row=>{if(!row)return;for(const key of ['content','text'])if(typeof row[key]==='string')row[key]=row[key].replace(/(Titrate oxygen to maintain (?:pulse oximetry|SpO2|SpO₂) of?\s*)98% or greater/gi,'$194% or greater');};
+ const records=CHART_RECORDS.filter(r=>r.patientId==='jane-fowler');
+ records.forEach(correct);for(const r of records)correct(state.chartContentEdits?.[r.id]);
+ for(const key of ['orders','customChartRecords','releaseQueue'])for(const row of state[key]||[])if(row.patientId==='jane-fowler'){correct(row);correct(row.rowData);}
+ for(const base of [state.simulationBases?.['jane-fowler'],SIMULATION_DEFAULTS['jane-fowler']])if(base){for(const row of [...(base.chartRecords||[]),...(base.releaseQueue||[]),...(base.collections?.orders||[])]){correct(row);correct(row.rowData);}}
+}
+function janeReleasedMARContent(content){
+ if(isFaculty())return content;
+ return content.replace(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi,row=>{
+  const name=/\b(?:Narcan|Naloxone)\b/i.test(row)?'Naloxone (Narcan)':/\b(?:Ketorolac|Toradol)\b/i.test(row)?'Ketorolac (Toradol)':null;
+  if(!name)return row;
+  return (state.medicationCatalog||[]).some(m=>m.patientId==='jane-fowler'&&m.name===name&&medicationReleased(m))?row:'';
+ });
+}
 function clearJanePostopExamples(){
+ updateJaneOxygenTarget();
  const id='chart-2d6195d201d58077a080faf182983607';
  const clean=row=>{if(row&&typeof row.content==='string')row.content=row.content.replace(/<td>\s*(?:14:26\/SF|14:45\/SF|14:31\/SF|Running)\s*<\/td>/gi,'<td></td>');};
  const cleanRows=rows=>(rows||[]).filter(r=>r.id===id||r.chartRecordId===id).forEach(clean);
@@ -274,6 +290,7 @@ window.initializeSimulationWorkflows=function(){
   // Remove packet example administrations, including copies in saved charts.
   // Real student administrations remain in the separate MAR history.
   if(r.id==='chart-2d6195d201d58077a080faf182983607')content=content.replace(/<td>\s*(?:14:26\/SF|14:45\/SF|14:31\/SF|Running)\s*<\/td>/gi,'<td></td>');
+  if(r.id==='chart-2d6195d201d58077a080faf182983607')content=janeReleasedMARContent(content);
   return {...r,content};
  }));};
  const faculty=renderFaculty;renderFaculty=function(){clearJanePostopExamples();faculty();facultyLayout();};

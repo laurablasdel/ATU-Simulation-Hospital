@@ -114,6 +114,7 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
  <button data-view="prenatal" data-specialty="prenatal">Prenatal / OB Record</button>
  <button data-view="labor" data-specialty="labor">Labor & Delivery</button>
  <button data-view="postpartum" data-specialty="postpartum">Postpartum Recovery / PPH</button>
+ <button data-view="preop" data-specialty="preop">Pre-op Nurse Checklist</button>
  <button data-view="surgery" data-specialty="surgery">Surgical / Post-Op</button>
  <div class="group">Charting</div>
  <button data-view="assessments">Assessments</button>
@@ -145,7 +146,7 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="chart-data.js?v=20260923-carl-import-v1"></script>
 <script src="ruth-profile.js?v=20260923"></script>
 <script src="chart-workflows.js?v=20261002-ob-forms"></script>
-<script src="chart-admin.js?v=20260930-blood-orders"></script>
+<script src="chart-admin.js?v=20261012-jane"></script>
 <script src="vendor/JsBarcode.code128.min.js"></script>
 <script src="medication-package-data.js?v=20260930-blood-orders"></script>
 <script src="medication-packages.js?v=20260930-blood-orders2"></script>
@@ -154,7 +155,7 @@ fieldset{margin:8px 0;padding:9px}output{margin:5px 0}.patientBanner{padding:8px
 <script src="medication-system.js?v=20260930-blood-orders"></script>
 <script src="simulation-defaults.js?v=20260930-blood-orders"></script>
 <script src="vernon-profile.js?v=20260928-provider-workflow"></script>
-<script src="simulation-workflows.js?v=20260930-blood-orders"></script>
+<script src="simulation-workflows.js?v=20261012-jane"></script>
 <script src="cloud-records.js?v=20260930-record-sync"></script>
 <script src="shared-session.js?v=20260930-record-sync"></script>
 <script src="simulation-roles.js?v=20260928-provider-workflow"></script>
@@ -922,7 +923,7 @@ const PATIENT_SPECIALTY_VIEWS={
  "stephanie-smith":["blood","pews"],
  "molly-thomas":["pews"],
  "baby-boy-sung":["prenatal"],
- "jane-fowler":["surgery"],
+ "jane-fowler":["preop","surgery"],
  "ruth-livingston":["surgery"],
  "vernon-watkins":["surgery"]
 };
@@ -959,7 +960,7 @@ function render(){
  if(currentView==="prenatal")renderPrenatal();
  if(currentView==="labor")renderLabor();
  if(currentView==="postpartum")renderPostpartum();
- if(currentView==="surgery")renderSurgery();
+ if(currentView==="surgery"||currentView==="preop")renderSurgery();
  if(currentView==="assessments")renderAssessments();
  if(currentView==="pews")renderPEWS();
  if(currentView==="flowsheets")renderFlowsheets();
@@ -1221,7 +1222,7 @@ function renderSurgery(){
  ${faculty&&stage==="pain"?`<div class="warn" style="margin-top:10px">${esc(JANE_SCENARIO.pain.cue)}</div>`:""}
  ${faculty&&stage==="depression"?`<div class="warn" style="margin-top:10px"><b>CHANGE IN CONDITION:</b> ${esc(JANE_SCENARIO.depression.cue)}</div>`:""}
  `)+
- panel("Pre-Op Checklist",`
+ panel("Pre-op Nurse Checklist",`
  ${checklist?`<div class="success"><b>Saved:</b> ${esc(checklist.time)} by ${esc(checklist.student||"student")} · ${esc(checklist.fields?.readiness||"Checklist in progress")}</div>`:""}
  <div class="grid" style="margin-top:10px"><label>Student Name / Initials<input id="janeChecklistStudent" value="${esc(checklist?.student||"")}"></label><label>Checklist Date/Time<input id="janeChecklistTime" type="datetime-local" value="${esc(checklist?.time||nowLocal())}"></label></div>
  <fieldset><legend>Patient and Procedure Verification</legend>
@@ -1308,6 +1309,7 @@ function renderSurgery(){
   audit("Scenario stage released",p.id,b.dataset.stage);
   liveSave("scenario_stage_released",{patientId:p.id,stage:b.dataset.stage});renderSurgery();
  });
+ if(currentView==="preop")for(const section of [...document.getElementById("view").children])if(!section.querySelector("#saveJaneChecklist"))section.remove();
  applyMode();
 }
 
