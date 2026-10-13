@@ -185,6 +185,12 @@ window.saveMedicationAdministration=function(input){
  if(input.resetEpoch!==undefined&&input.resetEpoch!==(state.patientResetEpochs?.[input.patientId]||0))return fail('The simulation was reset. Scan again for the new simulation.');
  if(!input.confirmed)return fail('Confirm administration before saving.');
  if(input.patientId!==activePatientId)return fail('The selected patient changed. Verify the current patient again.');
+ const acknowledged=input.submissionId&&(state.mar||[]).find(r=>r.submissionId===input.submissionId);
+ if(acknowledged&&!input.validateOnly&&window.ATU_CONFIG?.supabaseUrl){
+  if(acknowledged.patientId!==input.patientId||acknowledged.medicationId!==input.medicationId||acknowledged.dose!==String(input.dose||'').trim()||acknowledged.route!==String(input.route||'').trim()||acknowledged.time!==input.time||acknowledged.student!==String(input.student||'').trim())return fail('This submission was already used for a different administration. Scan again.');
+  // A background refresh may have recovered a committed dose after its reply was lost.
+  return commitMedicationAdministration(input,{order:'',previousIds:[]});
+ }
  if(!isFaculty()&&state.marVisibility?.[input.patientId]===false)return fail('The MAR is hidden by faculty.');
  const override=input.overrideId?(state.medicationOverrides||[]).find(r=>r.id===input.overrideId):null;
  if(input.overrideId&&(!override||getTabMode()!=='student'||override.patientId!==input.patientId||override.resetEpoch!==(state.patientResetEpochs?.[input.patientId]||0)||override.status!=='Approved'||override.barcode!==normalizeMedicationBarcode(input.medicationBarcode)))return fail('The provider approval does not match this patient and medication, or is no longer available.');
@@ -221,7 +227,6 @@ window.saveMedicationAdministration=function(input){
  if(window.ATU_CONFIG?.supabaseUrl)return commitMedicationAdministration(input,{order:JSON.stringify(m),previousIds:previous.map(r=>r.id)});
  state.mar ||= [];state.mar.push(row);
  try{save();}catch(e){state.mar=state.mar.filter(r=>r.id!==row.id);return fail('Unable to save in this browser. No administration was recorded. Check browser storage and try again.');}
- clearCurrentViewDraft();
  try{audit('Medication administration',m.patientId,`${m.name} ${dose} given by ${student}`);liveSave('medication_administration_documented',{patientId:m.patientId,medicationId:m.id});}catch(e){console.error('Administration saved locally; sharing or audit failed',e);}
  return {ok:true,row};
 };
