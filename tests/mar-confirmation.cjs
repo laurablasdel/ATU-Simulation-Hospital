@@ -14,7 +14,7 @@ function start(config){const w=boot(undefined,config);windows.push(w);w.supabase
  assert.equal(ui.medicationTiming(scheduled,'2026-10-09T10:01').timingStatus,'Late');
  assert.equal(ui.medicationTiming({scheduledTime:'00:15'},'2026-10-08T23:30').timingStatus,'On time');
  for(const due of ['Now','PRN','Continuous','Every 4 hours','On call to OR'])assert.equal(ui.medicationTiming({scheduledTime:due},ui.nowLocal()).timingStatus,'Not scheduled');
- const input={patientId:p.id,medicationId:m.id,method:'barcode',patientBarcode:p.barcode,medicationBarcode:pkg.id,confirmed:true,dose:m.dose,route:m.route,student:'TEST',time:ui.nowLocal(),resetEpoch:0};
+ const input={patientId:p.id,medicationId:m.id,method:'barcode',patientBarcode:p.barcode,medicationBarcode:pkg.id,confirmed:true,dose:m.dose,route:m.route,student:'TEST',time:'2026-10-09T12:00',resetEpoch:0};
  assert(!ui.saveMedicationAdministration({...input,dose:'WRONG'}).ok);assert(!ui.saveMedicationAdministration({...input,route:'WRONG'}).ok);
  el('marScanPatient').value='WRONG';el('marScanPatient').dispatchEvent(new ui.Event('input'));assert(!el('marConfirmSave'));
  shared={payload:clone(a.state),revision:1};
@@ -30,6 +30,7 @@ function start(config){const w=boot(undefined,config);windows.push(w);w.supabase
  offline=true;const before=one.testApp.state.mar.length;assert(!(await one.saveMedicationAdministration(next)).ok);assert.equal(one.testApp.state.mar.length,before,'offline failure creates no local record');offline=false;
  loseReply=true;assert(!(await one.saveMedicationAdministration(next)).ok);assert.equal(shared.payload.mar.filter(r=>r.submissionId===next.submissionId).length,1);
  assert((await one.saveMedicationAdministration(next)).ok,'retry recovers acknowledged record');assert.equal(shared.payload.mar.filter(r=>r.submissionId===next.submissionId).length,1,'retry does not duplicate');
+ await one.atuCloudPush();assert((await one.saveMedicationAdministration(next)).ok,'retry remains idempotent after background synchronization recovered the dose');assert.equal(shared.payload.mar.filter(r=>r.submissionId===next.submissionId).length,1);
  const changed=shared.payload.medicationCatalog.find(x=>x.id===m.id);changed.dose='CHANGED';shared.revision++;
  assert(!(await two.saveMedicationAdministration({...next,submissionId:'stale-dose',time:'2026-10-11T10:00'})).ok,'stale order rejected');
  // Timing flags are saved, and a different timestamp cannot duplicate a scheduled slot.

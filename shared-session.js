@@ -53,7 +53,7 @@ window.prioritizeSavedHistory=function(){
 };
 window.initializeSharedSession=function(){
  const checkpointKey=STORAGE_KEY+'_shared_checkpoint';
- let base=null,revision=0,busy=false,pending=false,retryTimer=null,pollTimer=null,localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);
+ let base=null,revision=0,busy=false,pending=false,retryTimer=null,pollTimer=null,localFailure=false,lastSharedError='',localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);
  try{const checkpoint=JSON.parse(localStorage.getItem(checkpointKey)||'null');base=checkpoint?.state;revision=checkpoint?.revision||0;}catch{}
  const scope=window.ATU_CONFIG?.sessionId||'simulation-state';
  // User decisions take the next available turn after an in-flight background sync.
@@ -70,7 +70,7 @@ window.initializeSharedSession=function(){
   busy=false;if(pending){pending=false;atuCloudSchedule();}
  }
 
- const persist=()=>{try{if(window.normalizeCloudReports)state=normalizeCloudReports(state);const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);}catch(e){atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
+ const persist=()=>{try{if(window.normalizeCloudReports)state=normalizeCloudReports(state);const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);localFailure=false;}catch(e){localFailure=true;atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
  reloadSharedState=function(){const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored){state=mergeState(localBase,state,stored);localBase=clone(stored);}};
  const checkpoint=()=>{if(window.normalizeCloudReports)base=normalizeCloudReports(base);localStorage.setItem(checkpointKey,JSON.stringify({state:base,revision}));};
  const oldClear=clearCurrentViewDraft;clearCurrentViewDraft=function(){save();oldClear();};
@@ -80,15 +80,28 @@ window.initializeSharedSession=function(){
  // Never clear typed data or claim success when a local save fails.
  save=function(){persist();atuCloudBadge(atuCloudReady?'Saved locally • sharing…':'Saved locally • not connected to other computers');atuCloudSchedule();};
  const badge=document.getElementById('saveBadge');
+ const notice=document.createElement('p');notice.id='chartSaveNotice';notice.setAttribute('role','status');notice.hidden=true;document.querySelector('header')?.after(notice);
+ window.showChartSaveNotice=function(text,success=false){notice.textContent=text;notice.className=success?'success':'warn';notice.hidden=!text;notice.dataset.source='chart';};
+ function syncError(e){
+  const code=String(e.code||''),message=String(e.message||'Connection unavailable');
+  let action='Check the connection and use Shared connection → Retry connection. Your completed entries will retry automatically.';
+  if(code==='42501'||/permission denied|not approved|not assigned|membership/i.test(message))action='Access denied. Use Shared connection to sign in with an approved hospital account. If this tab was open before an update, save your drafts and reload the hospital; do not clear browser data.';
+  if(/^PGRST30[123]$/.test(code)||/JWT|token.*expired|session.*expired/i.test(message))action='Your shared sign-in expired. Use Shared connection to sign in again; local chart entries are retained.';
+  lastSharedError=message+(code?' ['+code+']':'');
+  atuCloudBadge(localFailure?'NOT SAVED locally — keep this screen open':'Saved locally • NOT shared');
+  showChartSaveNotice((localFailure?'Browser storage is unavailable. Keep this screen open and copy your work. ':'')+action+' '+lastSharedError);
+  notice.dataset.source='sync';
+  const feedback=document.getElementById('sharedFeedback');if(feedback)feedback.textContent=notice.textContent;
+ }
  const connect=document.createElement('button');connect.id='sharedConnection';connect.textContent='Shared connection';connect.className='secondary';badge?.after(connect);
  connect.onclick=()=>{
   if(document.getElementById('sharedLogin'))return;
   const host=document.createElement('div');host.id='sharedLogin';host.className='popupOverlay';
   host.innerHTML='<div class="popupCard"><div class="popupHead"><b>Shared simulation connection</b></div><div class="popupBody"><p id="sharedInfo"></p><label>Email<input id="sharedEmail" type="email" autocomplete="username"></label><label>Password<input id="sharedPassword" type="password" autocomplete="current-password"></label><p id="sharedFeedback" role="status"></p></div><div class="popupActions"><button id="sharedSignIn">Connect</button><button id="sharedRetry">Retry connection</button><button id="sharedClose">Close</button></div></div>';
-  document.body.append(host);host.querySelector('#sharedEmail').value='Atusim1@atu.edu';host.querySelector('#sharedInfo').textContent=ATU_SUPABASE_URL?'Use your approved simulation account on both computers. Simulation: '+scope:'The hospital’s shared project has not been configured yet. Chart entries are saved in this browser.';
+  document.body.append(host);host.querySelector('#sharedEmail').value='Atusim1@atu.edu';host.querySelector('#sharedInfo').textContent=ATU_SUPABASE_URL?'Use your approved simulation account on both computers. Simulation: '+scope:'The hospital’s shared project has not been configured yet. Chart entries are saved in this browser.';host.querySelector('#sharedFeedback').textContent=lastSharedError;
   host.querySelector('#sharedClose').onclick=()=>host.remove();
   host.querySelector('#sharedRetry').onclick=()=>atuCloudInit();
-  host.querySelector('#sharedSignIn').onclick=async()=>{try{if(!atuSupabase)throw Error('Configure the hospital project first.');const {error}=await atuSupabase.auth.signInWithPassword({email:host.querySelector('#sharedEmail').value.trim(),password:host.querySelector('#sharedPassword').value});host.querySelector('#sharedPassword').value='';if(error)throw error;await atuCloudInit();host.querySelector('#sharedFeedback').textContent=atuCloudReady?'Connected.':'Signed in; check your simulation membership or connection.';}catch(e){host.querySelector('#sharedFeedback').textContent=e.message;}};
+  host.querySelector('#sharedSignIn').onclick=async()=>{try{if(!atuSupabase)throw Error('Configure the hospital project first.');const {error}=await atuSupabase.auth.signInWithPassword({email:host.querySelector('#sharedEmail').value.trim(),password:host.querySelector('#sharedPassword').value});host.querySelector('#sharedPassword').value='';if(error)throw error;await atuCloudInit();host.querySelector('#sharedFeedback').textContent=lastSharedError||(atuCloudReady?'Connected.':'Signed in; check your simulation membership or connection.');}catch(e){host.querySelector('#sharedFeedback').textContent=e.message;}};
  };
  let renderedState='',renderedEpoch=state.patientResetEpochs?.[activePatientId]||0;
  const refresh=()=>{
@@ -212,8 +225,9 @@ window.initializeSharedSession=function(){
     saveCurrentViewDraft();state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??row.revision+1;persist();checkpoint();refresh();
     if(!equal(state,base))pending=true;break;
    }
-   atuCloudBadge('Shared: connected • saved');
-  }catch(e){console.error('Shared simulation sync',e);atuCloudBadge('Saved locally • shared connection unavailable');document.getElementById('sharedFeedback')&&(document.getElementById('sharedFeedback').textContent=e.message);clearTimeout(retryTimer);retryTimer=setTimeout(()=>exchange(),10000);}
+   lastSharedError='';clearTimeout(retryTimer);atuCloudBadge(equal(state,base)?'Shared: connected • saved':'Saved locally • sharing…');
+   if(notice.dataset.source==='sync')showChartSaveNotice(equal(state,base)?'Shared connection restored. Completed entries are synchronized.':'Shared connection restored. Newer entries are still sharing.',true);
+  }catch(e){console.error('Shared simulation sync',e);syncError(e);clearTimeout(retryTimer);retryTimer=setTimeout(()=>exchange(),10000);}
   finally{releaseWork();}
  }
  atuCloudPush=exchange;atuCloudPull=exchange;
@@ -223,7 +237,15 @@ window.initializeSharedSession=function(){
   if(!ATU_SUPABASE_URL||!ATU_SUPABASE_KEY){atuCloudBadge('Saved locally • shared project not configured');return;}
   try{
    if(!window.supabase?.createClient)throw Error('Connection library unavailable.');
-   if(!atuSupabase){const raw=window.supabase.createClient(ATU_SUPABASE_URL,ATU_SUPABASE_KEY);atuSupabase=window.ATU_CONFIG?.recordSync?window.createRecordSyncClient(raw,scope):raw;}
+   if(!atuSupabase){
+    const raw=window.supabase.createClient(ATU_SUPABASE_URL,ATU_SUPABASE_KEY);
+    // Missing flags in a cached configuration must not revive the retired table transport.
+    atuSupabase=window.ATU_CONFIG?.recordSync!==false?window.createRecordSyncClient(raw,scope):raw;
+    raw.auth.onAuthStateChange?.((event,session)=>{
+     if(event==='SIGNED_OUT'){atuCloudReady=false;clearInterval(pollTimer);clearTimeout(retryTimer);clearTimeout(atuCloudTimer);atuCloudBadge('Saved locally • sign in to share across computers');showChartSaveNotice('Shared sign-in ended. Completed entries remain on this computer. Sign in again to share them.');}
+     else if(session&&(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'))setTimeout(()=>atuCloudInit(),0);
+    });
+   }
    const {data,error}=await atuSupabase.auth.getSession();if(error)throw error;
    if(!data.session){atuCloudReady=false;atuCloudBadge('Saved locally • sign in to share across computers');return;}
    atuCloudReady=true;
@@ -234,7 +256,7 @@ window.initializeSharedSession=function(){
     if(Date.now()-lastBackupCheck<interval)return;
     lastBackupCheck=Date.now();exchange();
    },5000);lastBackupCheck=Date.now();await exchange();
-  }catch(e){atuCloudReady=false;atuCloudBadge('Saved locally • connection setup needed');console.error(e);}
+  }catch(e){atuCloudReady=false;syncError(e);console.error(e);}
  };
  const resume=()=>{if(atuCloudReady)exchange();else atuCloudInit();};
  window.addEventListener('online',resume);window.addEventListener('focus',resume);window.addEventListener('pageshow',e=>{if(e.persisted)resume();});
