@@ -39,6 +39,16 @@
   }
  };
  window.migrateStephanieOrders=function(){
+  // Reapply after shared-state refreshes: saved chart edits and custom bases can contain legacy rows.
+  // Restrict cleanup to Stephanie's initial Doctors' orders; faculty releases are separate records.
+  const initialId='chart-28b195d201d580f18277f6d7049c1104';
+  const cleanInitial=row=>{if(row&&typeof row.content==='string')row.content=row.content.replace(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi,tr=>/2\s*U\s*Blood\s*infused|Ceftriaxon(?:e)?\s*500\s*mg\s*IV\s*Q6H/i.test(tr)?'':tr);};
+  for(const row of CHART_RECORDS)if(row.id===initialId)cleanInitial(row);
+  cleanInitial(state.chartContentEdits?.[initialId]);
+  for(const row of state.customChartRecords||[])if(row.id===initialId)cleanInitial(row);
+  for(const base of [state.simulationBases?.['stephanie-smith'],window.SIMULATION_DEFAULTS?.['stephanie-smith']]){
+   for(const row of base?.chartRecords||[])if(row.id===initialId)cleanInitial(row);
+  }
   state.settings||={};if(state.settings.stephanieOrders20260930)return;
   const pid='stephanie-smith',prbc='admin-stephanie-prbc-2units',cef='admin-stephanie-ceftriaxone';
   const correctText=value=>String(value).replace(/\b(?:infuse\s+)?2\s+units?\s+(?:of\s+)?(?:packed red blood cells\s*\(PRBCs?\)|PRBCs?)/gi,'Infuse 1 unit of packed red blood cells (PRBCs)').replace(/Ceftriaxone\s+500\s*mg\/100\s*mL(?:\s+IV)?\s*(?:q12h|every 12 hours|every 6 hours)/gi,'Ceftriaxone 500 mg/100 mL IV every 6 hours');
