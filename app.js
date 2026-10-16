@@ -713,10 +713,11 @@ let liveChannel=null;
 try{liveChannel=new BroadcastChannel(LIVE_CHANNEL_NAME)}catch(e){}
 
 function getTabMode(){
- return sessionStorage.getItem(TAB_MODE_KEY)||"faculty";
+ const mode=sessionStorage.getItem(TAB_MODE_KEY);
+ return !mode||mode==="faculty"?"faculty":"student";
 }
 function setTabMode(mode){
- sessionStorage.setItem(TAB_MODE_KEY,mode);
+ sessionStorage.setItem(TAB_MODE_KEY,mode==="faculty"?"faculty":"student");
 }
 function reloadSharedState(){
  try{
