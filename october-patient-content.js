@@ -3,7 +3,6 @@
  const ids=['amelia-sung','baby-boy-sung','fatima-sanogo','molly-thomas','stephanie-smith'];
  const copy=x=>JSON.parse(JSON.stringify(x));
  const gbs='Mother received one dose of clindamycin before delivery. Clindamycin does not count as adequate GBS prophylaxis, so the infant is observed for signs of early-onset GBS infection per unit protocol.';
- const juice='Treat low blood sugar with OJ, apple juice or Sprite; recheck fingerstick blood glucose 30 minutes after a low glucose result; notify the provider. Amount: needs faculty detail.';
  function text(pid,s){
   if(typeof s!=='string')return s;
   if(pid==='amelia-sung')s=s.replace(/Epidural requested, not yet placed\./g,'Epidural in place — anesthesia-managed; infusion running at the start of Shift 1.').replace(/Epidural requested \(anesthesia\)/g,'Epidural in place — anesthesia-managed').replace(/Requested — not yet placed/g,'In place — anesthesia-managed').replace(/epidural requested/g,'epidural in place').replace(/clindamycin 900 mg IV given by night nurse at 0530\./g,'clindamycin 900 mg IVPB every 6 hours until delivery; first dose due now, students start in Shift 1.').replace(/ Prior dose given at 0530 by night nurse\./g,' First dose due now; start clindamycin.').replace(/prepare for epidural per anesthesia/g,'start clindamycin; epidural in place, managed by anesthesia').replace(/bed rest with bathroom privileges/g,'bed rest (epidural in place)').replace(/Epidural is placed by anesthesia\./g,'Epidural is already in place and running at the start of Shift 1, managed by anesthesia.').replace(/Complete after 3 hours of pushing; vacuum-assisted delivery\./g,'Dr. Darnell wants a call when the baby is crowning; vacuum assist at delivery. The baby delivers after 4 pushes.');
@@ -13,7 +12,7 @@
   return s;
  }
  function row(r,pid=r.patientId){const out={...r};for(const k of ['content','text','title','provider','situation','background','assessment','recommendation','painPlan','epidural','birthPlan','dose','route'])if(k in out)out[k]=text(pid,out[k]);return out;}
- window.OCTOBER_PATIENT_CONTENT={ids,text,row,gbs,juice};
+ window.OCTOBER_PATIENT_CONTENT={ids,text,row,gbs};
  window.applyOctoberPatientContent=function(){
   const patches={'amelia-sung':{room:'211E',painPlan:'Epidural in place — anesthesia-managed'},'baby-boy-sung':{provider:'MD'},'fatima-sanogo':{weightKg:70},'stephanie-smith':{bloodType:'A-'}};
   for(const p of state.patients)if(patches[p.id])Object.assign(p,patches[p.id]);
@@ -27,8 +26,7 @@
    if(m.patientId==='amelia-sung'&&/clindamycin/i.test(m.name))Object.assign(m,{dose:'900 mg',route:'IVPB',frequency:'Every 6 hours until delivery',scheduledTime:'Now',status:'Due',releaseStatus:'released',previouslyGiven:''});
   }
   const order={id:'oct16-fatima-fentanyl',patientId:'fatima-sanogo',type:'Medication',text:'Fentanyl 50 mcg IV push every 1 hour as needed for pain',provider:'Dr. Nelson',status:'Active'};
-  const nursing={id:'oct16-amelia-juice',patientId:'amelia-sung',type:'Nursing',text:juice,provider:'Dr. Darnell',status:'Active'};
-  for(const seed of [order,nursing]){const old=state.orders.find(r=>r.id===seed.id);if(old)Object.assign(old,seed);else state.orders.push(seed);}
+  for(const seed of [order]){const old=state.orders.find(r=>r.id===seed.id);if(old)Object.assign(old,seed);else state.orders.push(seed);}
   let fentanyl=state.medicationCatalog.find(m=>m.patientId==='fatima-sanogo'&&m.name==='Fentanyl');
   if(!fentanyl){fentanyl={id:'oct16-fatima-fentanyl-mar',patientId:'fatima-sanogo',name:'Fentanyl'};state.medicationCatalog.push(fentanyl);}
   Object.assign(fentanyl,{dose:'50 mcg',route:'IV push',frequency:'Every 1 hour PRN pain',scheduledTime:'PRN',provider:'Dr. Nelson',status:'Due',releaseStatus:'released',sourceOrderId:order.id,packageIds:['MED-0065']});
@@ -48,7 +46,7 @@
      return revised;
     });
    }
-   for(const seed of [order,nursing])if(seed.patientId===pid&&!b.collections.orders.some(r=>r.id===seed.id))b.collections.orders.push(copy(seed));
+   for(const seed of [order])if(seed.patientId===pid&&!b.collections.orders.some(r=>r.id===seed.id))b.collections.orders.push(copy(seed));
    if(pid==='fatima-sanogo'&&!b.collections.medicationCatalog.some(m=>m.id===fentanyl.id))b.collections.medicationCatalog.push(copy(fentanyl));
    b.releaseQueue=(b.releaseQueue||[]).map(r=>{const revised=row(r,pid),source=CHART_RECORDS.find(c=>c.id===r.chartRecordId);if(source)revised.content=source.content;if(r.rowData)revised.rowData=row(r.rowData,pid);return revised;});
   }

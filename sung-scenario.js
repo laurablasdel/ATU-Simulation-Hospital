@@ -37,3 +37,26 @@
  const refresh=window.refreshSimulationRecords;if(refresh)window.refreshSimulationRecords=function(...args){const result=refresh(...args);applyScenario();return result;};
  window.applySungScenario=applyScenario;
 })();
+
+/* October 16: glucose management is directed by the provider. Preserve charted results. */
+(function(){
+ const pid='amelia-sung';
+ function text(s){return typeof s!=='string'?s:s
+  .replace(/Recheck fingerstick blood glucose 30 minutes after a low glucose result; report the repeat result to the provider\./g,'Check Blood Sugar')
+  .replace(/Recheck maternal fingerstick glucose 30 minutes after a low result; report the repeat result\./g,'Check Blood Sugar.')
+  .replace(/\s*Display only; not student-administered\./g,'')
+  .replace(/Treat low blood sugar with OJ, apple juice or Sprite; recheck fingerstick blood glucose 30 minutes after a low glucose result; notify the provider\. Amount: needs faculty detail\./g,'')
+  .replace(/Treat with OJ, apple juice or Sprite; recheck 30 minutes after the low result, then 100 mg\/dL\. Notify provider\. Juice amount: needs faculty detail\./g,'Follow provider orders for treatment and repeat checks; subsequent result 100 mg/dL.');}
+ window.simplifyAmeliaOrders=function(){
+  const retired=new Set(['oct16-amelia-juice']);
+  const obsolete=r=>r&&(retired.has(r.id)||retired.has(r.chartRecordId)||retired.has(r.sourceOrderId)||retired.has(r.sourceReleaseId)||retired.has(r.rowData?.id)||(r.patientId===pid&&/^Treat low blood sugar/i.test(r.text||r.content||r.title||'')));
+  for(const key of ['orders','customChartRecords','releaseQueue'])for(const r of state[key]||[])if(obsolete(r))retired.add(r.id);
+  const update=r=>{if(r.patientId!==pid)return;for(const key of ['text','content','title'])if(typeof r[key]==='string')r[key]=text(r[key]);if(r.id==='amelia-order-fingerstick')r.text='Check Blood Sugar';};
+  const rows=list=>(list||[]).filter(r=>!obsolete(r)).map(r=>{update(r);if(r.rowData)for(const k of ['text','content','title'])if(typeof r.rowData[k]==='string'&&r.patientId===pid)r.rowData[k]=text(r.rowData[k]);return r;});
+  for(let i=CHART_RECORDS.length-1;i>=0;i--)if(obsolete(CHART_RECORDS[i]))CHART_RECORDS.splice(i,1);else update(CHART_RECORDS[i]);
+  for(const key of ['orders','customChartRecords','releaseQueue'])state[key]=rows(state[key]);
+  for(const [id,e] of Object.entries(state.chartContentEdits||{})){if(retired.has(id)){delete state.chartContentEdits[id];continue;}if(CHART_RECORDS.some(r=>r.id===id&&r.patientId===pid))for(const key of ['content','title'])if(typeof e[key]==='string')e[key]=text(e[key]);}
+  for(const n of state.notes||[])if(n.id==='amelia-admission-note')n.recommendation=text(n.recommendation);
+  const b=state.simulationBases?.[pid];if(b){b.chartRecords=rows(b.chartRecords);b.releaseQueue=rows(b.releaseQueue);if(b.collections)b.collections.orders=rows(b.collections.orders);for(const n of b.collections?.notes||[])if(n.id==='amelia-admission-note')n.recommendation=text(n.recommendation);}
+ };
+})();

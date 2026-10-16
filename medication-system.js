@@ -491,7 +491,7 @@ window.medicationsForPatient=medicationsForPatient;
 // One persistence path for both manual and scanned administrations.
 window.medicationAdministrationHistory=function(m){return (state.mar||[]).filter(r=>r.patientId===m.patientId&&(r.medicationId===m.id||(!r.medicationId&&r.medication===m.name))&&r.status==='Given');};
 window.medicationAdministrationBlock=function(m){
- if(m?.administrationManagedBy==='anesthesia')return 'Anesthesia-managed infusion: display only; students cannot document administration.';
+ if(m?.administrationManagedBy==='anesthesia')return 'Anesthesia-managed infusion.';
  if(!m||!medicationReleased(m))return 'This order is not released or has been discontinued.';
  if(/held|hold|discontinu|complete|cancel|clarification|stop/i.test(m.status||'')||/^held$/i.test(m.scheduledTime||''))return 'This order is '+(/^held$/i.test(m.scheduledTime||'')?'Held':m.status)+'. It cannot be administered.';
  const order=(state.orders||[]).find(o=>o.id===m.sourceOrderId||o.medicationId===m.id);

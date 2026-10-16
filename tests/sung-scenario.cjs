@@ -4,7 +4,7 @@ try{
  const w=open(),a=w.testApp,s=a.state;
  assert.equal(s.patients.find(p=>p.id==='baby-boy-sung').weightKg,4.08);
  assert.equal(s.patients.find(p=>p.id==='amelia-sung').primaryDiagnosis,'Induction of labor / gestational diabetes (diet-controlled)');
- assert(s.orders.find(o=>o.id==='amelia-order-fingerstick').text.includes('30 minutes after a low glucose result'));
+ assert.equal(s.orders.find(o=>o.id==='amelia-order-fingerstick').text,'Check Blood Sugar');
  assert(!s.orders.some(o=>o.id==='amelia-order-morphine'));assert(!s.medicationCatalog.some(m=>m.patientId==='amelia-sung'&&/morphine/i.test(m.name)));
  assert(s.medicationCatalog.some(m=>m.patientId==='jane-fowler'&&/morphine/i.test(m.name)));
  assert(!s.medicationCatalog.some(m=>m.barcode==='1016'),'retired morphine barcode stays reserved');

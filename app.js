@@ -374,7 +374,7 @@ const SEED_AMELIA_ORDERS=[
     "time": "SIM ADMISSION",
     "provider": "Dr. Darnell",
     "type": "Laboratory",
-    "text": "Recheck fingerstick blood glucose 30 minutes after a low glucose result; report the repeat result to the provider.",
+    "text": "Check Blood Sugar",
     "status": "Active",
     "enteredBy": "Provider"
   },
@@ -384,7 +384,7 @@ const SEED_AMELIA_ORDERS=[
     "time": "SIM ADMISSION",
     "provider": "Dr. Darnell",
     "type": "Medication",
-    "text": "Epidural infusion: bupivacaine 0.1% with fentanyl 2 mcg/mL at 10 mL/hr, managed by anesthesia. Post-epidural monitoring per protocol. Display only; not student-administered.",
+    "text": "Epidural infusion: bupivacaine 0.1% with fentanyl 2 mcg/mL at 10 mL/hr, managed by anesthesia. Post-epidural monitoring per protocol.",
     "status": "Active",
     "enteredBy": "Provider"
   }
@@ -414,7 +414,7 @@ const SEED_AMELIA_NOTES=[
     "situation": "36-year-old Filipino G2P1 at 39 weeks admitted for induction for diet-controlled gestational diabetes; arrived 2 hours ago. SROM at home at 0300, clear fluid; cervix 4 cm. Epidural in place — anesthesia-managed; infusion running at the start of Shift 1. GBS positive with penicillin allergy; clindamycin 900 mg IVPB every 6 hours until delivery; first dose due now, students start in Shift 1. On-call physician requests report to day-shift physician.",
     "background": "G2P1L1; previous vaginal delivery of a 9 lb male, no complications. Diet-controlled gestational diabetes; O positive, hepatitis B negative, GBS positive. Prenatal care began at 14 weeks; pregnancy weight gain 55 lb. No surgical history. Not married; father of baby not involved; no support person.",
     "assessment": "LR 125 mL/hr via 20 g right wrist; Pitocin 6 milliunits/min. Fingerstick glucose 90 mg/dL 2 hours ago. BP 138/80; HR 90; RR 22; T 98.9 °F; SpO₂ 99% on room air. FHR 140, moderate variability with accelerations. Strong contractions every 3 minutes lasting 45 seconds. Clear liquids; bed rest (epidural in place).",
-    "recommendation": "Report to day-shift physician; start clindamycin; epidural in place, managed by anesthesia. Recheck fingerstick blood glucose 30 minutes after a low glucose result; report the repeat result to the provider."
+    "recommendation": "Report to day-shift physician; start clindamycin; epidural in place, managed by anesthesia. Check Blood Sugar"
   }
 ];
 

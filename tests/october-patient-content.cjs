@@ -4,7 +4,7 @@ function check(w){
  const s=w.testApp.state,patient=id=>s.patients.find(p=>p.id===id),med=(id,re)=>s.medicationCatalog.find(m=>m.patientId===id&&re.test(m.name)),content=id=>w.testApp.records.find(r=>r.id===id).content;
  assert.equal(patient('amelia-sung').room,'211E');assert.match(patient('amelia-sung').painPlan,/in place/);
  assert.equal(med('amelia-sung',/Clindamycin/i).scheduledTime,'Now');assert.equal(med('amelia-sung',/Clindamycin/i).releaseStatus,'released');assert(!s.mar.some(r=>r.id==='sung-prior-nurse-clindamycin'));
- assert.match(s.orders.find(o=>o.id==='oct16-amelia-juice').text,/30 minutes/);assert(!s.medicationCatalog.some(m=>/juice|sprite/i.test(m.name)));
+ assert(!s.orders.some(o=>o.id==='oct16-amelia-juice'));assert(!s.medicationCatalog.some(m=>/juice|sprite/i.test(m.name)));
  assert.equal(patient('baby-boy-sung').provider,'MD');assert.match(med('baby-boy-sung',/Erythromycin/).dose,/0.5%, 1 cm ribbon/);assert.match(med('baby-boy-sung',/Vitamin K/).route,/vastus lateralis/);
  assert.equal(w.packagesForMedication(med('baby-boy-sung',/Vitamin K/))[0].id,'MED-0033');assert.equal(w.packagesForMedication(med('baby-boy-sung',/Erythromycin/))[0].id,'MED-0034');
  assert.equal(patient('fatima-sanogo').weightKg,70);for(const r of w.testApp.records.filter(r=>r.patientId==='fatima-sanogo'))assert(!/1235|1242|71 kg/.test(r.content));
@@ -21,7 +21,7 @@ try{
  saved.simulationBases['fatima-sanogo'].patient.weightKg=71;
  saved.simulationBases['amelia-sung'].collections.mar.push({id:'sung-prior-nurse-clindamycin',patientId:'amelia-sung',status:'Given'});
  const w=open(saved);check(w);assert(w.testApp.state.mar.some(r=>r.id==='student-dose'));assert(w.testApp.state.notes.some(r=>r.id==='student-note'));
- const again=open(copy(w.testApp.state));check(again);for(const id of ['oct16-fatima-fentanyl','oct16-amelia-juice'])assert.equal(again.testApp.state.orders.filter(o=>o.id===id).length,1);
+ const again=open(copy(w.testApp.state));check(again);for(const id of ['oct16-fatima-fentanyl'])assert.equal(again.testApp.state.orders.filter(o=>o.id===id).length,1);
  for(const id of w.OCTOBER_PATIENT_CONTENT.ids)again.resetToBase(id);check(again);
  // Characterize existing guards; do not add compatibility rules as part of this content update.
  for(const [pid,type] of [['fatima-sanogo','A-'],['stephanie-smith','A+']]){
