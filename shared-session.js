@@ -22,22 +22,22 @@ function mergeValue(base,local,remote){
  return clone(local===undefined?remote:local);
 }
 function mergeState(base,local,remote){
- if(window.normalizeCloudReports){base=normalizeCloudReports(base);local=normalizeCloudReports(local);remote=normalizeCloudReports(remote);}
+ base=window.hydrateStateBaselines(cleanRetiredState(base||{}));local=window.hydrateStateBaselines(cleanRetiredState(local||{}));remote=window.hydrateStateBaselines(cleanRetiredState(remote||{}));
  const out=mergeValue(base||{},local||{},remote||{}),epochs={...local.patientResetEpochs,...remote.patientResetEpochs};
  for(const pid of Object.keys(epochs)){
   const le=local.patientResetEpochs?.[pid]||0,re=remote.patientResetEpochs?.[pid]||0;if(le===re)continue;
   const newer=le>re?local:remote;out.patientResetEpochs||={};out.patientResetEpochs[pid]=Math.max(le,re);
   for(const key of new Set([...Object.keys(local),...Object.keys(remote)])){
-   if(['simulationReports','simulationActivity'].includes(key))continue;
    if(Array.isArray(out[key]))out[key]=out[key].filter(row=>row?.patientId!==pid&&!(key==='patients'&&row?.id===pid)).concat(clone((newer[key]||[]).filter(row=>row?.patientId===pid||(key==='patients'&&row?.id===pid))));
    else if(out[key]&&typeof out[key]==='object'&&pid in out[key])out[key][pid]=clone(newer[key]?.[pid]);
   }
   const ids=new Set([...(local.customChartRecords||[]),...(remote.customChartRecords||[]),...(window.CHART_RECORDS||[])].filter(r=>r.patientId===pid).map(r=>r.id));
   for(const key of ['chartContentEdits','marHiddenRecords'])for(const id of ids){if(newer[key]?.[id]!==undefined){out[key]||={};out[key][id]=clone(newer[key][id]);}else if(out[key])delete out[key][id];}
  }
- // Audit records and completed reports are append-only across resets and older clients.
- for(const key of ['simulationReports','simulationActivity']){const rows=new Map();for(const row of [...(base?.[key]||[]),...(remote?.[key]||[]),...(local?.[key]||[])])if(row?.id&&!rows.has(row.id))rows.set(row.id,clone(row));out[key]=[...rows.values()];}
- return out;
+ for(const pid of Object.keys(out.simulationShifts||{}))if((local.patientResetEpochs?.[pid]||0)===(remote.patientResetEpochs?.[pid]||0)){
+  const l=local.simulationShifts?.[pid],r=remote.simulationShifts?.[pid];if(l&&r)out.simulationShifts[pid]=clone(Number(l.shift)>Number(r.shift)?l:r);
+ }
+ return window.reconcilePriorNurseState?.(out)||out;
 }
 window.ATUSharedMerge=mergeState;
 window.prioritizeSavedHistory=function(){
@@ -54,7 +54,7 @@ window.prioritizeSavedHistory=function(){
 window.initializeSharedSession=function(){
  const checkpointKey=STORAGE_KEY+'_shared_checkpoint';
  let base=null,revision=0,busy=false,pending=false,retryTimer=null,pollTimer=null,localFailure=false,lastSharedError='',localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);
- try{const checkpoint=JSON.parse(localStorage.getItem(checkpointKey)||'null');base=checkpoint?.state;revision=checkpoint?.revision||0;}catch{}
+ try{const checkpoint=JSON.parse(localStorage.getItem(checkpointKey)||'null');base=window.hydrateStateBaselines(checkpoint?.state);revision=checkpoint?.revision||0;}catch{}
  const scope=window.ATU_CONFIG?.sessionId||'simulation-state';
  // User decisions take the next available turn after an in-flight background sync.
  // Reserve the lock before resolving a waiter so polling cannot jump the queue.
@@ -70,15 +70,26 @@ window.initializeSharedSession=function(){
   busy=false;if(pending){pending=false;atuCloudSchedule();}
  }
 
- const persist=()=>{try{if(window.normalizeCloudReports)state=normalizeCloudReports(state);const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);localFailure=false;}catch(e){localFailure=true;atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
+ const persist=()=>{try{state=window.hydrateStateBaselines(cleanRetiredState(state));const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored&&!equal(stored,localBase))state=mergeState(localBase,state,stored);localStorage.setItem(STORAGE_KEY,JSON.stringify(window.compactStateBaselines(state)));localBase=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||clone(state);localFailure=false;}catch(e){localFailure=true;atuCloudBadge('NOT SAVED — browser storage is full or unavailable');throw e;}};
  reloadSharedState=function(){const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(stored){state=mergeState(localBase,state,stored);localBase=clone(stored);}};
- const checkpoint=()=>{if(window.normalizeCloudReports)base=normalizeCloudReports(base);localStorage.setItem(checkpointKey,JSON.stringify({state:base,revision}));};
- const oldClear=clearCurrentViewDraft;clearCurrentViewDraft=function(){save();oldClear();};
+ const checkpoint=()=>{base=cleanRetiredState(base);localStorage.setItem(checkpointKey,JSON.stringify({state:window.compactStateBaselines(base),revision}));};
+ const oldClear=clearCurrentViewDraft;clearCurrentViewDraft=function(){window.flushChartSave();oldClear();};
  const oldRender=render;render=function(){oldRender();prioritizeSavedHistory();};
  const oldOrders=renderOrders;renderOrders=function(){oldOrders();prioritizeSavedHistory();};
  const oldPopup=showNextNotification;showNextNotification=function(){if(!document.querySelector('.popupOverlay'))oldPopup();};
  // Never clear typed data or claim success when a local save fails.
- save=function(){persist();atuCloudBadge(atuCloudReady?'Saved locally • sharing…':'Saved locally • not connected to other computers');atuCloudSchedule();};
+ let localSaveTimer=null;
+ window.flushChartSave=function(){clearTimeout(localSaveTimer);localSaveTimer=null;persist();atuCloudBadge(atuCloudReady?'Saved locally • sharing…':'Saved locally • not connected to other computers');atuCloudSchedule();};
+ save=function(options={}){
+  if(options.immediate)return window.flushChartSave();
+  clearTimeout(localSaveTimer);atuCloudBadge('Saving locally…');
+  localSaveTimer=setTimeout(()=>{localSaveTimer=null;try{window.flushChartSave();}catch(e){syncError(e);}},300);
+ };
+ // Explicit completed charting must succeed before its draft is cleared or a live event is sent.
+ liveSave=function(eventType='',payload={}){save({immediate:true});if(eventType)broadcastLive(eventType,payload);};
+ const flushPending=()=>{if(localSaveTimer!==null)try{window.flushChartSave();}catch(e){syncError(e);}};
+ window.addEventListener('pagehide',flushPending);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPending();});
  const badge=document.getElementById('saveBadge');
  const notice=document.createElement('p');notice.id='chartSaveNotice';notice.setAttribute('role','status');notice.hidden=true;document.querySelector('header')?.after(notice);
  window.showChartSaveNotice=function(text,success=false){notice.textContent=text;notice.className=success?'success':'warn';notice.hidden=!text;notice.dataset.source='chart';};
@@ -105,7 +116,7 @@ window.initializeSharedSession=function(){
  };
  let renderedState='',renderedEpoch=state.patientResetEpochs?.[activePatientId]||0;
  const refresh=()=>{
-  window.auditSharedStateReceived?.();
+  void 0;
   const snapshot=JSON.stringify(state),epoch=state.patientResetEpochs?.[activePatientId]||0;
   const editingControl=document.activeElement?.matches('#view input,#view textarea,#view select');
   if(snapshot!==renderedState&&(!editingControl||epoch!==renderedEpoch)){window.refreshSimulationRecords?.();applyMode();window.simRefreshFromShared?.();renderedState=JSON.stringify(state);renderedEpoch=epoch;}
@@ -117,6 +128,7 @@ window.initializeSharedSession=function(){
  window.commitMedicationAdministration=async function(input,expected){
   const fail=error=>({ok:false,error});
   if(!atuCloudReady||!atuSupabase)return fail('Connect to the shared simulation before confirming administration. Nothing was recorded.');
+  try{window.flushChartSave();}catch{return fail('Unable to save locally. Check browser storage before confirming administration.');}
   if(!await acquireDecision())return fail('The shared chart is busy. Keep this review open and try again.');
   const submissionId=input.submissionId||uid('administration');
   try{
@@ -127,7 +139,7 @@ window.initializeSharedSession=function(){
      if(prior.patientId!==input.patientId||prior.medicationId!==input.medicationId||prior.dose!==input.dose||prior.route!==input.route||prior.time!==input.time||prior.student!==input.student.trim())throw Error('This submission was already used for a different administration. Scan again.');
      state=mergeState(base||{},state,remote.payload);base=clone(remote.payload);revision=remote.revision;
      try{persist();checkpoint();}catch{}
-     window.auditSharedStateReceived?.();
+     void 0;
      return {ok:true,row:prior};
     }
     const sent=clone(state);let checked;
@@ -142,13 +154,11 @@ window.initializeSharedSession=function(){
     if((merged.patientResetEpochs?.[input.patientId]||0)!==(remote.payload.patientResetEpochs?.[input.patientId]||0))throw Error('The simulation was reset. Scan again.');
     merged.mar||=[];merged.mar.push(row);
     const at=nowLocal(),actor=window.studentSession?.()?.name||row.student,details=`${row.medication} ${row.dose} ${row.route} given by ${row.student}`;
-    merged.audit||=[];merged.audit.push({id:uid('audit'),at,patientId:row.patientId,type:'Medication administration',details,actor,role:getTabMode()});
-    merged.simulationActivity||=[];merged.simulationActivity.push({id:uid('activity'),patientId:row.patientId,simulationId:row.patientId+':'+(input.resetEpoch||'initial'),at:new Date().toISOString(),actor,role:getTabMode(),group:window.studentSession?.()?.group||'',type:'Medication administration',details,collection:'mar',recordId:row.id,record:clone(row)});
     const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:remote.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});
     if(error)throw error;if(!data)continue;
     state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??remote.revision+1;
     try{persist();checkpoint();}catch{atuCloudBadge('Saved to shared chart; browser storage unavailable');}
-    window.auditSharedStateReceived?.();
+    void 0;
     return {ok:true,row};
    }
    return fail('The shared chart changed repeatedly. Review the order and try again.');
@@ -186,13 +196,11 @@ window.initializeSharedSession=function(){
      merged.mar||=[];merged.mar.push(clone(values));Object.assign(target,{status:'Used',usedAt:at,administrationId:values.id});
     }
     const detail=action==='decision'?`${request.barcode}: ${values.status} by ${actor}. ${values.decisionNotes||''}`:`${values.medication} ${values.dose} ${values.route} given by ${values.student}; one-dose approval ${id}`;
-    merged.audit||=[];merged.audit.push({id:uid('audit'),patientId:request.patientId,at,type,details:detail,actor,role:getTabMode()});
-    merged.simulationActivity||=[];merged.simulationActivity.push({id:uid('activity'),patientId:request.patientId,simulationId:request.patientId+':'+(request.resetEpoch||'initial'),at:new Date().toISOString(),actor,role:getTabMode(),group:window.studentSession?.()?.group||'',type,details:detail,collection:action==='consume'?'mar':'medicationOverrides',recordId:action==='consume'?values.id:id,record:clone(action==='consume'?values:target)});
     const {data,error}=await atuSupabase.rpc('save_simulation_state',{p_session:scope,p_revision:remote.revision,p_payload:merged,p_client:ATU_CLOUD_CLIENT});if(error)throw error;if(!data)continue;
     state=mergeState(sent,state,merged);base=clone(merged);revision=data.revision??remote.revision+1;
     // The cloud commit is durable even if the browser cannot cache its result.
     try{persist();checkpoint();}catch(e){atuCloudBadge('Saved to shared chart; browser storage unavailable');}
-    window.auditSharedStateReceived?.();updateNotificationCount();
+    void 0;updateNotificationCount();
     return {ok:true,row:action==='consume'?values:target};
    }
    return fail('The shared chart is busy. Nothing was changed; try again.');
@@ -200,6 +208,7 @@ window.initializeSharedSession=function(){
   finally{releaseWork();}
  };
  async function exchange(){
+  if(localSaveTimer!==null){try{window.flushChartSave();}catch(e){syncError(e);return;}}
   if(!atuCloudReady||busy){pending=true;return;}busy=true;
   try{
    for(let attempt=0;attempt<5;attempt++){
@@ -214,7 +223,7 @@ window.initializeSharedSession=function(){
      localStorage.setItem(STORAGE_KEY+'_before_first_join',JSON.stringify(state));
      saveCurrentViewDraft();
      const incoming=clone(row.payload),localEntries={...incoming};
-     for(const key of ['medicationPackages','orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','providerNotifications','medicationOverrides','audit','simulationActivity','simulationReports'])localEntries[key]=clone(state[key]||[]);
+     for(const key of ['medicationPackages','orders','assessments','vitals','io','notes','labs','mar','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','chartEntries','pewsAssessments','messages','notifications','medicationOverrides'])localEntries[key]=clone(state[key]||[]);
      localEntries.patientResetEpochs=clone(state.patientResetEpochs||{});
      state=mergeState({},localEntries,incoming);base=clone(row.payload);revision=row.revision;persist();checkpoint();refresh();
     }
@@ -232,7 +241,7 @@ window.initializeSharedSession=function(){
  }
  atuCloudPush=exchange;atuCloudPull=exchange;
  atuCloudReceive=()=>exchange();
- atuCloudSchedule=function(){if(!atuCloudReady)return;clearTimeout(atuCloudTimer);atuCloudTimer=setTimeout(exchange,150);};
+ atuCloudSchedule=function(){if(!atuCloudReady)return;clearTimeout(atuCloudTimer);atuCloudTimer=setTimeout(exchange,300);};
  atuCloudInit=async function(){
   if(!ATU_SUPABASE_URL||!ATU_SUPABASE_KEY){atuCloudBadge('Saved locally • shared project not configured');return;}
   try{
@@ -240,7 +249,7 @@ window.initializeSharedSession=function(){
    if(!atuSupabase){
     const raw=window.supabase.createClient(ATU_SUPABASE_URL,ATU_SUPABASE_KEY);
     // Missing flags in a cached configuration must not revive the retired table transport.
-    atuSupabase=window.ATU_CONFIG?.recordSync!==false?window.createRecordSyncClient(raw,scope):raw;
+    atuSupabase=window.createRecordSyncClient(raw,scope);
     raw.auth.onAuthStateChange?.((event,session)=>{
      if(event==='SIGNED_OUT'){atuCloudReady=false;clearInterval(pollTimer);clearTimeout(retryTimer);clearTimeout(atuCloudTimer);atuCloudBadge('Saved locally • sign in to share across computers');showChartSaveNotice('Shared sign-in ended. Completed entries remain on this computer. Sign in again to share them.');}
      else if(session&&(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'))setTimeout(()=>atuCloudInit(),0);

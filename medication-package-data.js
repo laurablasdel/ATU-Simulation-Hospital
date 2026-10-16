@@ -1,5 +1,3 @@
-/* Shared physical packages. Strength/form are intentionally blank where the supplied sources do not specify a package.
-   Do not copy an ordered dose into strength. orderKeys link existing orders; IDs never include a patient or instructions. */
 window.MEDICATION_PACKAGE_DEFAULTS=[
   {
     "id": "MED-0001",
@@ -17,7 +15,8 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
     "form": "",
     "orderKeys": [
       "lactated ringer’s solution (lr)|iv infusion",
-      "lactated ringer's at 75 ml/hr|iv infusion"
+      "lactated ringer's at 75 ml/hr|iv infusion",
+      "lactated ringer’s solution (lr) bolus|iv bolus"
     ]
   },
   {
@@ -304,7 +303,9 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
     "strength": "",
     "form": "",
     "orderKeys": [
-      "vitamin k|im"
+      "vitamin k|im",
+      "vitamin k|im — anterior thigh",
+      "vitamin k|im — vastus lateralis (anterolateral thigh)"
     ]
   },
   {
@@ -426,7 +427,8 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
     "orderKeys": [
       "acetaminophen 650 mg every 6 hours prn temperature >101°f|po",
       "acetaminophen 1 g — mar says every 8 hours; provider order says every 12 hours|po",
-      "acetaminophen 650 mg every 8 hours prn pain|po"
+      "acetaminophen 650 mg every 8 hours prn pain|po",
+      "acetaminophen 1 g every 12 hours|po"
     ]
   },
   {
@@ -569,10 +571,56 @@ window.MEDICATION_PACKAGE_DEFAULTS=[
       "ceftriaxone|",
       "ceftriaxone|iv"
     ]
+  },
+  {
+    "id": "MED-HEP10K",
+    "name": "Heparin",
+    "strength": "10,000 units/10 mL",
+    "form": "vial",
+    "orderKeys": []
+  },
+  {
+    "id": "MED-HEPINF",
+    "name": "Heparin",
+    "strength": "25,000 units/500 mL",
+    "form": "infusion bag",
+    "orderKeys": []
+  },
+  {
+    "id": "MED-0062",
+    "name": "Ephedrine",
+    "strength": "",
+    "form": "Injection",
+    "orderKeys": [
+      "ephedrine|iv"
+    ]
+  },
+  {
+    "id": "MED-0063",
+    "name": "Bupivacaine / fentanyl epidural infusion",
+    "strength": "0.1% / 2 mcg/mL",
+    "form": "Epidural solution",
+    "orderKeys": [
+      "bupivacaine / fentanyl epidural infusion|epidural"
+    ]
+  },
+  {
+    "id": "MED-0064",
+    "name": "Hepatitis B vaccine",
+    "strength": "",
+    "form": "Injection",
+    "orderKeys": [
+      "hepatitis b vaccine|im — anterior thigh",
+      "hepatitis b vaccine|im — vastus lateralis (anterolateral thigh)"
+    ]
+  },
+  {
+    "id": "MED-0065",
+    "name": "Fentanyl",
+    "strength": "",
+    "form": "Injection",
+    "orderKeys": [
+      "fentanyl|iv push"
+    ]
   }
 ];
-
-MEDICATION_PACKAGE_DEFAULTS.push(
- {id:'MED-HEP10K',name:'Heparin',strength:'10,000 units/10 mL',form:'vial',orderKeys:[]},
- {id:'MED-HEPINF',name:'Heparin',strength:'',form:'infusion bag',orderKeys:[]}
-);

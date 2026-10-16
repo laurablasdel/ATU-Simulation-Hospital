@@ -11,14 +11,14 @@
  window.VERNON_PROFILE_RECORDS=[
   record('25d195d201d581278b56ca1765119f16','Lab Results','labs','released','## Vernon Watkins — Routine Lab Results\n\n'+routine+'\n\n* Asterisks and reference ranges retained from the source. Collection times are not specified.'),
   record('303195d201d58008afd5fe58a12dc63e','Heparin Flowsheet','flowsheets','pending',table(flowHeaders,[flowHeaders.map(()=> '___')])),
-  record('25d195d201d580409b1cc83312b4cff6','Stat Orders','orders','pending','## Stat Orders\n\n- Activity: Bed rest\n- Continuous SpO2 and ECG Monitoring\n- 12 lead ECG\n- Oxygen via mask: titrate to maintain SpO2 greater than 92%\n- Spiral CT-Scan with contrast\n\nMeds:\n- Using weight of 80 kg: initiation of Nurse Driven Heparin Protocol\n- Please give bolus from the Heparin 10000 units/10 mLs vial, and use the bag for the drip.\n- Maintain Heparin flowsheet\n\nEntered by Dr. Nelson'),
+  record('25d195d201d580409b1cc83312b4cff6','Stat Orders','orders','pending','## Stat Orders\n\n- Activity: Bed rest\n- Continuous SpO2 and ECG Monitoring\n- 12 lead ECG\n- Oxygen via mask: titrate to maintain SpO2 greater than 92%\n- Spiral CT-Scan with contrast\n\nMeds:\n- Using weight of 80 kg: initiation of Nurse Driven Heparin Protocol\n- Please give bolus from the Heparin 10000 units/10 mLs vial, and use the 25,000 units/500 mL bag for the drip.\n- Hold enoxaparin while on heparin.\n- Maintain Heparin flowsheet\n\nEntered by Dr. Nelson'),
   record('25d195d201d580739aecc611389a3ff0','Stat Lab Results','labs','pending','## Vernon Watkins — Stat Lab Results\n\nTime: Today\n\n'+table(['Test / reference range','Result'],[['pH (7.35–7.45)','7.49*'],['PCO2 (35–45 mmHg)','31*'],['PO2 (80–100 mmHg)','58*'],['HCO3− (22–26 mEq/L)','24'],['D-dimer (<0.5 mcg/mL)','0.9*'],['CK-MB (0–4.9 ng/mL)','3.9'],['Troponin T (0–0.1 ng/mL)','0.09']])+'\n\n* Asterisks retained from source.'),
   record('25d195d201d58178bfb9ff0fb4ddd729','Nurse Driven Heparin Protocol','orders','pending','## Nurse Driven Heparin Protocol\n\n[Open / print the original heparin protocol](assets/vernon-heparin-protocol.pdf)\n\nOriginal physician order, including marked selections, starting-dose grids, and dosing nomogram.\n\n![Nurse Driven Heparin Protocol](assets/vernon-heparin-protocol.png)')
  ];
  // Structured links make these pending orders available to the shared MAR and package printer.
  window.CHART_MEDICATION_DEFAULTS=(window.CHART_MEDICATION_DEFAULTS||[]).concat([
   {id:'vernon-heparin-bolus',patientId:pid,name:'Heparin bolus',dose:'',route:'IV',frequency:'Per released Nurse Driven Heparin Protocol',highAlert:true,packageIds:['MED-HEP10K'],sourceChartRecordId:'chart-25d195d201d580409b1cc83312b4cff6',notes:'Calculate and enter units from the released protocol. Vial: 10,000 units/10 mL.'},
-  {id:'vernon-heparin-infusion',patientId:pid,name:'Heparin infusion',dose:'',route:'IV infusion',frequency:'Continuous per released Nurse Driven Heparin Protocol',highAlert:true,packageIds:['MED-HEPINF'],sourceChartRecordId:'chart-25d195d201d580409b1cc83312b4cff6',notes:'Use the infusion bag. Enter the rate from the released protocol.'}
+  {id:'vernon-heparin-infusion',patientId:pid,name:'Heparin infusion',dose:'',route:'IV infusion',frequency:'Continuous per released Nurse Driven Heparin Protocol',highAlert:true,packageIds:['MED-HEPINF'],sourceChartRecordId:'chart-25d195d201d580409b1cc83312b4cff6',notes:'Use the 25,000 units/500 mL infusion bag. Enter the rate from the released protocol. Hold enoxaparin while on heparin.'}
  ]);
  // Only remove rows explicitly dated August 21; retain admission orders and later edits.
  const clean=content=>String(content||'').replace(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi,row=>/<td[^>]*>\s*0?8\/21/.test(row)?'':row);
@@ -34,7 +34,7 @@
   defaults.releaseQueue=(defaults.releaseQueue||[]).filter(q=>!ids.has(q.chartRecordId));
  }
  window.migrateVernonProfile=function(){
-  if(state.vernonProfileV1)return;
+  if(window.stateMigrationApplied('vernonProfileV1'))return;
   fillPatient(state.patients.find(p=>p.id===pid));fillPatient(state.simulationBases?.[pid]?.patient);
   const targetIds=new Set(VERNON_PROFILE_RECORDS.map(r=>r.id));
   state.chartContentEdits||={};
@@ -43,7 +43,6 @@
   for(const [id,edit] of Object.entries(state.chartContentEdits))if(orderIds.has(id))edit.content=clean(edit.content);
   cleanRecords(CHART_RECORDS);cleanRecords(state.customChartRecords);readOnlyVitals(CHART_RECORDS);
   const stale=row=>row.patientId===pid&&/^(?:\d{4}-08-21|0?8\/21(?:\D|\d{4}))/i.test(String(row.time||row.date||''));
-  state.vernonLegacyEntriesV1={orders:copy((state.orders||[]).filter(stale)),notes:copy((state.notes||[]).filter(stale))};
   for(const key of ['orders','notes'])state[key]=(state[key]||[]).filter(row=>!stale(row));
   seedChartPending();
   for(const base of [window.SIMULATION_DEFAULTS?.[pid],state.simulationBases?.[pid]])if(base){
@@ -52,6 +51,6 @@
    base.releaseQueue=(base.releaseQueue||[]).filter(q=>!targetIds.has(q.chartRecordId)).concat(copy(state.releaseQueue.filter(q=>targetIds.has(q.chartRecordId))).map(q=>({...q,status:'pending',releasedAt:''})));
    for(const key of ['orders','notes'])base.collections[key]=(base.collections[key]||[]).filter(row=>!stale(row));
   }
-  state.vernonProfileV1=true;
+  window.markStateMigration('vernonProfileV1');
  };
 })();

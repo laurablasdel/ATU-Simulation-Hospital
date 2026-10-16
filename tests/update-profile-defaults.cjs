@@ -2,7 +2,7 @@
 // Other baseline collections (medications, orders, etc.) remain unchanged.
 const fs=require('fs'),path=require('path'),vm=require('vm'),boot=require('./boot.cjs');
 const file=path.join(__dirname,'../simulation-defaults.js'),context={window:{}};
-vm.runInNewContext(fs.readFileSync(file,'utf8'),context);
+for(const f of ['chart-data.js','baseline-data.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),context);vm.runInNewContext(fs.readFileSync(file,'utf8'),context);
 const defaults=context.window.SIMULATION_DEFAULTS,ids=['carl-shapiro','ruth-livingston'];
 const others=JSON.stringify(Object.entries(defaults).filter(([id])=>!ids.includes(id)));
 const w=boot();try{for(const id of ids){
@@ -12,6 +12,6 @@ const w=boot();try{for(const id of ids){
  b.releaseQueue=JSON.parse(JSON.stringify(s.releaseQueue.filter(r=>r.patientId===id&&r.status==='pending')));
 }
 if(others!==JSON.stringify(Object.entries(defaults).filter(([id])=>!ids.includes(id))))throw Error('Unrelated patient changed');
-fs.writeFileSync(file,'window.SIMULATION_DEFAULTS='+JSON.stringify(defaults)+';\n');
+fs.writeFileSync(file,'window.SIMULATION_DEFAULTS=window.hydrateSimulationDefaults('+JSON.stringify(Object.fromEntries(Object.entries(defaults).map(([id,b])=>[id,w.compactSimulationBase(b)])))+');\n');
 console.log('Updated Carl and Ruth reset headers, records and pending queues. Other collections and patients unchanged.');
 }finally{w.close();}

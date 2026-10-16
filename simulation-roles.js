@@ -1,4 +1,4 @@
-/* Device roles (student, observer, faculty), release alerts, and SBAR provider notifications.
+/* Device roles (student, observer, faculty), release alerts.
    Observer: debrief-room laptops. View-only, independent navigation, non-blocking alerts that remain until Student Mode acknowledges them. Open with ?mode=observer or choose Observer Mode in Faculty Mode. */
 (function(){
 const OBSERVER='observer';
@@ -18,7 +18,7 @@ function installModes(){
   baseFaculty(...args);
   const view=document.getElementById('view');if(!isFaculty()||!view||view.querySelector('#makeObserver'))return;
   const link=location.origin+location.pathname+'?mode=observer';
-  view.insertAdjacentHTML('beforeend',panel('This Computer’s Role',`<p class="note">Debrief-room computers can be set to <b>Observer Mode</b>: students there can open any part of the chart on their own, cannot chart, see every student alert until a student acknowledges it, and see student SBAR notifications. The faculty PIN is needed to leave Observer Mode.</p><div class="actions"><button id="makeObserver" class="secondary">Make this computer an Observer (debrief room)</button></div><p class="note">Or open this link on the debrief computer: <code>${esc(link)}</code></p>`));
+  view.insertAdjacentHTML('beforeend',panel('This Computer’s Role',`<p class="note">Debrief-room computers can be set to <b>Observer Mode</b>: students there can open any part of the chart on their own, cannot chart, see every student alert until a student acknowledges it. The faculty PIN is needed to leave Observer Mode.</p><div class="actions"><button id="makeObserver" class="secondary">Make this computer an Observer (debrief room)</button></div><p class="note">Or open this link on the debrief computer: <code>${esc(link)}</code></p>`));
   view.querySelector('#makeObserver').onclick=()=>{if(!confirm('Switch this computer to Observer Mode? Observers can view the chart but cannot chart. The faculty PIN is needed to leave.'))return;saveCurrentViewDraft();setTabMode(OBSERVER);startObserving();currentView='patients';applyMode();render();};
  };
  const main=document.getElementById('view');
@@ -56,14 +56,6 @@ function overlay(kind,id,html){
  document.body.appendChild(host);return host;
 }
 const patientName=id=>state.patients.find(p=>p.id===id)?.name||'';
-const when=t=>String(t||'').replace('T',' ');
-function sbarBody(s){
- const row=(label,text)=>`<div style="margin-top:8px"><b>${label}</b><div style="white-space:pre-wrap">${esc(text||'—')}</div></div>`;
- return `<div class="note">Patient: <b>${esc(patientName(s.patientId))}</b> • From: <b>${esc(s.student)}</b> • To: ${esc(s.provider||'Provider')} • ${esc(when(s.createdAt))}</div>
-  <div style="margin-top:6px"><span class="sbarUrgency sbar${esc(s.urgency)}">${esc(s.urgency)}</span></div>
-  ${row('S — Situation',s.situation)}${row('B — Background',s.background)}${row('A — Assessment',s.assessment)}${row('R — Recommendation',s.recommendation)}`;
-}
-
 // One student popup at a time; acknowledgement is shared by every connected computer.
 function showStudentAlert(){
  const n=(state.notifications||[]).find(x=>!x.read&&(!x.patientId||x.patientId===activePatientId));
@@ -90,85 +82,24 @@ function showObserverToasts(){
  if(!stack){stack=document.createElement('div');stack.id='observerToasts';stack.setAttribute('aria-label','Student alerts awaiting acknowledgement');document.body.appendChild(stack);}
  stack.innerHTML=pending.map(n=>`<div class="observerToast" role="status" data-notification-id="${esc(n.id)}"><b>${esc(n.title)}</b><div class="note">${esc(patientName(n.patientId))}</div><div>${esc(n.body)}</div><small>Waiting for student acknowledgement</small></div>`).join('');
 }
-// SBAR submissions also have a shared student acknowledgement, independent of faculty acceptance.
-function ensureSbarAlerts(){
- state.notifications||=[];
- for(const s of state.providerNotifications||[]){const id='sbar-notice:'+s.id;if(!state.notifications.some(n=>n.id===id))state.notifications.push({id,patientId:s.patientId,createdAt:s.createdAt,type:'sbar',title:'SBAR sent to provider',body:`${s.student}: Situation: ${s.situation} • Background: ${s.background||''} • Assessment: ${s.assessment||''} • Recommendation: ${s.recommendation}`,sbarId:s.id,read:false});}
-}
-
-// Faculty accept each SBAR; an optional response goes to the student as a provider message.
-function showFacultySbar(){
- const s=(state.providerNotifications||[]).find(x=>x.status==='Submitted');if(!s)return;
- const host=overlay('sbar-faculty',s.id,`<div class="popupHead"><b>Provider notification (SBAR)</b></div><div class="popupBody">${sbarBody(s)}
-  <label style="margin-top:12px;display:block">Provider response to student (optional)<textarea data-sbar-response rows="3" placeholder="e.g., Acknowledged. Give 500 mL NS bolus and recheck BP in 15 minutes."></textarea></label></div>
-  <div class="popupActions"><button class="primary" data-accept-sbar>Accept</button></div>`);
- host.querySelector('[data-accept-sbar]').onclick=()=>{
-  const current=(state.providerNotifications||[]).find(x=>x.id===s.id);
-  const response=host.querySelector('[data-sbar-response]').value.trim();
-  if(current&&current.status==='Submitted'){
-   Object.assign(current,{status:'Accepted',acceptedAt:nowLocal(),response});
-   if(response){
-    const title=`Provider response: ${current.provider||'Provider'}`;
-    state.messages ||= [];state.notifications ||= [];
-    const messageId=uid('msg');
-    state.messages.push({id:messageId,patientId:current.patientId,at:nowLocal(),from:current.provider||'Provider',to:'Student',subject:title,message:response,read:false,sbarId:current.id});
-    state.notifications.push({id:uid('notif'),patientId:current.patientId,createdAt:nowLocal(),type:'message',title,body:response,releaseItemId:messageId,read:false});
-   }
-   audit('SBAR accepted by faculty',current.patientId,`${current.urgency}: ${current.situation}${response?` • Response: ${response}`:''}`);
-   liveSave('sbar_accepted',{patientId:current.patientId,sbarId:current.id});
-  }
-  host.remove();if(currentView==='sbar')render();setTimeout(showNextNotification,120);
- };
-}
-
 // Close popups that another computer already handled.
 function closeStalePopups(){
  for(const host of document.querySelectorAll('.popupOverlay[data-alert-kind]')){
   const id=host.dataset.alertId,kind=host.dataset.alertKind;
   const stale=kind==='release'?(isFaculty()||isObserver()||!(state.notifications||[]).some(x=>x.id===id&&!x.read))
-   :kind==='sbar-faculty'?(!isFaculty()||(state.providerNotifications||[]).find(x=>x.id===id)?.status!=='Submitted')
    :kind==='medication-override'?(!isFaculty()||(state.medicationOverrides||[]).find(r=>r.id===id)?.status!=='Pending')
-   :kind==='sbar-observer'?true:false;
+   :false;
   // Keep a faculty popup open while its response is being typed.
-  if(stale&&!(kind==='sbar-faculty'&&host.contains(document.activeElement)))host.remove();
+  if(stale)host.remove();
  }
 }
 function showAlerts(){
- ensureSbarAlerts();closeStalePopups();showObserverToasts();
+ closeStalePopups();showObserverToasts();
  if(document.querySelector('.popupOverlay'))return;
- if(isFaculty()){if(!window.showMedicationOverrideApproval?.())showFacultySbar();}else if(!isObserver())showStudentAlert();
-}
-
-// SBAR screen: students write and send; everyone sees this patient's SBAR history.
-function renderSBAR(){
- if(!requirePatient())return;
- const p=activePatient(),rows=(state.providerNotifications||[]).filter(x=>x.patientId===p.id).slice().reverse();
- const history=rows.map(s=>`<details class="sbarHistory"><summary><b>${esc(when(s.createdAt))}</b> • ${esc(s.urgency)} • ${esc(s.student)} → ${esc(s.provider||'Provider')} • <span class="sbarStatus sbar${esc(s.status)}">${s.status==='Accepted'?'Accepted by provider':'Waiting for provider'}</span></summary>${sbarBody(s)}${s.response?`<div class="success" style="margin-top:8px"><b>Provider response:</b> ${esc(s.response)}</div>`:''}</details>`).join('')||'<div class="note">No provider notifications have been sent for this patient.</div>';
- const form=isFaculty()?'<div class="note">Students send SBAR notifications from this screen. Each one appears on Faculty screens to accept.</div>':isObserver()?'<div class="note">SBAR notifications sent from the simulation room appear here and remain in the alert list until a student acknowledges them.</div>':`<form id="sbarForm" class="nativeEntry" data-record="sbar">
-  <div class="grid3"><label>Student / Initials<input name="student" required></label><label>Provider<input name="provider" value="${esc(p.provider||'')}" required></label>
-  <label>Urgency<select name="urgency" required><option>Routine</option><option>Urgent</option><option>STAT</option></select></label></div>
-  <label>S — Situation<textarea name="situation" rows="3" required placeholder="What is happening with the patient right now?"></textarea></label>
-  <label>B — Background<textarea name="background" rows="3" required placeholder="Relevant history, diagnosis, recent treatments, current medications."></textarea></label>
-  <label>A — Assessment<textarea name="assessment" rows="3" required placeholder="Your assessment findings, vital signs, labs, and what you think the problem is."></textarea></label>
-  <label>R — Recommendation<textarea name="recommendation" rows="3" required placeholder="What do you need from the provider?"></textarea></label>
-  <div class="actions"><button type="submit" class="primary">Submit to Provider</button><span id="sbarFeedback" role="status"></span></div></form>`;
- document.getElementById('view').innerHTML=panel('Provider Notification (SBAR)',form)+panel('SBAR History',history);
- const f=document.getElementById('sbarForm');
- if(f)f.onsubmit=e=>{
-  e.preventDefault();if(isObserver()||!f.reportValidity())return;
-  const v=Object.fromEntries(new FormData(f).entries());for(const k of Object.keys(v))v[k]=String(v[k]).trim();
-  if(Object.values(v).some(x=>!x)){f.reportValidity();return;}
-  state.providerNotifications ||= [];
-  const sbar={id:uid('sbar'),patientId:p.id,createdAt:nowLocal(),status:'Submitted',...v};
-  state.providerNotifications.push(sbar);ensureSbarAlerts();
-  audit('SBAR sent to provider',p.id,`${v.student} (${v.urgency}): ${v.situation}`);
-  clearCurrentViewDraft?.();liveSave('sbar_submitted',{patientId:p.id,sbarId:sbar.id});
-  render();const fb=document.getElementById('sbarFeedback');if(fb)fb.textContent=' Sent to provider. You will be notified when the provider responds.';
- };
+ if(isFaculty()){window.showMedicationOverrideApproval?.();}else if(!isObserver())showStudentAlert();
 }
 
 window.initializeSimulationRoles=function(){
- state.providerNotifications ||= [];
  document.head.insertAdjacentHTML('beforeend',`<style>
   #observerToasts{position:fixed;top:78px;right:16px;z-index:4000;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px));max-height:70vh;overflow:auto}
   .observerToast{background:#fff;border-left:5px solid var(--gold,#c9a227);box-shadow:0 6px 20px #0004;border-radius:6px;padding:10px 30px 10px 12px;position:relative}
@@ -176,22 +107,17 @@ window.initializeSimulationRoles=function(){
   .observerBanner{background:#fff7dc;border:1px solid #e6cf7a;padding:8px 10px;border-radius:6px;margin-bottom:10px}
   body.observerMode #view input:disabled,body.observerMode #view textarea:disabled,body.observerMode #view select:disabled{background:#f1f3f4;color:#555;cursor:not-allowed}
   body.observerMode #view button:disabled{opacity:.45;cursor:not-allowed}
-  .sbarUrgency{display:inline-block;padding:2px 8px;border-radius:10px;font-weight:bold;font-size:12px;background:#e7f1ec}
-  .sbarUrgent{background:#fff1c7}.sbarSTAT{background:#c72c43;color:#fff}
-  .sbarStatus.sbarSubmitted{color:#9a5b00}.sbarStatus.sbarAccepted{color:#1f6b45}
-  details.sbarHistory{border:1px solid #d5dfe4;border-radius:6px;padding:8px;margin-bottom:8px}
  </style>`);
- const inbox=document.querySelector('aside button[data-view="inbox"]');
- if(inbox&&!document.querySelector('aside button[data-view="sbar"]')){
-  const b=document.createElement('button');b.dataset.view='sbar';b.textContent='Provider Notification (SBAR)';inbox.before(b);
-  b.onclick=()=>{saveCurrentViewDraft();currentView='sbar';render();};
- }
  installModes();installObserverLock();
  if(isObserver())startObserving();
- const baseRender=render;render=function(){baseRender();if(currentView==='sbar')renderSBAR();if(isObserver())lockView();};
+ const baseRender=render;render=function(){baseRender();if(isObserver())lockView();};
  showNextNotification=showAlerts;
- window.renderSBAR=renderSBAR;
- const timer=setInterval(()=>{let open=false;try{open=!!document.defaultView}catch{}if(!open){clearInterval(timer);return;}try{showAlerts();}catch(e){console.error('Alerts',e);}},1500);
+ // Alert updates follow local saves and shared receives instead of polling every device.
+ const saved=save;let queued=false,lastAlerts='';
+ const changed=()=>{const signature=JSON.stringify([state.notifications||[],(state.medicationOverrides||[]).map(r=>[r.id,r.status])]);if(signature===lastAlerts)return;lastAlerts=signature;if(queued)return;queued=true;queueMicrotask(()=>{queued=false;try{if(window.document?.defaultView)showAlerts();}catch{/* window closed */}});};
+ save=function(...args){const result=saved(...args);changed();return result;};
+ changed();
+
 };
 })();
 

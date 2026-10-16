@@ -9,7 +9,7 @@ try{
  for(const [rid,name,other] of [['admin-jane-respiratory-naloxone','Narcan','Ketorolac'],['admin-jane-respiratory-ketorolac','Ketorolac',null]]){
   w.setTabMode('faculty');const item=a.state.releaseQueue.find(r=>r.chartRecordId===rid);assert(item&&item.status==='pending');w.releaseItem(item.id);w.setTabMode('student');w.renderMAR();assert(text().includes(name),'released drug becomes visible');if(other)assert(!text().includes(other),'other drug remains hidden');
  }
- assert.equal(a.state.mar.length,0,'releasing a drug creates no administration');
+ assert.equal(a.state.mar.filter(r=>r.patientId===pid).length,0,'releasing a drug creates no administration');
  a.setView('preop');w.render();assert(w.document.querySelector('aside [data-view="preop"]:not(.hiddenByPatient)'));assert(w.document.getElementById('saveJaneChecklist'));assert(!w.document.getElementById('saveJaneAssessment'));
  w.document.getElementById('janeChecklistStudent').value='TS';w.document.getElementById('jpc-identifiers').checked=true;w.document.getElementById('saveJaneChecklist').click();assert(a.state.surgicalChecklist.find(r=>r.patientId===pid).checks.identifiers);assert(!w.document.getElementById('saveJaneAssessment'),'save stays on checklist');
  const saved=JSON.parse(JSON.stringify(a.state)),order=a.records.find(r=>r.patientId===pid&&/Titrate oxygen/.test(r.content));assert(order&&order.content.includes('94% or greater'));

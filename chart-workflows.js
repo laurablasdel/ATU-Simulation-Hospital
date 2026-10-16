@@ -137,7 +137,7 @@ function initializeNativeCharts(){
   updateNativeScores(form);form.querySelectorAll('output').forEach(o=>values[o.dataset.score]=o.textContent);
   let snapshot='';if(form.matches('.recordEntry')){const copy=form.cloneNode(true);copy.querySelectorAll('input,select,textarea').forEach(el=>{const span=document.createElement('span');span.textContent=values[el.name]||'—';el.replaceWith(span);});copy.querySelectorAll('button,.entryFeedback').forEach(el=>el.remove());snapshot=copy.innerHTML;}
   state.chartEntries ||= [];state.chartEntries.push({id:uid('chart-entry'),patientId:activePatientId,recordId:form.dataset.record,time:values.time||nowLocal(),student:values.student.trim(),shift:values.shift.trim(),values,snapshot});
-  audit('Chart form signed',activePatientId,`${values.student}: ${form.dataset.record}`);liveSave('chart_form_saved',{patientId:activePatientId});
+  liveSave('chart_form_saved',{patientId:activePatientId});
   const history=document.createElement('details');history.open=true;history.innerHTML=`<summary>Saved • ${esc(values.student)} • ${esc(values.shift)}</summary>${snapshot||renderEntryValues(values)}`;form.before(history);form.reset();form.querySelector('.entryFeedback').textContent=' Saved to this patient’s chart.';
  });
 }

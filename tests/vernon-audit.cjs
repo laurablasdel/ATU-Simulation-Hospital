@@ -9,7 +9,6 @@ function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w
  assert.equal(w.formatChartTimestamp('2026-09-28T19:35:00Z'),'14:35_09/28/2026');
  assert.equal(w.formatChartTimestamp('2026-01-28T20:35:00Z'),'14:35_01/28/2026');
  assert.equal(w.formatChartTimestamp('Today'),'Today');
- w.setTabMode('faculty');const navBefore=(s.simulationActivity||[]).length;w.recordChartAccess(pid,'Orders');w.audit('Chart opened',pid,'Faculty visit');assert.equal((s.simulationActivity||[]).length,navBefore);assert(!s.audit.some(e=>e.details==='Faculty visit'));
 
  assert(view(w,pid,'labs').textContent.includes('Postop day 4'));
  const releases=w.VERNON_PROFILE_RECORDS.filter(r=>r.status==='pending');assert.equal(releases.length,4);
@@ -24,29 +23,13 @@ function checkIn(w,id,first,last){w.signOutStudent();w.checkInForChart(id,()=>{w
   root.querySelector('#vStudent').value='ST';root.querySelector('#vTime').value='2026-09-28T14:35';root.querySelector('#vBP').value='120/80';root.querySelector('#saveVitals').click();await tick();
   assert(root.textContent.includes('14:35_09/28/2026'),p.id+' formatted history');
   assert.equal(s.vitals.filter(r=>r.patientId===p.id).at(-1).time,'2026-09-28T14:35');
-  assert(s.simulationActivity.some(e=>e.patientId===p.id&&e.actor==='Student '+p.id&&e.collection==='vitals'));
   assert.equal(root.querySelector('h2').textContent,'Vitals History');
  }
  w.setTabMode('student');w.signOutStudent();w.checkInForChart(pid,()=>assert.fail('blank name accepted'));let f=w.document.querySelector('#studentCheckIn form');f.elements.firstName.value=' ';f.elements.lastName.value='Test';f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert(w.document.getElementById('studentCheckIn'));w.setTabMode('faculty');w.render();
- checkIn(w,pid,'Alex','Nurse');view(w,pid,'flowsheets');w.document.querySelector('aside [data-view="orders"]').click();assert(s.simulationActivity.some(e=>e.patientId===pid&&e.type==='Section opened'&&e.actor==='Alex Nurse'));
- s.providerNotifications.push({id:'sbar-audit',patientId:pid,student:'AN',situation:'Breathing changed',recommendation:'Assess now',createdAt:'2026-09-28T14:35'});w.save();
- const first=w.buildSimulationReport(pid),html=w.simulationReportHTML(first);assert(html.includes('Alex Nurse')&&html.includes('Breathing changed')&&html.includes('Assess now'));
- const evil=clone(first);evil.patient.name='<script>alert(1)</script>';assert(!w.simulationReportHTML(evil).includes('<script>alert'));
- const old=clone(s);w.setTabMode('faculty');w.resetToBase(pid);assert.equal(s.simulationReports.filter(r=>r.patientId===pid).length,1);assert(!s.providerNotifications.some(r=>r.id==='sbar-audit'));
- checkIn(w,pid,'Second','Student');w.resetToBase(pid);assert.equal(s.simulationReports.filter(r=>r.patientId===pid).length,2);
- const reopened=start(clone(s));assert.equal(reopened.testApp.state.simulationReports.filter(r=>r.patientId===pid).length,2);
- reopened.resetToBase(pid);assert.equal(reopened.testApp.state.simulationReports.filter(r=>r.patientId===pid).length,3);
- const merged=w.ATUSharedMerge(old,old,clone(s));assert.equal(merged.simulationReports.filter(r=>r.patientId===pid).length,2,'stale client cannot remove reports');
- assert(!merged.providerNotifications.some(r=>r.id==='sbar-audit'),'stale client cannot resurrect simulation entries');
- assert(merged.simulationActivity.some(e=>e.actor==='Alex Nurse'),'old simulation access is retained');
- view(reopened,pid,'debrief','faculty');assert.equal(reopened.document.querySelectorAll('[data-report]').length,3);
- reopened.document.getElementById('buildDebrief').click();assert(reopened.document.getElementById('dResult').textContent.includes('Vernon Watkins'));
- reopened.document.getElementById('previewCurrentAudit').click();assert(reopened.document.querySelector('#auditPreview iframe').srcdoc.includes('Simulation chart audit'));
- reopened.URL.createObjectURL=()=> 'blob:test-report';reopened.URL.revokeObjectURL=()=>{};let downloaded='';reopened.HTMLAnchorElement.prototype.click=function(){downloaded=this.download;};reopened.document.getElementById('downloadCurrentAudit').click();assert(downloaded.startsWith('vernon-watkins-simulation-'));assert(reopened.document.querySelector('#auditDownloadReady a[download]'),'direct download fallback available');
- const before=clone(s.vitals);const set=w.Storage.prototype.setItem;w.Storage.prototype.setItem=()=>{throw Error('quota')};assert.throws(()=>w.resetToBase('karl-sharp'));assert.deepEqual(clone(s.vitals),before,'failed archive save must abort reset');w.Storage.prototype.setItem=set;
- const legacy=clone(old);delete legacy.vernonProfileV1;legacy.orders.push({id:'old-aug21',patientId:pid,time:'2026-08-21T14:15',text:'old simulation'},{id:'keep-current',patientId:pid,time:'2026-09-28T14:15',text:'current simulation'});
+ const old=clone(s);w.setTabMode('faculty');w.resetToBase(pid);assert(!s.vitals.some(r=>r.patientId===pid));
+ const before=clone(s.vitals);const set=w.Storage.prototype.setItem;w.Storage.prototype.setItem=()=>{throw Error('quota')};assert.throws(()=>w.resetToBase('karl-sharp'));assert.deepEqual(clone(s.vitals),before,'failed local save must abort reset');w.Storage.prototype.setItem=set;
+ const legacy=clone(old);legacy.schemaVersion=0;delete legacy.vernonProfileV1;legacy.orders.push({id:'old-aug21',patientId:pid,time:'2026-08-21T14:15',text:'old simulation'},{id:'keep-current',patientId:pid,time:'2026-09-28T14:15',text:'current simulation'});
  const migrated=start(legacy);assert(!migrated.testApp.state.orders.some(r=>r.id==='old-aug21'));assert(migrated.testApp.state.orders.some(r=>r.id==='keep-current'));
  for(const id of ['ruth-livingston','carl-shapiro','vernon-watkins','karl-sharp'])for(const [name,heading] of [['orders','Order List'],['assessments','Assessment History'],['flowsheets','Vitals History']])assert.equal(view(w,id,name).querySelector('h2').textContent,heading);
- fs.writeFileSync(path.join(__dirname,'..','..','vernon-audit-preview.html'),html);
- console.log('PASS Vernon and audit: routine labs, four independent releases, clean heparin form, reset/reload, all 13 patients timestamp/identity/history, SBAR report, three retained simulations, stale-client merge, storage-failure protection, legacy cleanup.');
+ console.log('PASS Vernon releases, editable heparin form, all-patient formatted history, reset/reload, storage failure and legacy cleanup.');
 }finally{await tick();windows.forEach(w=>w.close());}})().catch(e=>{console.error(e);process.exitCode=1});

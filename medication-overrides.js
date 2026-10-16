@@ -26,8 +26,7 @@
   const resolved=resolveMedicationBarcode(input.barcode),name=resolved.package?.name||resolved.legacyOrder?.name||'';
   const request={id:uid('override'),patientId:input.patientId,barcode:code(input.barcode),packageId:resolved.package?.id||'',medication:name,reason:String(input.reason).trim(),requestedBy:window.studentSession?.()?.name||'Student',group:window.studentSession?.()?.group||'',createdAt:nowLocal(),resetEpoch:epoch(input.patientId),status:'Pending'};
   state.medicationOverrides.push(request);
-  try{save();}catch(e){state.medicationOverrides=state.medicationOverrides.filter(r=>r.id!==request.id);return fail('The request could not be saved. Try again.');}
-  audit('Medication override requested',input.patientId,`${request.requestedBy}: ${request.barcode} — ${request.reason}`);
+  try{save({immediate:true});}catch(e){state.medicationOverrides=state.medicationOverrides.filter(r=>r.id!==request.id);return fail('The request could not be saved. Try again.');}
   liveSave('medication_override_requested',{patientId:input.patientId,requestId:request.id});
   return {ok:true,request};
  };

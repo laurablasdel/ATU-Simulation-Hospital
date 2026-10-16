@@ -7,11 +7,10 @@ const windows=[];const start=(...args)=>{const w=boot(...args);windows.push(w);r
  f.elements.firstName.value='Alex';f.elements.group.value='Group A';f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
  assert.equal(w.studentSession().name,'Alex Student');assert(!w.document.getElementById('studentCheckIn'));assert(!w.document.getElementById('view').hasAttribute('inert'));
  assert(w.document.querySelectorAll('.openPatient').length);for(const b of w.document.querySelectorAll('.openPatient'))assert(w.studentPatientAreas(w.testApp.state.patients.find(p=>p.id===b.dataset.id)).includes('PEDS'));
- w.document.querySelector('.openPatient').click();assert(!w.document.getElementById('studentCheckIn'));const pid=w.testApp.state.simulationActivity.at(-1).patientId;
+ const pid=w.document.querySelector('.openPatient').dataset.id;w.document.querySelector('.openPatient').click();assert(!w.document.getElementById('studentCheckIn'));
  w.testApp.setView('flowsheets');w.render();assert.equal(w.document.getElementById('vStudent').value,'');
  w.document.getElementById('vStudent').value='AS';w.document.getElementById('vBP').value='110/70';w.document.getElementById('saveVitals').click();
- const row=w.testApp.state.simulationActivity.find(e=>e.collection==='vitals'&&e.actor==='Alex Student');assert(row&&row.group==='Group A'&&row.area==='PEDS');
- assert(w.simulationReportHTML(w.buildSimulationReport(pid)).includes('Group A'));
+ assert(w.testApp.state.vitals.some(r=>r.patientId===pid&&r.student==='AS'));
  const session=w.studentSession(),r=start(JSON.parse(JSON.stringify(w.testApp.state)),undefined,session);r.setTabMode('student');r.render();assert.equal(r.studentSession().name,'Alex Student');assert(!r.document.getElementById('studentCheckIn'));
  r.resetToBase(pid);assert.equal(r.studentSession().name,'Alex Student','reset does not sign student out');
  r.document.getElementById('studentSignOut').click();assert.equal(r.studentSession(),null);assert(r.document.getElementById('studentCheckIn'));assert.equal(r.sessionStorage.getItem('atuSimulationHospitalEHRv1_student_session'),null);
@@ -25,5 +24,5 @@ const windows=[];const start=(...args)=>{const w=boot(...args);windows.push(w);r
  for(const p of w.testApp.state.patients)assert(w.studentPatientAreas(p).length,'every patient has an area');
  r.setTabMode('faculty');r.render();assert(!r.document.getElementById('studentSessionControls'));assert(!r.document.querySelector('aside').hasAttribute('inert'));
  r.testApp.setPatient('ruth-livingston');r.testApp.setView('summary');r.render();const details=[...r.document.querySelectorAll('#view details')];assert(details.length>1);details[0].open=false;details[1].open=true;const title=details[1].querySelector('summary').textContent;for(let i=0;i<3;i++)r.simRefreshFromShared();assert([...r.document.querySelectorAll('#view details')].find(d=>d.querySelector('summary').textContent===title).open,'expanded section survives repeated shared refresh');assert(!r.document.querySelector('#view details').open,'closed section stays closed');
- console.log('PASS student session: required name/area, optional group, area filtering, repeat chart opening, audit attribution, blank documentation, refresh, reset, sign-out, independent tabs.');
+ console.log('PASS student session: required name/area, optional group, area filtering, repeat chart opening, blank documentation, refresh, reset, sign-out, independent tabs.');
 }finally{await new Promise(r=>setImmediate(r));windows.forEach(w=>w.close());}})().catch(e=>{console.error(e);process.exitCode=1});

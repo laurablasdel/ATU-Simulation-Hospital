@@ -9,10 +9,9 @@ function start(saved){const w=boot(saved,{supabaseUrl:'https://example.supabase.
   const input={patientId:pid,medicationId:m.id,method:'barcode',patientBarcode:p.barcode,medicationBarcode:pkg.id,confirmed:true,dose:m.dose||'1 test unit',route:m.route||'Test route',time:'2026-09-28T14:00',student:'BS',submissionId:'test-'+pid};
   assert(!student.saveMedicationAdministration({...input,patientBarcode:''}).ok);assert(!student.saveMedicationAdministration({...input,method:'manual',patientBarcode:''}).ok);
   const result=await student.saveMedicationAdministration(input);assert(result.ok,pid+": "+result.error);await student.atuCloudPush();await faculty.atuCloudPush();assert(faculty.testApp.state.mar.some(r=>r.submissionId===input.submissionId));
-  const event=faculty.testApp.state.simulationActivity.find(r=>r.collection==='mar'&&r.record.submissionId===input.submissionId);assert(event&&event.actor==='Barcode Student'&&event.group==='Group A');
   assert(!student.saveMedicationAdministration(input).ok,'duplicate refused');
   const refreshed=start(clone(shared.payload));assert(refreshed.testApp.state.mar.some(r=>r.submissionId===input.submissionId));
  }
- faculty.resetToBase('charles-jones');await faculty.atuCloudPush();await student.atuCloudPush();assert(!student.testApp.state.mar.some(r=>r.submissionId==='test-charles-jones'));assert(student.testApp.state.simulationReports.some(r=>r.patientId==='charles-jones'&&r.collections.mar.some(m=>m.submissionId==='test-charles-jones')));
- console.log('PASS shared MAR: three levels, required patient verification, same records on faculty/student, named group audit, duplicate prevention, reload persistence, reset audit retention.');
+ faculty.resetToBase('charles-jones');await faculty.atuCloudPush();await student.atuCloudPush();assert(!student.testApp.state.mar.some(r=>r.submissionId==='test-charles-jones'));assert(!('simulationReports' in student.testApp.state));
+ console.log('PASS shared MAR: three levels, required patient verification, same records on faculty/student, duplicate prevention, reload persistence, reset without archives.');
 }finally{await new Promise(r=>setImmediate(r));windows.forEach(w=>w.close());}})().catch(e=>{console.error(e);process.exitCode=1});

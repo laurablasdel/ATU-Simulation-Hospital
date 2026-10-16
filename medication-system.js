@@ -3,19 +3,361 @@
 const C39={"0":"nnnwwnwnn","1":"wnnwnnnnw","2":"nnwwnnnnw","3":"wnwwnnnnn","4":"nnnwwnnnw","5":"wnnwwnnnn","6":"nnwwwnnnn","7":"nnnwnnwnw","8":"wnnwnnwnn","9":"nnwwnnwnn","A":"wnnnnwnnw","B":"nnwnnwnnw","C":"wnwnnwnnn","D":"nnnnwwnnw","E":"wnnnwwnnn","F":"nnwnwwnnn","G":"nnnnnwwnw","H":"wnnnnwwnn","I":"nnwnnwwnn","J":"nnnnwwwnn","K":"wnnnnnnww","L":"nnwnnnnww","M":"wnwnnnnwn","N":"nnnnwnnww","O":"wnnnwnnwn","P":"nnwnwnnwn","Q":"nnnnnnwww","R":"wnnnnnwwn","S":"nnwnnnwwn","T":"nnnnwnwwn","U":"wwnnnnnnw","V":"nwwnnnnnw","W":"wwwnnnnnn","X":"nwnnwnnnw","Y":"wwnnwnnnn","Z":"nwwnwnnnn","-":"nwnnnnwnw",".":"wwnnnnwnn"," ":"nwwnnnwnn","*":"nwnnwnwnn"};
 const slug=v=>String(v||'').toUpperCase().replace(/[^0-9A-Z. -]/g,'-').replace(/\s+/g,'-').replace(/-+/g,'-');
 const ORIGINAL_MAR={
- 'amelia-sung':[
-  ['Oxytocin (Pitocin)','30 units in 500 mL sodium chloride 0.9%; start at 2 milliunits/min','IV infusion','Increase by 2 milliunits/min every 15 minutes until contractions are every 2–3 minutes','Active labor',true],
-  ['Lactated Ringer’s solution (LR)','125 mL/hr','IV infusion','Continuous','Now',false],
-  ['Clindamycin (Cleocin)','900 mg','IVPB','Every 6 hours until delivery for GBS prophylaxis','Now',false],
-  ['Morphine sulfate (Duramorph)','2 mg','Slow IV push','Every 2 hours PRN pain','PRN',true],
- ['Lidocaine (Xylocaine) 1%','Available at delivery','Local infiltration','As needed at delivery','Delivery',false]],
- 'jane-fowler':[
-  ['Lactated Ringer’s solution (LR)','125 mL/hr','IV infusion','Continuous','Now',false],['Cefazolin (Ancef)','2 g in 250 mL','IVPB','On call to OR; infuse over 1 hour','Now',false],['Metoclopramide (Reglan)','10 mg (10 mg/2 mL)','IV','Once','Now',false],['Midazolam (Versed)','1 mg (5 mg/mL)','IV','On call to OR','Now',true],['Morphine sulfate (Duramorph)','2 mg/1 mL','IV push','Every 4 hours PRN; may repeat up to 10 mg every 4 hours','Post-op',true,'pending'],['Ondansetron (Zofran)','4 mg (4 mg/2 mL)','IV push','Every 4 hours PRN nausea','Post-op',false,'pending'],['Naloxone (Narcan)','0.2 mg (0.4 mg/mL)','IV push','Every 2–3 minutes PRN respiratory rate less than 6/min or change in level of consciousness','PRN',true,'pending'],['Ketorolac (Toradol)','30 mg (30 mg/mL)','IV push','Once now','Now',false,'pending']],
- 'fatima-sanogo':[
-  ['Lactated Ringer’s solution (LR)','125 mL/hr','IV infusion','Continuous','Now',false],['Oxytocin (Pitocin)','30 units in 500 mL normal saline','IV infusion','334 mL/hr for 100 mL after placenta, then 95 mL/hr until complete','After placenta',true],['Witch hazel (Tucks)','Pads','Topical','Apply to hemorrhoids PRN','PRN',false],['Pramoxine (Epifoam)','Spray','Topical','Apply to perineum PRN pain','PRN',false],['Oxycodone/acetaminophen (Percocet)','1 tablet','PO','Every 4 hours PRN pain','PRN',false],['Ibuprofen (Motrin)','600 mg','PO','Every 6 hours PRN pain','PRN',false],['Methylergonovine (Methergine)','0.2 mg','IM','Every 2–4 hours PRN','PRN',false,'pending'],['Carboprost tromethamine (Hemabate)','250 mcg','IM','Every 15–90 minutes PRN; maximum 2 mg','PRN',false,'pending'],['Misoprostol (Cytotec)','600–1,000 mcg','PR / SL / PO','PRN per protocol','PRN',false,'pending'],['Tranexamic acid (Cyklokapron; TXA)','1 g','IV over 10 minutes','Once when PPH diagnosed; may repeat once','PRN',true,'pending']],
- 'molly-thomas':[
-  ['Sodium chloride 0.9% (Normal Saline)','20 mL/kg','IV bolus','Infuse over 30 minutes','Now',false],['Racepinephrine (Asthmanefrin)','2.25% nebulized','Nebulizer','Give now','Now',false,'pending'],['Dexamethasone (Decadron)','0.6 mg/kg','IV','Give now','Now',false,'pending'],['Ampicillin (Principen)','50 mg/kg','IV','Every 6 hours','Shift 2',false,'pending'],['Dextrose 5% in 0.45% sodium chloride (D5 1/2 NS)','Daily maintenance rate after void during bolus','IV infusion','Continuous','Shift 2',false,'pending']],
- 'stephanie-smith':[['Dextrose 5% in 0.45% sodium chloride (D5 1/2 NS)','150 mL/hr','IV infusion','Continuous','Now',false],['Morphine','5 mg','IV','Every 4 hours PRN pain','PRN',true]],'charles-jones':[['Lisinopril','20 mg','PO','Daily','0900',false],['Metoprolol','50 mg','PO','Daily','0900',false],['Amiodarone','200 mg','PO','Daily','0900',false],['Digoxin','0.125 mg','PO','Daily','0900',false],['Metformin','1000 mg','PO','Daily','0800',false],['Warfarin','2.5 mg','PO','Daily','2100',true],['Regular insulin','Sliding scale','Subcutaneous','AC and HS','AC/HS',true],['Normal saline','KVO','IV infusion','Continuous','Now',false],['Spironolactone','12.5 mg','PO','Daily—held while receiving Lasix','Held',false]],'baby-boy-sung':[['Vitamin K','1 mg','IM','Once','1300',false],['Erythromycin ophthalmic ointment','0.5 mL ribbon','Ophthalmic','Once both eyes','1300',false],['Glucose gel','Per protocol','PO','PRN hypoglycemia','PRN',false]]};
+  "amelia-sung": [
+    [
+      "Oxytocin (Pitocin)",
+      "30 units in 500 mL sodium chloride 0.9%; infusing at 6 milliunits/min",
+      "IV infusion",
+      "Continuous; discontinue when faculty releases intervention orders",
+      "Now",
+      true
+    ],
+    [
+      "Lactated Ringer’s solution (LR)",
+      "125 mL/hr",
+      "IV infusion",
+      "Continuous",
+      "Now",
+      false
+    ],
+    [
+      "Clindamycin (Cleocin)",
+      "900 mg",
+      "IVPB",
+      "Every 6 hours until delivery for GBS prophylaxis",
+      "Now",
+      false
+    ],
+    [
+      "Lidocaine (Xylocaine) 1%",
+      "Available at delivery",
+      "Local infiltration",
+      "As needed at delivery",
+      "Delivery",
+      false
+    ]
+  ],
+  "jane-fowler": [
+    [
+      "Lactated Ringer’s solution (LR)",
+      "125 mL/hr",
+      "IV infusion",
+      "Continuous",
+      "Now",
+      false
+    ],
+    [
+      "Cefazolin (Ancef)",
+      "2 g in 250 mL",
+      "IVPB",
+      "On call to OR; infuse over 1 hour",
+      "Now",
+      false
+    ],
+    [
+      "Metoclopramide (Reglan)",
+      "10 mg (10 mg/2 mL)",
+      "IV",
+      "Once",
+      "Now",
+      false
+    ],
+    [
+      "Midazolam (Versed)",
+      "1 mg (5 mg/mL)",
+      "IV",
+      "On call to OR",
+      "Now",
+      true
+    ],
+    [
+      "Morphine sulfate (Duramorph)",
+      "2 mg/1 mL",
+      "IV push",
+      "Every 4 hours PRN; may repeat up to 10 mg every 4 hours",
+      "Post-op",
+      true,
+      "pending"
+    ],
+    [
+      "Ondansetron (Zofran)",
+      "4 mg (4 mg/2 mL)",
+      "IV push",
+      "Every 4 hours PRN nausea",
+      "Post-op",
+      false,
+      "pending"
+    ],
+    [
+      "Naloxone (Narcan)",
+      "0.2 mg (0.4 mg/mL)",
+      "IV push",
+      "Every 2–3 minutes PRN respiratory rate less than 6/min or change in level of consciousness",
+      "PRN",
+      true,
+      "pending"
+    ],
+    [
+      "Ketorolac (Toradol)",
+      "30 mg (30 mg/mL)",
+      "IV push",
+      "Once now",
+      "Now",
+      false,
+      "pending"
+    ]
+  ],
+  "fatima-sanogo": [
+    [
+      "Lactated Ringer’s solution (LR)",
+      "125 mL/hr",
+      "IV infusion",
+      "Continuous",
+      "Now",
+      false
+    ],
+    [
+      "Oxytocin (Pitocin)",
+      "30 units in 500 mL normal saline",
+      "IV infusion",
+      "334 mL/hr for 100 mL after placenta, then 95 mL/hr until complete",
+      "After placenta",
+      true
+    ],
+    [
+      "Witch hazel (Tucks)",
+      "Pads",
+      "Topical",
+      "Apply to hemorrhoids PRN",
+      "PRN",
+      false
+    ],
+    [
+      "Pramoxine (Epifoam)",
+      "Spray",
+      "Topical",
+      "Apply to perineum PRN pain",
+      "PRN",
+      false
+    ],
+    [
+      "Oxycodone/acetaminophen (Percocet)",
+      "1 tablet",
+      "PO",
+      "Every 4 hours PRN pain",
+      "PRN",
+      false
+    ],
+    [
+      "Ibuprofen (Motrin)",
+      "600 mg",
+      "PO",
+      "Every 6 hours PRN pain",
+      "PRN",
+      false
+    ],
+    [
+      "Methylergonovine (Methergine)",
+      "0.2 mg",
+      "IM",
+      "Every 2–4 hours PRN",
+      "PRN",
+      false,
+      "pending"
+    ],
+    [
+      "Carboprost tromethamine (Hemabate)",
+      "250 mcg",
+      "IM",
+      "Every 15–90 minutes PRN; maximum 2 mg",
+      "PRN",
+      false,
+      "pending"
+    ],
+    [
+      "Misoprostol (Cytotec)",
+      "600–1,000 mcg",
+      "PR / SL / PO",
+      "PRN per protocol",
+      "PRN",
+      false,
+      "pending"
+    ],
+    [
+      "Tranexamic acid (Cyklokapron; TXA)",
+      "1 g",
+      "IV over 10 minutes",
+      "Once when PPH diagnosed; may repeat once",
+      "PRN",
+      true,
+      "pending"
+    ]
+  ],
+  "molly-thomas": [
+    [
+      "Sodium chloride 0.9% (Normal Saline)",
+      "20 mL/kg",
+      "IV bolus",
+      "Infuse over 30 minutes",
+      "Now",
+      false
+    ],
+    [
+      "Racepinephrine (Asthmanefrin)",
+      "2.25% nebulized",
+      "Nebulizer",
+      "Give now",
+      "Now",
+      false,
+      "pending"
+    ],
+    [
+      "Dexamethasone (Decadron)",
+      "0.6 mg/kg",
+      "IV",
+      "Give now",
+      "Now",
+      false,
+      "pending"
+    ],
+    [
+      "Ampicillin (Principen)",
+      "50 mg/kg",
+      "IV",
+      "Every 6 hours",
+      "Shift 2",
+      false,
+      "pending"
+    ],
+    [
+      "Dextrose 5% in 0.45% sodium chloride (D5 1/2 NS)",
+      "Daily maintenance rate after void during bolus",
+      "IV infusion",
+      "Continuous",
+      "Shift 2",
+      false,
+      "pending"
+    ]
+  ],
+  "stephanie-smith": [
+    [
+      "Dextrose 5% in 0.45% sodium chloride (D5 1/2 NS)",
+      "150 mL/hr",
+      "IV infusion",
+      "Continuous",
+      "Now",
+      false
+    ],
+    [
+      "Morphine",
+      "5 mg",
+      "IV",
+      "Every 4 hours PRN pain",
+      "PRN",
+      true
+    ]
+  ],
+  "charles-jones": [
+    [
+      "Lisinopril",
+      "20 mg",
+      "PO",
+      "Daily",
+      "0900",
+      false
+    ],
+    [
+      "Metoprolol",
+      "50 mg",
+      "PO",
+      "Daily",
+      "0900",
+      false
+    ],
+    [
+      "Amiodarone",
+      "200 mg",
+      "PO",
+      "Daily",
+      "0900",
+      false
+    ],
+    [
+      "Digoxin",
+      "0.125 mg",
+      "PO",
+      "Daily",
+      "0900",
+      false
+    ],
+    [
+      "Metformin",
+      "1000 mg",
+      "PO",
+      "Daily",
+      "0800",
+      false
+    ],
+    [
+      "Warfarin",
+      "2.5 mg",
+      "PO",
+      "Daily",
+      "2100",
+      true
+    ],
+    [
+      "Regular insulin",
+      "Sliding scale",
+      "Subcutaneous",
+      "AC and HS",
+      "AC/HS",
+      true
+    ],
+    [
+      "Normal saline",
+      "KVO",
+      "IV infusion",
+      "Continuous",
+      "Now",
+      false
+    ],
+    [
+      "Spironolactone",
+      "12.5 mg",
+      "PO",
+      "Daily—held while receiving Lasix",
+      "Held",
+      false
+    ]
+  ],
+  "baby-boy-sung": [
+    [
+      "Vitamin K",
+      "1 mg",
+      "IM — vastus lateralis (anterolateral thigh)",
+      "Once",
+      "Now",
+      false
+    ],
+    [
+      "Erythromycin ophthalmic ointment",
+      "0.5%, 1 cm ribbon in each eye",
+      "Ophthalmic",
+      "Once both eyes",
+      "Now",
+      false
+    ],
+    [
+      "Glucose gel",
+      "Per protocol",
+      "PO",
+      "PRN hypoglycemia",
+      "PRN",
+      false
+    ]
+  ]
+};
 function medicationGenericKey(value){
  const text=String(value||'').toLowerCase();
  const known=['cefazolin','metoclopramide','morphine','ondansetron','lactated ringer','midazolam','naloxone','ketorolac','oxytocin','clindamycin','lidocaine','witch hazel','pramoxine','oxycodone','ibuprofen','methylergonovine','carboprost','misoprostol','tranexamic','sodium chloride 0.9','racepinephrine','dexamethasone','ampicillin','dextrose 5%'];
@@ -23,10 +365,10 @@ function medicationGenericKey(value){
 }
 function seedOriginalMAR(){
  state.medicationCatalog||=[];state.releaseQueue||=[];
- const migrate=!state.medicationOrdersRebuiltV6;
+ const migrate=!window.stateMigrationApplied('medicationOrdersRebuiltV6');
  for(const [patientId,meds] of Object.entries(ORIGINAL_MAR))for(const [name,dose,route,frequency,scheduledTime,highAlert,releaseStatus='released'] of meds){
   const key=medicationGenericKey(name);
-  let med=state.medicationCatalog.find(x=>x.patientId===patientId&&medicationGenericKey(x.name)===key&&!x.sourceOrderId);
+  let med=state.medicationCatalog.find(x=>x.patientId===patientId&&medicationGenericKey(x.name)===key&&(!x.sourceOrderId||x.name===name));
   if(!med){
    med={id:patientId==='stephanie-smith'&&key==='dextrose 5%'?'stephanie-d5-half-ns':uid('med'),patientId,name,dose,route,frequency,scheduledTime,status:releaseStatus==='pending'?'Pending':'Due',provider:state.patients.find(x=>x.id===patientId)?.provider||'',highAlert,releaseStatus,barcode:`MED-${slug(name)}-${slug(dose)}-${slug(state.patients.find(x=>x.id===patientId)?.mrn||patientId)}`,notes:''};
    state.medicationCatalog.push(med);ensureShortBarcodes();
@@ -47,7 +389,7 @@ function seedOriginalMAR(){
    base.releaseQueue=(base.releaseQueue||[]).filter(item=>item.targetCollection!=='medicationCatalog'||expectedByPatient[patientId]?.has(medicationGenericKey(item.rowData?.name||item.title)));
   }
  }
- state.medicationOrdersRebuiltV6=true;
+ window.markStateMigration('medicationOrdersRebuiltV6');
 }
 function cloneMedicationRows(patientId){return (state.medicationCatalog||[]).filter(x=>x.patientId===patientId).map(x=>JSON.parse(JSON.stringify(x)));}
 // Replace the early Fowler MAR drafts with the final admission list.  Older
@@ -62,7 +404,7 @@ function normalizeJaneMARV7(){
  // A faculty release changes a pending medication to released.  Keep that
  // live change instead of rebuilding the Fowler MAR back to pending.
  const alreadyClean=existing.length===medicines.length&&existing.every(m=>{const want=expected.get(medicationGenericKey(m.name));const releaseMatches=want&&(m.releaseStatus===want.releaseStatus||(want.releaseStatus==='pending'&&m.releaseStatus==='released'));return releaseMatches&&m.dose===want.dose&&m.route===want.route&&m.frequency===want.frequency&&m.scheduledTime===want.scheduledTime;});
- if(alreadyClean){state.janeMarNormalizedV7=true;return;}
+ if(alreadyClean){window.markStateMigration('janeMarNormalizedV7');return;}
  state.medicationCatalog=(state.medicationCatalog||[]).filter(m=>m.patientId!==patientId);
  state.releaseQueue=(state.releaseQueue||[]).filter(item=>!(item.patientId===patientId&&item.targetCollection==='medicationCatalog'));
  for(const [name,dose,route,frequency,scheduledTime,highAlert,releaseStatus='released'] of medicines){
@@ -78,7 +420,7 @@ function normalizeJaneMARV7(){
   base.collections||={};base.collections.medicationCatalog=cloneMedicationRows(patientId);
   base.releaseQueue=(base.releaseQueue||[]).filter(item=>item.targetCollection!=='medicationCatalog').concat((state.releaseQueue||[]).filter(item=>item.patientId===patientId&&item.targetCollection==='medicationCatalog').map(item=>JSON.parse(JSON.stringify(item))));
  }
- state.janeMarNormalizedV7=true;
+ window.markStateMigration('janeMarNormalizedV7');
 }
 window.normalizeJaneMAR=normalizeJaneMARV7;
 // Fowler's Shift 2 post-op order list releases as one group. Morphine and
@@ -114,7 +456,7 @@ function normalizeMARDueNow(){
 }
 // Apply the corrected admission medication once to existing saved simulations.
 function migrateMollyAdmission(){
- if(state.mollyAdmissionReleasedV1)return;
+ if(window.stateMigrationApplied('mollyAdmissionReleasedV1'))return;
  const med=(state.medicationCatalog||[]).find(x=>x.patientId==='molly-thomas'&&medicationGenericKey(x.name)==='sodium chloride 0.9');
  if(med){
   med.releaseStatus='released';if(med.status==='Pending')med.status='Due';
@@ -122,7 +464,7 @@ function migrateMollyAdmission(){
    item.status='released';item.releasedAt=nowLocal();item.rowData={...med};
   }
  }
- state.mollyAdmissionReleasedV1=true;
+ window.markStateMigration('mollyAdmissionReleasedV1');
 }
 function medicationReleased(med){
  if(med?.sourceReleaseId&&(state.releaseQueue||[]).find(q=>q.id===med.sourceReleaseId)?.status!=='released')return false;
@@ -149,6 +491,7 @@ window.medicationsForPatient=medicationsForPatient;
 // One persistence path for both manual and scanned administrations.
 window.medicationAdministrationHistory=function(m){return (state.mar||[]).filter(r=>r.patientId===m.patientId&&(r.medicationId===m.id||(!r.medicationId&&r.medication===m.name))&&r.status==='Given');};
 window.medicationAdministrationBlock=function(m){
+ if(m?.administrationManagedBy==='anesthesia')return 'Anesthesia-managed infusion: display only; students cannot document administration.';
  if(!m||!medicationReleased(m))return 'This order is not released or has been discontinued.';
  if(/held|hold|discontinu|complete|cancel|clarification|stop/i.test(m.status||'')||/^held$/i.test(m.scheduledTime||''))return 'This order is '+(/^held$/i.test(m.scheduledTime||'')?'Held':m.status)+'. It cannot be administered.';
  const order=(state.orders||[]).find(o=>o.id===m.sourceOrderId||o.medicationId===m.id);
@@ -218,7 +561,7 @@ window.saveMedicationAdministration=function(input){
  if(timing.scheduledFor&&previous.some(r=>(r.scheduledFor||medicationTiming(m,r.time).scheduledFor)===timing.scheduledFor))return fail('This scheduled dose is already documented. No duplicate was added.');
  if(previous.some(r=>r.time===time)||(input.submissionId&&(state.mar||[]).some(r=>r.submissionId===input.submissionId)))return fail('This administration is already saved. No duplicate was added.');
  if(previous.length&&!input.repeatConfirmed)return fail('Review the previous administration and confirm this is a new dose.');
- const row={id:uid('mar'),patientId:input.patientId,medicationId:m.id,medication:m.name,dose,route,due:m.scheduledTime||m.frequency,time,student,status:'Given',response:String(input.response||'').trim(),verifiedBy:String(input.verifiedBy||'').trim(),submissionId:input.submissionId||uid('administration')};
+ const row={id:uid('mar'),patientId:input.patientId,shiftNumber:state.simulationShifts?.[input.patientId]?.shift||1,medicationId:m.id,medication:m.name,dose,route,due:m.scheduledTime||m.frequency,time,student,status:'Given',response:String(input.response||'').trim(),verifiedBy:String(input.verifiedBy||'').trim(),submissionId:input.submissionId||uid('administration')};
  Object.assign(row,medicationTiming(m,time),{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),patientScanMethod:'Scanner or entered code'});
  if(bloodUnit)Object.assign(row,{bloodUnitId:bloodUnit.id,bloodUnitNumber:bloodUnit.unitNumber,bloodType:bloodUnit.unitType});
  if(input.method==='barcode')Object.assign(row,{patientBarcode:normalizeMedicationBarcode(input.patientBarcode),medicationBarcode:normalizeMedicationBarcode(input.medicationBarcode),patientScanMethod:'Scanner or entered code',medicationScanMethod:'Scanner or entered code'});
@@ -226,8 +569,8 @@ window.saveMedicationAdministration=function(input){
  if(input.validateOnly)return {ok:true,row,order:JSON.stringify(m),previousIds:previous.map(r=>r.id)};
  if(window.ATU_CONFIG?.supabaseUrl)return commitMedicationAdministration(input,{order:JSON.stringify(m),previousIds:previous.map(r=>r.id)});
  state.mar ||= [];state.mar.push(row);
- try{save();}catch(e){state.mar=state.mar.filter(r=>r.id!==row.id);return fail('Unable to save in this browser. No administration was recorded. Check browser storage and try again.');}
- try{audit('Medication administration',m.patientId,`${m.name} ${dose} given by ${student}`);liveSave('medication_administration_documented',{patientId:m.patientId,medicationId:m.id});}catch(e){console.error('Administration saved locally; sharing or audit failed',e);}
+ try{save({immediate:true});}catch(e){state.mar=state.mar.filter(r=>r.id!==row.id);return fail('Unable to save in this browser. No administration was recorded. Check browser storage and try again.');}
+ try{liveSave('medication_administration_documented',{patientId:m.patientId,medicationId:m.id});}catch(e){console.error('Administration saved locally; sharing failed',e);}
  return {ok:true,row};
 };
 // Four-digit identifiers are retained by record ID, including after simulation resets.
@@ -235,11 +578,11 @@ function ensureShortBarcodes(){
  state.shortBarcodeRegistry||={};
  const registry=state.shortBarcodeRegistry;
  const records=[...state.patients.map(row=>({row,key:'patient:'+row.id})),...(state.medicationCatalog||[]).map(row=>({row,key:'med:'+row.id})),...(state.bloodUnits||[]).map(row=>({row,key:'blood:'+row.id}))];
- const used=new Set(Object.values(registry));
+ const used=new Set([...Object.values(registry),...Object.values(window.LEGACY_MEDICATION_CODES||{})]);
  for(const {row,key} of records){
   if(!registry[key]){
-   let code=String(row.barcode||'');
-   if(!/^\d{4}$/.test(code)||used.has(code)){
+   const historical=window.LEGACY_MEDICATION_CODES?.[row.patientId+'|'+row.name];let code=String(historical||row.barcode||'');
+   if(!/^\d{4}$/.test(code)||(used.has(code)&&!historical)){
     let n=1000;while(used.has(String(n))&&n<=9999)n++;
     if(n>9999)throw new Error('All four-digit barcode identifiers are assigned.');
     code=String(n);
@@ -277,13 +620,12 @@ function attachManualBarcodeOverride(){
   overrideFeedback.textContent=success?'Manual codes verified. Complete administration documentation.':'Verification failed. Check the wristband and medication label.';
   if(!success)return;
   if(document.getElementById('cjStudent'))cjStudent.value=student;
-  audit('Manual scan verification',p.id,`${student}: ${reason}; patient ${patientScan.value.trim()}; medication ${medScan.value.trim()}`);
   liveSave('manual_scan_verification',{patientId:p.id,student,reason,patientBarcode:patientScan.value.trim(),medicationBarcode:medScan.value.trim()});
  };
 }
 function slidingScale(glucose){const value=Number(glucose);if(!Number.isFinite(value)||value<0)return null;if(value<150)return {dose:0,text:'No insulin recommended'};if(value<200)return {dose:2,text:'Give 2 units subcutaneously'};if(value<250)return {dose:4,text:'Give 4 units subcutaneously'};if(value<300)return {dose:6,text:'Give 6 units subcutaneously'};if(value<350)return {dose:8,text:'Give 8 units subcutaneously'};return {dose:10,text:'Give 10 units subcutaneously and notify the provider'};}
-function renderGlucoseModule(){if(!requirePatient())return;const p=activePatient();if(typeof PATIENTS_WITHOUT_GLUCOSE_MODULE!=='undefined'&&PATIENTS_WITHOUT_GLUCOSE_MODULE.has(p.id)){currentView='summary';renderSummary();return}state.glucoseChecks||=[];const rows=state.glucoseChecks.filter(x=>x.patientId===p.id).slice().reverse(),insulin=medicationsForPatient(p.id,false).find(x=>/insulin/i.test(x.name));document.getElementById('view').innerHTML=panel(`Blood Glucose & Sliding Scale — ${esc(p.name)}`,`<div class="grid3"><label>Date/Time<input id="bgTime" type="datetime-local" value="${nowLocal()}"></label><label>Schedule<select id="bgSchedule"><option>AC Breakfast</option><option>AC Lunch</option><option>AC Dinner</option><option>HS</option><option>PRN</option></select></label><label>Blood Glucose (mg/dL)<input id="bgValue" type="number" min="0"></label><label>Student / Initials<input id="bgStudent"></label><label>Independent Verifier<input id="bgVerifier" placeholder="Required if insulin is given"></label><label>Insulin Order<input value="${esc(insulin?`${insulin.name} — ${insulin.dose}`:'No active insulin order')}" readonly></label></div><div class="actions"><button id="calculateInsulin" class="secondary">Calculate Sliding-Scale Recommendation</button><button id="saveGlucoseCheck" class="primary">Save Blood Sugar Check</button><button id="documentRecommendedInsulin" class="primary">Document Recommended Insulin</button></div><div id="insulinRecommendation" class="note" role="status"></div><div class="warn" style="margin-top:8px">Simulation recommendation: less than 150 = none; 150–199 = 2 units; 200–249 = 4 units; 250–299 = 6 units; 300–349 = 8 units; 350 or greater = 10 units and notify provider. Verify against the active provider order before administration.</div>`)+panel('Blood Glucose History',`<table><thead><tr><th>Time</th><th>Schedule</th><th>Glucose</th><th>Recommendation</th><th>Insulin Given</th><th>Student / Verifier</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.schedule)}</td><td>${esc(x.glucose)} mg/dL</td><td>${esc(x.recommendation)}</td><td>${esc(x.insulinGiven||'—')}</td><td>${esc(x.student)}${x.verifier?` / ${esc(x.verifier)}`:''}</td></tr>`).join('')||'<tr><td colspan="6">No blood glucose checks documented.</td></tr>'}</tbody></table>`);let recommendation=null;calculateInsulin.onclick=()=>{recommendation=slidingScale(bgValue.value);insulinRecommendation.className=recommendation?'success':'warn';insulinRecommendation.textContent=recommendation?`${recommendation.text}.`:'Enter a valid blood glucose value.';};const buildRow=insulinGiven=>{if(!recommendation)recommendation=slidingScale(bgValue.value);if(!recommendation||!bgStudent.value.trim()){alert('Enter the blood glucose and student/initials.');return null}if(insulinGiven&&recommendation.dose>0&&!insulin){alert('There is no active insulin order for this patient. Save the glucose check and notify the provider.');return null}if(insulinGiven&&recommendation.dose>0&&!bgVerifier.value.trim()){alert('Enter the independent verifier before documenting insulin.');return null}return {id:uid('glucose'),patientId:p.id,time:bgTime.value,schedule:bgSchedule.value,glucose:Number(bgValue.value),recommendation:recommendation.text,units:recommendation.dose,insulinGiven:insulinGiven&&recommendation.dose>0?`${recommendation.dose} units ${insulin.name}`:insulinGiven?'No insulin indicated':'Not documented',student:bgStudent.value.trim(),verifier:bgVerifier.value.trim()}};saveGlucoseCheck.onclick=()=>{const row=buildRow(false);if(!row)return;state.glucoseChecks.push(row);audit('Blood glucose documented',p.id,`${row.glucose} mg/dL; ${row.recommendation}`);renderGlucoseModule();};documentRecommendedInsulin.onclick=()=>{const row=buildRow(true);if(!row)return;state.glucoseChecks.push(row);if(row.units>0)state.mar.push({id:uid('mar'),patientId:p.id,time:row.time,student:row.student,medication:insulin.name,dose:`${row.units} units`,route:'Subcutaneous',due:row.schedule,status:'Given',response:`Blood glucose ${row.glucose} mg/dL`,verifiedBy:row.verifier});audit('Sliding-scale insulin documented',p.id,`${row.glucose} mg/dL; ${row.insulinGiven}`);renderGlucoseModule();};}
-function attachPendingMedicationControl(){if(!isFaculty()||!activePatient()||document.getElementById('savePendingMedication'))return;const p=activePatient(),host=document.getElementById('view');host.insertAdjacentHTML('beforeend',panel('Create Pending Medication',`<div class="note">Enter a medication now and keep it hidden from students until faculty releases it.</div><div class="grid3"><label>Medication<input id="pendingMedName"></label><label>Dose<input id="pendingMedDose"></label><label>Route<input id="pendingMedRoute"></label><label>Frequency<input id="pendingMedFrequency"></label><label>Scheduled Time<input id="pendingMedTime"></label><label>Provider<input id="pendingMedProvider" value="${esc(p.provider||'')}"></label><label>High Alert<select id="pendingMedHigh"><option value="false">No</option><option value="true">Yes</option></select></label><label>Barcode<input id="pendingMedBarcode" placeholder="Four-digit code assigned automatically" readonly></label><label class="wide">Instructions / Notes<textarea id="pendingMedNotes"></textarea></label></div><button id="savePendingMedication" class="primary">Save Medication as Pending</button>`));savePendingMedication.onclick=()=>{const name=pendingMedName.value.trim();if(!name||!pendingMedDose.value.trim()){alert('Enter the medication and dose.');return}const med={id:uid('med'),patientId:p.id,name,dose:pendingMedDose.value.trim(),route:pendingMedRoute.value.trim(),frequency:pendingMedFrequency.value.trim(),scheduledTime:pendingMedTime.value.trim(),provider:pendingMedProvider.value.trim(),status:'Due',highAlert:pendingMedHigh.value==='true',barcode:pendingMedBarcode.value.trim()||`MED-${slug(name)}-${slug(pendingMedDose.value)}-${slug(p.mrn)}`,notes:pendingMedNotes.value.trim()};queueRelease('chartdata',p.id,`${med.name} ${med.dose}`,`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),{targetCollection:'medicationCatalog',rowData:med,provider:med.provider,orderType:'Medication'});audit('Pending medication created',p.id,`${med.name} ${med.dose}`);renderFaculty();};}
+function renderGlucoseModule(){if(!requirePatient())return;const p=activePatient();if(typeof PATIENTS_WITHOUT_GLUCOSE_MODULE!=='undefined'&&PATIENTS_WITHOUT_GLUCOSE_MODULE.has(p.id)){currentView='summary';renderSummary();return}state.glucoseChecks||=[];const rows=state.glucoseChecks.filter(x=>x.patientId===p.id).slice().reverse(),insulin=medicationsForPatient(p.id,false).find(x=>/insulin/i.test(x.name));document.getElementById('view').innerHTML=panel(`Blood Glucose & Sliding Scale — ${esc(p.name)}`,`<div class="grid3"><label>Date/Time<input id="bgTime" type="datetime-local" value="${nowLocal()}"></label><label>Schedule<select id="bgSchedule"><option>AC Breakfast</option><option>AC Lunch</option><option>AC Dinner</option><option>HS</option><option>PRN</option></select></label><label>Blood Glucose (mg/dL)<input id="bgValue" type="number" min="0"></label><label>Student / Initials<input id="bgStudent"></label><label>Independent Verifier<input id="bgVerifier" placeholder="Required if insulin is given"></label><label>Insulin Order<input value="${esc(insulin?`${insulin.name} — ${insulin.dose}`:'No active insulin order')}" readonly></label></div><div class="actions"><button id="calculateInsulin" class="secondary">Calculate Sliding-Scale Recommendation</button><button id="saveGlucoseCheck" class="primary">Save Blood Sugar Check</button><button id="documentRecommendedInsulin" class="primary">Document Recommended Insulin</button></div><div id="insulinRecommendation" class="note" role="status"></div><div class="warn" style="margin-top:8px">Simulation recommendation: less than 150 = none; 150–199 = 2 units; 200–249 = 4 units; 250–299 = 6 units; 300–349 = 8 units; 350 or greater = 10 units and notify provider. Verify against the active provider order before administration.</div>`)+panel('Blood Glucose History',`<table><thead><tr><th>Time</th><th>Schedule</th><th>Glucose</th><th>Recommendation</th><th>Insulin Given</th><th>Student / Verifier</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.schedule)}</td><td>${esc(x.glucose)} mg/dL</td><td>${esc(x.recommendation)}</td><td>${esc(x.insulinGiven||'—')}</td><td>${esc(x.student)}${x.verifier?` / ${esc(x.verifier)}`:''}</td></tr>`).join('')||'<tr><td colspan="6">No blood glucose checks documented.</td></tr>'}</tbody></table>`);let recommendation=null;calculateInsulin.onclick=()=>{recommendation=slidingScale(bgValue.value);insulinRecommendation.className=recommendation?'success':'warn';insulinRecommendation.textContent=recommendation?`${recommendation.text}.`:'Enter a valid blood glucose value.';};const buildRow=insulinGiven=>{if(!recommendation)recommendation=slidingScale(bgValue.value);if(!recommendation||!bgStudent.value.trim()){alert('Enter the blood glucose and student/initials.');return null}if(insulinGiven&&recommendation.dose>0&&!insulin){alert('There is no active insulin order for this patient. Save the glucose check and notify the provider.');return null}if(insulinGiven&&recommendation.dose>0&&!bgVerifier.value.trim()){alert('Enter the independent verifier before documenting insulin.');return null}return {id:uid('glucose'),patientId:p.id,time:bgTime.value,schedule:bgSchedule.value,glucose:Number(bgValue.value),recommendation:recommendation.text,units:recommendation.dose,insulinGiven:insulinGiven&&recommendation.dose>0?`${recommendation.dose} units ${insulin.name}`:insulinGiven?'No insulin indicated':'Not documented',student:bgStudent.value.trim(),verifier:bgVerifier.value.trim()}};saveGlucoseCheck.onclick=()=>{const row=buildRow(false);if(!row)return;state.glucoseChecks.push(row);save({immediate:true});renderGlucoseModule();};documentRecommendedInsulin.onclick=()=>{const row=buildRow(true);if(!row)return;state.glucoseChecks.push(row);if(row.units>0)state.mar.push({id:uid('mar'),patientId:p.id,time:row.time,student:row.student,medication:insulin.name,dose:`${row.units} units`,route:'Subcutaneous',due:row.schedule,status:'Given',response:`Blood glucose ${row.glucose} mg/dL`,verifiedBy:row.verifier});save({immediate:true});renderGlucoseModule();};}
+function attachPendingMedicationControl(){if(!isFaculty()||!activePatient()||document.getElementById('savePendingMedication'))return;const p=activePatient(),host=document.getElementById('view');host.insertAdjacentHTML('beforeend',panel('Create Pending Medication',`<div class="note">Enter a medication now and keep it hidden from students until faculty releases it.</div><div class="grid3"><label>Medication<input id="pendingMedName"></label><label>Dose<input id="pendingMedDose"></label><label>Route<input id="pendingMedRoute"></label><label>Frequency<input id="pendingMedFrequency"></label><label>Scheduled Time<input id="pendingMedTime"></label><label>Provider<input id="pendingMedProvider" value="${esc(p.provider||'')}"></label><label>High Alert<select id="pendingMedHigh"><option value="false">No</option><option value="true">Yes</option></select></label><label>Barcode<input id="pendingMedBarcode" placeholder="Four-digit code assigned automatically" readonly></label><label class="wide">Instructions / Notes<textarea id="pendingMedNotes"></textarea></label></div><button id="savePendingMedication" class="primary">Save Medication as Pending</button>`));savePendingMedication.onclick=()=>{const name=pendingMedName.value.trim();if(!name||!pendingMedDose.value.trim()){alert('Enter the medication and dose.');return}const med={id:uid('med'),patientId:p.id,name,dose:pendingMedDose.value.trim(),route:pendingMedRoute.value.trim(),frequency:pendingMedFrequency.value.trim(),scheduledTime:pendingMedTime.value.trim(),provider:pendingMedProvider.value.trim(),status:'Due',highAlert:pendingMedHigh.value==='true',barcode:pendingMedBarcode.value.trim()||`MED-${slug(name)}-${slug(pendingMedDose.value)}-${slug(p.mrn)}`,notes:pendingMedNotes.value.trim()};queueRelease('chartdata',p.id,`${med.name} ${med.dose}`,`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),{targetCollection:'medicationCatalog',rowData:med,provider:med.provider,orderType:'Medication'});save();renderFaculty();};}
 // Also reconcile MAR data restored after startup or introduced by a later release.
 function reconcileSmithTylenolMAR(){
  const correct=row=>{
@@ -325,19 +667,20 @@ function ensureMedicationData(){
 }
 function renderBarcodeCenter(){if(!isFaculty()||!requirePatient())return;ensureMedicationData();const p=activePatient(),meds=state.medicationCatalog.filter(x=>x.patientId===p.id),blood=state.bloodUnits.filter(x=>x.patientId===p.id),labelMeds=meds.concat(window.bloodLabelMedications?.(p.id)||[]);document.getElementById('view').innerHTML=panel(`Barcode & Medication Center — ${esc(p.name)}`,`<div class="success"><b>Patient Wristband:</b> ${esc(p.barcode)}</div><div class="actions"><button id="printPatientBarcode" class="primary">Print Patient Wristband Barcode</button><button id="printPatientMedSheet" class="secondary">Print Patient Wristband + All Patient Medications</button></div>`)+panel('Add Medication',`<div class="grid3"><label>Medication Name<input id="bcMedName"></label><label>Dose<input id="bcMedDose"></label><label>Route<input id="bcMedRoute"></label><label>Frequency<input id="bcMedFrequency"></label><label>Scheduled Time<input id="bcMedTime"></label><label>Provider<input id="bcMedProvider" value="${esc(p.provider||'')}"></label><label>Status<select id="bcMedStatus"><option>Due</option><option>Active</option><option>Held</option><option>Discontinued</option></select></label><label>High Alert<select id="bcMedHigh"><option value="false">No</option><option value="true">Yes</option></select></label><label>Barcode<input id="bcMedBarcode" placeholder="Four-digit code assigned automatically" readonly></label><label class="wide">Instructions / Notes<textarea id="bcMedNotes"></textarea></label></div><button id="bcAddMedication" class="primary">Add Medication to MAR</button>`)+panel('Medication Orders',`${meds.map(m=>`<div class="releaseCard" data-med-label="${esc(m.id)}"><b>${esc(m.name)} ${esc(m.dose)}</b><div class="note">${esc(m.route)} • ${esc(m.frequency)}</div><button class="danger deleteMed">Delete Medication</button></div>`).join('')}`)+renderPackageLabelCenter(labelMeds)+panel('Add Blood Product',`<div class="grid3"><label>Product<select id="bcBloodProduct"><option>Packed red blood cells</option><option>Fresh frozen plasma</option><option>Platelets</option><option>Cryoprecipitate</option><option>Whole blood</option></select></label><label>ABO/Rh<input id="bcBloodType"></label><label>Unit Number<input id="bcBloodUnit"></label><label>Expiration<input id="bcBloodExpiry" type="datetime-local"></label><label>Barcode<input id="bcBloodBarcode" placeholder="Four-digit code assigned automatically" readonly></label></div><button id="bcAddBlood" class="primary">Add Blood Product</button>`)+panel('Blood Product Barcode Labels',`${blood.map(b=>`<div class="releaseCard" data-blood-label="${esc(b.id)}"><b>${esc(b.product)} — ${esc(b.unitType)} — Unit ${esc(b.unitNumber)}</b><div class="note">${esc(b.barcode)}</div><div class="actions"><label>Copies<input class="bloodCopies" type="number" min="1" max="50" value="2"></label><button class="primary printBlood">Print Blood Barcode</button><button class="danger deleteBlood">Delete Blood Product</button></div></div>`).join('')||'<div class="note">No blood products entered.</div>'}`);
  attachPackageLabelCenter(labelMeds);
- document.querySelectorAll('[data-med-label]').forEach(card=>{card.querySelector('.deleteMed').insertAdjacentHTML('beforebegin','<button class="secondary editMed">Edit Medication</button>');card.querySelector('.editMed').onclick=()=>{const med=state.medicationCatalog.find(x=>x.id===card.dataset.medLabel),name=prompt('Medication name:',med.name);if(name===null)return;const dose=prompt('Dose:',med.dose);if(dose===null)return;const route=prompt('Route:',med.route);if(route===null)return;const frequency=prompt('Frequency / due time:',med.frequency);if(frequency===null)return;const barcode=med.barcode;if(state.medicationCatalog.some(x=>x.id!==med.id&&x.barcode===barcode.trim())){alert('That medication barcode is already assigned.');return}Object.assign(med,{name:name.trim(),dose:dose.trim(),route:route.trim(),frequency:frequency.trim(),scheduledTime:frequency.trim(),barcode:barcode.trim()||`MED-${slug(name)}-${slug(dose)}-${slug(p.mrn)}`});audit('Medication edited',p.id,med.name);renderBarcodeCenter();};});
+ document.querySelectorAll('[data-med-label]').forEach(card=>{card.querySelector('.deleteMed').insertAdjacentHTML('beforebegin','<button class="secondary editMed">Edit Medication</button>');card.querySelector('.editMed').onclick=()=>{const med=state.medicationCatalog.find(x=>x.id===card.dataset.medLabel),name=prompt('Medication name:',med.name);if(name===null)return;const dose=prompt('Dose:',med.dose);if(dose===null)return;const route=prompt('Route:',med.route);if(route===null)return;const frequency=prompt('Frequency / due time:',med.frequency);if(frequency===null)return;const barcode=med.barcode;if(state.medicationCatalog.some(x=>x.id!==med.id&&x.barcode===barcode.trim())){alert('That medication barcode is already assigned.');return}Object.assign(med,{name:name.trim(),dose:dose.trim(),route:route.trim(),frequency:frequency.trim(),scheduledTime:frequency.trim(),barcode:barcode.trim()||`MED-${slug(name)}-${slug(dose)}-${slug(p.mrn)}`});save();renderBarcodeCenter();};});
  printPatientBarcode.onclick=()=>printLabels(p.name,p.barcode,`MRN ${p.mrn} | DOB ${p.dob} | Room ${p.room}`,1,'small');printPatientMedSheet.onclick=()=>{try{saveVisiblePackageDetails();const packages=[...new Map(labelMeds.flatMap(m=>packagesForMedication(m)).map(pkg=>[pkg.id,pkg])).values()];openMedicationLabels(packages.concat(blood.map(bloodUnitLabelPackage)).map(package=>({package,copies:1})),1,true,{patient:p,barcodeHTML:barcodeSvg(p.barcode,50)});}catch(e){alert(e.message);}};
- bcAddMedication.onclick=()=>{const name=bcMedName.value.trim();if(!name){alert('Enter the medication name.');return}const med={id:uid('med'),patientId:p.id,name,dose:bcMedDose.value.trim(),route:bcMedRoute.value.trim(),frequency:bcMedFrequency.value.trim(),scheduledTime:bcMedTime.value.trim(),provider:bcMedProvider.value.trim(),status:bcMedStatus.value,highAlert:bcMedHigh.value==='true',barcode:bcMedBarcode.value.trim()||`MED-${slug(name)}-${slug(bcMedDose.value)}-${slug(p.mrn)}`,notes:bcMedNotes.value.trim()};if(state.medicationCatalog.some(x=>x.barcode===med.barcode)){alert('That medication barcode is already in use.');return}state.medicationCatalog.push(med);ensureShortBarcodes();state.orders.push({id:uid('order'),patientId:p.id,time:nowLocal(),provider:med.provider,type:'Medication',text:`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),status:'Active',enteredBy:'Faculty',medicationId:med.id});audit('Medication added',p.id,med.name);renderBarcodeCenter();};
+ bcAddMedication.onclick=()=>{const name=bcMedName.value.trim();if(!name){alert('Enter the medication name.');return}const med={id:uid('med'),patientId:p.id,name,dose:bcMedDose.value.trim(),route:bcMedRoute.value.trim(),frequency:bcMedFrequency.value.trim(),scheduledTime:bcMedTime.value.trim(),provider:bcMedProvider.value.trim(),status:bcMedStatus.value,highAlert:bcMedHigh.value==='true',barcode:bcMedBarcode.value.trim()||`MED-${slug(name)}-${slug(bcMedDose.value)}-${slug(p.mrn)}`,notes:bcMedNotes.value.trim()};if(state.medicationCatalog.some(x=>x.barcode===med.barcode)){alert('That medication barcode is already in use.');return}state.medicationCatalog.push(med);ensureShortBarcodes();state.orders.push({id:uid('order'),patientId:p.id,time:nowLocal(),provider:med.provider,type:'Medication',text:`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),status:'Active',enteredBy:'Faculty',medicationId:med.id});save();renderBarcodeCenter();};
  document.querySelectorAll('[data-med-label]').forEach(card=>{const med=state.medicationCatalog.find(x=>x.id===card.dataset.medLabel);card.querySelector('.deleteMed').onclick=()=>{if(!confirm(`Delete ${med.name}?`))return;state.medicationCatalog=state.medicationCatalog.filter(x=>x.id!==med.id);liveSave('medication_deleted',{patientId:p.id,medicationId:med.id});renderBarcodeCenter();};});
  bcAddBlood.onclick=()=>{if(!bcBloodUnit.value.trim()){alert('Enter the blood unit number.');return}const b={id:uid('bloodunit'),patientId:p.id,product:bcBloodProduct.value,unitType:bcBloodType.value.trim(),unitNumber:bcBloodUnit.value.trim(),expiration:bcBloodExpiry.value,status:'Available',barcode:bcBloodBarcode.value.trim()||`BLOOD-${slug(bcBloodProduct.value)}-${slug(bcBloodType.value)}-${slug(bcBloodUnit.value)}`};state.bloodUnits.push(b);ensureShortBarcodes();liveSave('blood_product_added',{patientId:p.id,bloodUnitId:b.id});renderBarcodeCenter();};document.querySelectorAll('[data-blood-label]').forEach(card=>{const b=state.bloodUnits.find(x=>x.id===card.dataset.bloodLabel);card.querySelector('.printBlood').onclick=()=>openMedicationLabels([{package:bloodUnitLabelPackage(b),copies:Number(card.querySelector('.bloodCopies').value)}],1,true);card.querySelector('.deleteBlood').onclick=()=>{if(!confirm(`Delete blood unit ${b.unitNumber}?`))return;state.bloodUnits=state.bloodUnits.filter(x=>x.id!==b.id);liveSave('blood_product_deleted',{patientId:p.id,bloodUnitId:b.id});renderBarcodeCenter();};});}
 window.renderBarcodeCenter=renderBarcodeCenter;
+window.seedOriginalMAR=seedOriginalMAR;window.migrateMollyAdmission=migrateMollyAdmission;
 window.ensureMedicationData=ensureMedicationData;
 window.renderGlucoseModule=renderGlucoseModule;
-window.initializeMedicationSystem=function(){ensureMedicationData();const previousMAR=renderMAR;renderMAR=function(){ensureMedicationData();previousMAR();if(!activePatient()||(!isFaculty()&&state.marVisibility?.[activePatientId]===false))return;const p=activePatient(),meds=medicationsForPatient(p.id);if(activePatientId==='charles-jones')return;const old=document.querySelector('#view #marPatientScan')?.closest('.panel');if(old)old.remove();let verifiedMed=null;document.getElementById('view').insertAdjacentHTML('afterbegin',panel('MAR Barcode Scanning',`<div class="grid3"><label>Scan Patient Wristband<input id="scanPatientBarcode" placeholder="Scan wristband or enter printed code"></label><label>Scan Medication Barcode<input id="scanMedicationBarcode" placeholder="Scan medication barcode"></label><label>Student Nurse<input id="scanStudent"></label></div><div class="actions"><button id="verifyMedicationScan" class="primary">Verify Patient & Medication</button>${isFaculty()?'<button id="openBarcodeCenter" class="secondary">Open Barcode Center</button>':''}</div><div id="medScanFeedback" class="note"></div><div class="note" style="margin-top:8px"><b>Medication barcodes on this MAR:</b> ${meds.map(m=>esc(m.barcode)).join(' • ')||'No medications entered.'}</div>`));verifyMedicationScan.onclick=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(scanPatientBarcode.value.trim()),med=meds.find(x=>x.barcode===scanMedicationBarcode.value.trim()&&(isFaculty()||medicationReleased(x)));verifiedMed=patientOk&&med?med:null;medScanFeedback.className=verifiedMed?'success':'warn';medScanFeedback.textContent=!patientOk?'PATIENT MISMATCH: Stop and verify the wristband.':!med?'MEDICATION MISMATCH: Medication is not ordered for this patient.':`MATCH VERIFIED: ${p.name} — ${med.name} ${med.dose}. Complete administration documentation below.`;if(verifiedMed){marMedication.value=med.name;marDose.value=med.dose;marRoute.value=med.route;marDue.value=med.scheduledTime||med.frequency;marStudent.value=scanStudent.value.trim();}};scanPatientBarcode.oninput=scanMedicationBarcode.oninput=()=>{verifiedMed=null;medScanFeedback.className='note';medScanFeedback.textContent='Codes changed. Verify again before documenting.';};const saveAdministration=document.getElementById('saveMarAdministration');if(saveAdministration)saveAdministration.onclick=()=>{if(!verifiedMed||(!isFaculty()&&!medicationReleased(verifiedMed))||![p.barcode,String(p.mrn)].includes(scanPatientBarcode.value.trim())||verifiedMed.barcode!==scanMedicationBarcode.value.trim()){alert('Scan and verify the patient wristband and medication before documenting administration.');return}const row={id:uid('mar'),patientId:p.id,time:marTime.value,student:marStudent.value.trim()||scanStudent.value.trim(),medication:verifiedMed.name,dose:marDose.value.trim(),route:marRoute.value.trim(),due:marDue.value.trim(),status:marStatus.value,response:marResponse.value.trim(),patientBarcode:scanPatientBarcode.value.trim(),medicationBarcode:scanMedicationBarcode.value.trim()};if(!row.time||!row.student){alert('Administration time and student/initials are required.');return}state.mar.push(row);audit('Medication administration',p.id,`${row.medication}: ${row.status} by ${row.student}`);renderMAR();};if(document.getElementById('openBarcodeCenter'))openBarcodeCenter.onclick=()=>{currentView='barcodes';render();};};
+window.initializeMedicationSystem=function(){ensureMedicationData();const previousMAR=renderMAR;renderMAR=function(){ensureMedicationData();previousMAR();if(!activePatient()||(!isFaculty()&&state.marVisibility?.[activePatientId]===false))return;const p=activePatient(),meds=medicationsForPatient(p.id);if(activePatientId==='charles-jones')return;const old=document.querySelector('#view #marPatientScan')?.closest('.panel');if(old)old.remove();let verifiedMed=null;document.getElementById('view').insertAdjacentHTML('afterbegin',panel('MAR Barcode Scanning',`<div class="grid3"><label>Scan Patient Wristband<input id="scanPatientBarcode" placeholder="Scan wristband or enter printed code"></label><label>Scan Medication Barcode<input id="scanMedicationBarcode" placeholder="Scan medication barcode"></label><label>Student Nurse<input id="scanStudent"></label></div><div class="actions"><button id="verifyMedicationScan" class="primary">Verify Patient & Medication</button>${isFaculty()?'<button id="openBarcodeCenter" class="secondary">Open Barcode Center</button>':''}</div><div id="medScanFeedback" class="note"></div><div class="note" style="margin-top:8px"><b>Medication barcodes on this MAR:</b> ${meds.map(m=>esc(m.barcode)).join(' • ')||'No medications entered.'}</div>`));verifyMedicationScan.onclick=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(scanPatientBarcode.value.trim()),med=meds.find(x=>x.barcode===scanMedicationBarcode.value.trim()&&(isFaculty()||medicationReleased(x)));verifiedMed=patientOk&&med?med:null;medScanFeedback.className=verifiedMed?'success':'warn';medScanFeedback.textContent=!patientOk?'PATIENT MISMATCH: Stop and verify the wristband.':!med?'MEDICATION MISMATCH: Medication is not ordered for this patient.':`MATCH VERIFIED: ${p.name} — ${med.name} ${med.dose}. Complete administration documentation below.`;if(verifiedMed){marMedication.value=med.name;marDose.value=med.dose;marRoute.value=med.route;marDue.value=med.scheduledTime||med.frequency;marStudent.value=scanStudent.value.trim();}};scanPatientBarcode.oninput=scanMedicationBarcode.oninput=()=>{verifiedMed=null;medScanFeedback.className='note';medScanFeedback.textContent='Codes changed. Verify again before documenting.';};const saveAdministration=document.getElementById('saveMarAdministration');if(saveAdministration)saveAdministration.onclick=()=>{if(!verifiedMed||(!isFaculty()&&!medicationReleased(verifiedMed))||![p.barcode,String(p.mrn)].includes(scanPatientBarcode.value.trim())||verifiedMed.barcode!==scanMedicationBarcode.value.trim()){alert('Scan and verify the patient wristband and medication before documenting administration.');return}const row={id:uid('mar'),patientId:p.id,time:marTime.value,student:marStudent.value.trim()||scanStudent.value.trim(),medication:verifiedMed.name,dose:marDose.value.trim(),route:marRoute.value.trim(),due:marDue.value.trim(),status:marStatus.value,response:marResponse.value.trim(),patientBarcode:scanPatientBarcode.value.trim(),medicationBarcode:scanMedicationBarcode.value.trim()};if(!row.time||!row.student){alert('Administration time and student/initials are required.');return}state.mar.push(row);save();renderMAR();};if(document.getElementById('openBarcodeCenter'))openBarcodeCenter.onclick=()=>{currentView='barcodes';render();};};
  const previousBlood=renderBloodAdministration;renderBloodAdministration=function(){ensureMedicationData();previousBlood();if(!['fatima-sanogo','stephanie-smith'].includes(activePatientId))return;const p=activePatient(),units=state.bloodUnits.filter(x=>x.patientId===p.id&&x.status!=='Transfused');const actions=document.getElementById('baVerify')?.closest('.actions');if(actions&&isFaculty())actions.insertAdjacentHTML('beforeend','<button id="openBloodBarcodes" class="secondary">Manage / Print Blood Barcodes</button>');if(document.getElementById('openBloodBarcodes'))openBloodBarcodes.onclick=()=>{currentView='barcodes';render();};baVerify.onclick=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(baPatient.value.trim()),unit=units.find(x=>x.barcode===baBarcode.value.trim()&&x.unitNumber===baUnit.value.trim());if(!patientOk){alert('PATIENT MISMATCH: Scan the correct patient wristband.');return}if(!unit){alert('BLOOD PRODUCT MISMATCH: Unit number and barcode do not match an available unit assigned to this patient.');return}alert('Patient wristband and blood-product barcode verified. Complete the independent verifier check before administration.');};};
  liveSave('medication_system_initialized');};
 const initializeIntegratedMedicationSystem=window.initializeMedicationSystem;window.initializeMedicationSystem=function(){initializeIntegratedMedicationSystem();const scannedMAR=renderMAR;renderMAR=function(){scannedMAR();};const scannedBlood=renderBloodAdministration;renderBloodAdministration=function(){scannedBlood();if(!document.getElementById('baVerify')||!['fatima-sanogo','stephanie-smith'].includes(activePatientId))return;let verifiedUnit=null;const p=activePatient(),originalSave=baSave.onclick;baVerify.onclick=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(baPatient.value.trim());verifiedUnit=(state.bloodUnits||[]).find(x=>x.patientId===p.id&&x.status!=='Transfused'&&x.barcode===baBarcode.value.trim()&&x.unitNumber===baUnit.value.trim())||null;if(!patientOk){verifiedUnit=null;alert('PATIENT MISMATCH: Scan the correct patient wristband.');return}if(!verifiedUnit){alert('BLOOD PRODUCT MISMATCH: Unit number and barcode do not match an available unit assigned to this patient.');return}alert('Patient wristband and blood-product barcode verified. Complete the independent verifier check before administration.');};baSave.onclick=()=>{if(!verifiedUnit){alert('Verify the patient wristband and blood-product barcode before documenting administration.');return}const before=state.bloodAdministration.length;originalSave();if(state.bloodAdministration.length>before){verifiedUnit.status='Transfused';liveSave('blood_product_administered',{patientId:p.id,bloodUnitId:verifiedUnit.id});}};};};
 const initializeManualBarcodeSystem=window.initializeMedicationSystem;window.initializeMedicationSystem=function(){seedOriginalMAR();normalizeJaneMARV7();groupJanePostopMedicationRelease();normalizeMARDueNow();migrateMollyAdmission();initializeManualBarcodeSystem();state.glucoseChecks||=[];const medicationViewWithOverrides=renderMAR;renderMAR=function(){medicationViewWithOverrides();attachManualBarcodeOverride();};const facultyMedicationControl=renderFaculty;renderFaculty=function(){facultyMedicationControl();attachPendingMedicationControl();};};
-const initializeOrderLinkedMAR=window.initializeMedicationSystem;window.initializeMedicationSystem=function(){initializeOrderLinkedMAR();const orderedMAR=renderMAR;renderMAR=function(){orderedMAR();const p=activePatient();if(!p||p.id==='charles-jones'||(!isFaculty()&&state.marVisibility?.[p.id]===false))return;const meds=medicationsForPatient(p.id),all=medicationsForPatient(p.id,true),rows=meds.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.dose)}</td><td>${esc(m.route)}</td><td>${esc(m.frequency)}</td><td>${esc(m.scheduledTime)}</td><td>${esc((m.releaseStatus||'released')==='pending'?'Pending':m.status)}</td></tr>`).join('');const scanPanel=document.getElementById('scanPatientBarcode')?.closest('.panel');if(scanPanel)scanPanel.insertAdjacentHTML('afterend',panel('Admission & Provider-Ordered Medications',`<table><thead><tr><th>Medication</th><th>Dose</th><th>Route</th><th>Frequency</th><th>Due</th><th>Status</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No medication orders entered.</td></tr>'}</tbody></table>`));const note=[...document.querySelectorAll('#view .note')].find(x=>x.textContent.includes('Medication barcodes on this MAR:'));if(note)note.innerHTML=`<b>Medication barcodes on this MAR:</b> ${meds.map(m=>esc(m.barcode)).join(' • ')||'No released medications.'}`;const verify=document.getElementById('verifyMedicationScan');if(verify&&!isFaculty()){const original=verify.onclick;verify.onclick=()=>{const pending=all.find(m=>(m.releaseStatus||'released')==='pending'&&m.barcode===document.getElementById('scanMedicationBarcode')?.value.trim());if(pending){original();const feedback=document.getElementById('medScanFeedback');feedback.className='warn';feedback.textContent='MEDICATION PENDING: This order has not been released by faculty.';return}original();};}};const orderedFaculty=renderFaculty;renderFaculty=function(){orderedFaculty();const button=document.getElementById('savePendingMedication');if(!button||button.dataset.orderLinked)return;button.dataset.orderLinked='true';button.onclick=()=>{const p=activePatient(),name=pendingMedName.value.trim(),dose=pendingMedDose.value.trim();if(!name||!dose){alert('Enter the medication and dose.');return}const med={id:uid('med'),patientId:p.id,name,dose,route:pendingMedRoute.value.trim(),frequency:pendingMedFrequency.value.trim(),scheduledTime:pendingMedTime.value.trim(),provider:pendingMedProvider.value.trim(),status:'Pending',releaseStatus:'pending',highAlert:pendingMedHigh.value==='true',barcode:pendingMedBarcode.value.trim()||`MED-${slug(name)}-${slug(dose)}-${slug(p.mrn)}`,notes:pendingMedNotes.value.trim()};if(state.medicationCatalog.some(x=>x.barcode===med.barcode)){alert('That medication barcode is already in use.');return}state.medicationCatalog.push(med);ensureShortBarcodes();queueRelease('chartdata',p.id,`${med.name} ${med.dose}`,`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),{targetCollection:'medicationCatalog',rowData:{...med},provider:med.provider,orderType:'Medication'});audit('Pending medication created',p.id,`${med.name} ${med.dose}`);renderFaculty();};};};
+const initializeOrderLinkedMAR=window.initializeMedicationSystem;window.initializeMedicationSystem=function(){initializeOrderLinkedMAR();const orderedMAR=renderMAR;renderMAR=function(){orderedMAR();const p=activePatient();if(!p||p.id==='charles-jones'||(!isFaculty()&&state.marVisibility?.[p.id]===false))return;const meds=medicationsForPatient(p.id),all=medicationsForPatient(p.id,true),rows=meds.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.dose)}</td><td>${esc(m.route)}</td><td>${esc(m.frequency)}</td><td>${esc(m.scheduledTime)}</td><td>${esc((m.releaseStatus||'released')==='pending'?'Pending':m.status)}</td></tr>`).join('');const scanPanel=document.getElementById('scanPatientBarcode')?.closest('.panel');if(scanPanel)scanPanel.insertAdjacentHTML('afterend',panel('Admission & Provider-Ordered Medications',`<table><thead><tr><th>Medication</th><th>Dose</th><th>Route</th><th>Frequency</th><th>Due</th><th>Status</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No medication orders entered.</td></tr>'}</tbody></table>`));const note=[...document.querySelectorAll('#view .note')].find(x=>x.textContent.includes('Medication barcodes on this MAR:'));if(note)note.innerHTML=`<b>Medication barcodes on this MAR:</b> ${meds.map(m=>esc(m.barcode)).join(' • ')||'No released medications.'}`;const verify=document.getElementById('verifyMedicationScan');if(verify&&!isFaculty()){const original=verify.onclick;verify.onclick=()=>{const pending=all.find(m=>(m.releaseStatus||'released')==='pending'&&m.barcode===document.getElementById('scanMedicationBarcode')?.value.trim());if(pending){original();const feedback=document.getElementById('medScanFeedback');feedback.className='warn';feedback.textContent='MEDICATION PENDING: This order has not been released by faculty.';return}original();};}};const orderedFaculty=renderFaculty;renderFaculty=function(){orderedFaculty();const button=document.getElementById('savePendingMedication');if(!button||button.dataset.orderLinked)return;button.dataset.orderLinked='true';button.onclick=()=>{const p=activePatient(),name=pendingMedName.value.trim(),dose=pendingMedDose.value.trim();if(!name||!dose){alert('Enter the medication and dose.');return}const med={id:uid('med'),patientId:p.id,name,dose,route:pendingMedRoute.value.trim(),frequency:pendingMedFrequency.value.trim(),scheduledTime:pendingMedTime.value.trim(),provider:pendingMedProvider.value.trim(),status:'Pending',releaseStatus:'pending',highAlert:pendingMedHigh.value==='true',barcode:pendingMedBarcode.value.trim()||`MED-${slug(name)}-${slug(dose)}-${slug(p.mrn)}`,notes:pendingMedNotes.value.trim()};if(state.medicationCatalog.some(x=>x.barcode===med.barcode)){alert('That medication barcode is already in use.');return}state.medicationCatalog.push(med);ensureShortBarcodes();queueRelease('chartdata',p.id,`${med.name} ${med.dose}`,`${med.name} ${med.dose} ${med.route} ${med.frequency}`.trim(),{targetCollection:'medicationCatalog',rowData:{...med},provider:med.provider,orderType:'Medication'});save();renderFaculty();};};};
 })();
 

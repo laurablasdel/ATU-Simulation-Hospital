@@ -44,7 +44,8 @@ try{
  assert.equal(norepi.cells[1].textContent,'2 mcg/min');
  assert(norepi.cells[0].textContent.includes('Titrate by 2 mcg every 5 minutes'),'titration shown as a note');
  assert(!mar.includes('After fluid bolus, if MAP'),'long order text no longer used as the MAR name');
- assert(!mar.includes("Lactated Ringer's at 75 mL/hr")&&!mar.includes('Piperacillin-tazobactam'),'ICU orders discontinue LR and piperacillin-tazobactam');
+ const activeMar=w.document.querySelector('table.simpleMAR').textContent;
+ assert(!activeMar.includes("Lactated Ringer's at 75 mL/hr")&&!activeMar.includes('Piperacillin-tazobactam'),'ICU orders discontinue LR and piperacillin-tazobactam while retaining prior history');
  w.resetToBase(ruth);checkRuthStart(w);
  // Update Base Patient after the ICU release, then reset: the MAR must still follow the (now pending) ICU Orders.
  w.releaseItem(s.releaseQueue.find(q=>q.chartRecordId===icu&&q.status==='pending').id);
@@ -67,7 +68,7 @@ try{
  old.chartContentEdits[icu]={title:'ICU Orders',category:'orders',status:'released',content:w.testApp.records.find(r=>r.id===icu).content};
  old.chartContentEdits['chart-262195d201d581c7adc3f86cdc38c563']={content:'<table><tr><td>ER VS</td><td></td></tr></table>'};
  for(const m of old.medicationCatalog.filter(m=>m.patientId===ruth&&icuMeds.includes(m.name)))Object.assign(m,{status:'Active',releaseStatus:'released'});
- delete old.ruthNorepinephrineV1;
+ old.schemaVersion=0;delete old.ruthNorepinephrineV1;
  for(const m of old.medicationCatalog.filter(m=>m.patientId===ruth&&m.name==='Norepinephrine'))Object.assign(m,{name:'After fluid bolus, if MAP <65 or SBP <100: norepinephrine 2 mcg/min; titrate by 2 mcg every 5 minutes to MAP >65 or SBP >100; max 30 mcg/min',dose:'',notes:''});
  old.simulationBases={[ruth]:JSON.parse(JSON.stringify(w.SIMULATION_DEFAULTS[ruth]))};
  const migrated=start(old);checkRuthStart(migrated);

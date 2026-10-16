@@ -10,7 +10,7 @@ try{
   }
   for(const collection of ['assessments','vitals','orders','notes'])a.state[collection].push({id:'retain-'+p.id+'-'+collection,patientId:p.id,student:'QA',text:'Preserve this entry',time:'2026-09-25T09:00'});
  }
- delete a.state.settings.stephanieVitalsCleared20260916;w.save();
+ delete a.state.settings.stephanieVitalsCleared20260916;w.save();w.flushChartSave();
  const saved=JSON.parse(w.localStorage.getItem(key)),reopened=start(saved);
  for(const p of saved.patients)for(const c of ['assessments','vitals','orders','notes'])assert(reopened.testApp.state[c].some(r=>r.id==='retain-'+p.id+'-'+c),'Retained '+p.id+' '+c);
  // Drafts restore in a fresh tab (different session/client ID).

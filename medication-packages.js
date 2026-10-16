@@ -7,6 +7,7 @@ function medicationNameForLabel(name){return String(name||'').replace(/\s+\d.*$/
 function ensurePackages(){
  state.medicationPackages ||= [];
  for(const p of window.MEDICATION_PACKAGE_DEFAULTS||[])if(!state.medicationPackages.some(x=>x.id===p.id))state.medicationPackages.push(copy(p));
+ for(const definition of window.MEDICATION_PACKAGE_DEFAULTS||[]){const saved=state.medicationPackages.find(p=>p.id===definition.id);if(saved)saved.orderKeys=[...new Set([...(saved.orderKeys||[]),...(definition.orderKeys||[])])];}
  // Update existing saved catalogs while preserving faculty-customized names and barcode identity.
  const naloxone=state.medicationPackages.find(p=>p.id==='MED-0010');
  if(naloxone&&/^naloxone$/i.test(String(naloxone.name||'').trim()))naloxone.name='Naloxone (Narcan)';

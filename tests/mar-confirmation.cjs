@@ -6,7 +6,7 @@ function start(config){const w=boot(undefined,config);windows.push(w);w.supabase
  const ui=start(),a=ui.testApp;ui.setTabMode('student');a.setPatient('charles-jones');a.setView('mar');ui.renderMAR();
  const p=a.state.patients.find(p=>p.id==='charles-jones'),m=ui.medicationsForPatient(p.id,false).find(m=>m.dose&&m.route&&!m.highAlert&&!ui.medicationAdministrationBlock(m)),pkg=ui.packagesForMedication(m)[0];
  const el=id=>ui.document.getElementById(id);el('marScanPatient').value=p.barcode;el('marScanPatient').dispatchEvent(new ui.KeyboardEvent('keydown',{key:'Enter'}));el('marScanMedication').value=pkg.id;el('marScanMedication').dispatchEvent(new ui.Event('input'));await new Promise(r=>setTimeout(r,300));
- assert(el('marConfirmSave'),'suffixless scanner opens the matching order');assert(el('marConfirmDose').readOnly);assert(el('marConfirmRoute').readOnly);assert.equal(a.state.mar.length,0,'scan is not administration');
+ assert(el('marConfirmSave'),'suffixless scanner opens the matching order');assert(el('marConfirmDose').readOnly);assert(el('marConfirmRoute').readOnly);assert.equal(a.state.mar.filter(r=>r.patientId===p.id).length,0,'scan is not administration');
  const scheduled={scheduledTime:'09:00'};
  assert.equal(ui.medicationTiming(scheduled,'2026-10-09T08:00').timingStatus,'On time');
  assert.equal(ui.medicationTiming(scheduled,'2026-10-09T10:00').timingStatus,'On time');
@@ -21,7 +21,7 @@ function start(config){const w=boot(undefined,config);windows.push(w);w.supabase
  const config={supabaseUrl:'https://example.supabase.co',supabasePublishableKey:'test'},one=start(config),two=start(config);
  await one.atuCloudInit();await two.atuCloudInit();for(const w of [one,two]){w.setTabMode('student');w.testApp.setPatient(p.id);}
  const results=await Promise.all([one.saveMedicationAdministration({...input,submissionId:'student-one'}),two.saveMedicationAdministration({...input,submissionId:'student-two'})]);
- assert.equal(results.filter(r=>r.ok).length,1,'simultaneous confirmations create exactly one dose: '+JSON.stringify(results));assert.equal(shared.payload.mar.length,1);
+ assert.equal(results.filter(r=>r.ok).length,1,'simultaneous confirmations create exactly one dose: '+JSON.stringify(results));assert.equal(shared.payload.mar.filter(r=>r.patientId===p.id).length,1);
  await one.atuCloudPush();await two.atuCloudPush();
  const next={...input,time:'2026-10-10T10:00',repeatConfirmed:true,submissionId:'lost-response'};
  // Use a repeatable test order to isolate persistence from one-time order rules.

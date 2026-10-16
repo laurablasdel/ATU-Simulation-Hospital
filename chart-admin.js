@@ -4,224 +4,7 @@ const level3RetiredAssessments=['chart-25d195d201d581188309ec0841b19586','chart-
 // Carl/Karl ER vital signs are read-only; students chart new vitals in the Vitals / Flowsheet form.
 const level3VitalsRecords=['chart-262195d201d581c7adc3f86cdc38c563','chart-277195d201d5815286c2df3a01649aea'];
 const level3VitalsStart=JSON.parse(JSON.stringify((window.CHART_RECORDS||[]).filter(r=>level3VitalsRecords.includes(r.id))));
-const removeIds=new Set([
- 'chart-284195d201d58119b8effd1fb54adbde',
- 'chart-1d0195d201d5810a9acac8451e662014','chart-1d0195d201d5818b8449cd92cc20db7b',
- 'chart-279195d201d580c18d3bcf4493eb6d56','chart-27e195d201d580188376fefb97c68085',
- 'chart-1d0195d201d581a696f3d43f99ff1b11','chart-1d0195d201d5813a9544cca0547f2612',
- 'chart-318195d201d5805e84bdc3cf5591db4','chart-318195d201d5805e84bdc3cf5591db4e','chart-25d195d201d58111ba41db57ea4e0b76',
- 'chart-form-baby-boy-sung','chart-document-newborn-glucose-protocol.pdf','chart-256195d201d581a1b665e359a34c9c03',
- 'chart-2d6195d201d58013a186edd649f28647','chart-form-jane-fowler','chart-2d6195d201d580a19062cdbe1706684f','chart-1d0195d201d581b98e64df9f11bd51d4'
- ,'chart-283195d201d5808bbeb5e24d75f4d33f','chart-284195d201d581908c27c50dbf996e0f','chart-284195d201d5810a91e5ff040ed8a383','chart-28b195d201d5805ca4d1c8978c9278be','packet-amelia-hydromorphone',
- 'chart-2d6195d201d58023be58fb267a940645'
- ,'chart-1d0195d201d581428555d6ceb118688e','admin-jane-postop-morphine','admin-jane-postop-ondansetron'
- // Level 3 WDL physical assessments; students chart the Detailed Head-to-Toe Assessment instead.
- ,...level3RetiredAssessments
-]);
-const changes={
- 'chart-2fd195d201d58013ab8bffdf475123e4':{title:'History and Physical',status:'released',content:'## History and Physical\n\n**Date of Admission:** Today  \n**Patient Name:** Jane Fowler  \n**Chief Complaint:** Pelvic pressure, bloating, and constipation  \n**DOB:** 01/28/XXXX  \n**Admitting Physician:** Dr. Smith  \n**Age/Sex:** 79-year-old female  \n**Source of History:** Patient and daughter\n\n### History of Present Illness\n\nJane Fowler has been experiencing pelvic pressure, bloating, and constipation. Her primary provider could palpate her right ovary. An abdominal CT scan showed a tumor with possible invasion of the right ovary. She is admitted for a total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging today.\n\n### Past Medical History\n\n- No history of surgeries\n- No significant medical history\n\n### Allergies\n\n- NKDA\n\n### Social History\n\n- Lives alone\n- No tobacco, alcohol, or drug use\n\n### Home Medications\n\n- Acetaminophen (Tylenol) 650 mg as needed\n- Polyethylene glycol 3350 (MiraLAX) daily\n- Docusate sodium (Colace) daily\n- Melatonin (Natrol) 3 mg every night\n- Escitalopram (Lexapro) 10 mg PO daily\n\n### Assessment\n\nShe is alert and oriented to time, person, place, and situation. Heart rate and rhythm are regular. Lungs are clear to auscultation; oxygen saturation is 97% on room air. The abdomen is slightly distended and tender to light palpation, with rebound tenderness present.\n\n### Plan\n\n1. Total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging.\n   - Cefazolin (Ancef) 2 g IV once on call to the operating room.\n2. Hydration and preoperative care.\n   - Lactated Ringer’s solution (LR) IV at 125 mL/hr.\n   - NPO.\n   - Sequential compression devices.\n   - Indwelling Foley catheter.\n3. Disposition.\n   - Admit to the medical-surgical floor for close monitoring.'},
- 'chart-1d0195d201d581d49553e7787bbe1924':{title:'Admission Orders',status:'released',content:'## Jane Fowler — Admission Orders\n\n**Provider: Dr. Smith MD**\n\n1. Admit to Surgical Pre-Op for preoperative total abdominal hysterectomy with bilateral salpingo-oophorectomy.\n2. Vital signs every 30 minutes until surgery.\n3. Diet: NPO.\n4. Code status: Full Code.\n5. Obtain sterilization consent, blood-administration consent, and surgical consent for total abdominal hysterectomy with bilateral salpingo-oophorectomy.\n6. Lactated Ringer’s solution (LR) IV at 125 mL/hr.\n7. Obtain CBC, urine hCG, BMP, and blood type.\n8. Insert indwelling Foley catheter.\n9. Apply bilateral sequential compression devices (SCDs).\n10. Cefazolin (Ancef) 2 g in 250 mL IV on call to the operating room; infuse over 1 hour.\n11. Metoclopramide (Reglan) 10 mg IV; available concentration 10 mg/2 mL.\n12. Midazolam (Versed) 1 mg IV on call to the operating room; available concentration 5 mg/mL.\n13. Prepare the abdomen: shave as needed and cleanse with antibacterial wipes.\n14. Complete the surgical checklist and time-out documentation.\n15. Teach postoperative incision splinting and incentive-spirometer use.'},
- 'chart-1d0195d201d581cf8a0adf7495447769':{status:'pending',title:'Postoperative Progress Note',releaseWith:'chart-2d6195d201d58030b0ded95695bbcb1e'},
- 'chart-2d6195d201d58023be58fb267a940645':{status:'pending',title:'Postoperative Vital Signs'},
- 'chart-2d6195d201d58030b0ded95695bbcb1e':{status:'pending',title:'Post-Op Progress Notes & Orders',content:'## Post-Op Orders\n\n**Provider: Dr. Smith MD**\n\n- Diet: Sips of water; advance to clear liquids as tolerated.\n- Activity: Out of bed tonight.\n- Postoperative vital signs per protocol.\n- Titrate oxygen to maintain pulse oximetry of 94% or greater.\n- Lactated Ringer’s solution (LR) IV at 125 mL/hr.\n- Continue sequential compression devices (SCDs).\n- Maintain indwelling Foley catheter.\n- Intake and output every 4 hours; notify the provider for urine output less than 30 mL/hr.\n- Morphine sulfate (Duramorph) 2 mg IV push PRN pain; may repeat up to 10 mg every 4 hours. Available concentration: 2 mg/1 mL.\n- Ondansetron (Zofran) 4 mg IV push every 4 hours PRN nausea. Available concentration: 4 mg/2 mL.\n- Consult oncology in AM.\n- Transfer to the surgical floor.'},
- 'chart-2d6195d201d58077a080faf182983607':{status:'pending',title:'Postoperative MAR'},
- 'chart-amelia-sung-overview':{content:'## Patient Overview\n\n- 36-year-old Filipino female; G2 P1; 39 weeks\n- Weight: 83 kg\n- Allergies: Shellfish and Penicillin\n- Blood type: O positive\n- GBS: Positive\n- Diet-controlled gestational diabetes\n- Admitted in active labor; 4 cm on admission; no epidural\n- AROM 12 hours ago with clear fluid'},
- 'chart-256195d201d581218206ef01a346f788':{content:'## Admission CBC\n\n| Test | Result | Reference |\n|---|---:|---:|\n| Hemoglobin | 10.7 | 12.1–15.1 |\n| Hematocrit | 31.2 | 36.1–44.3 |\n| WBC | 12 | 4.5–10 |\n| RBC | 3.24 | 4.2–5.4 |\n| MCV | 96 | 80–99 |\n| MCH | 30 | 27–31 |\n| MCHC | 34.2 | 32–36 |\n| Platelets | 140 | 140–400 |\n\nBlood type: O positive  \nHIV: Negative  \nGBS: Positive'},
- 'chart-256195d201d58135acaae97c6f6e482f':{content:'## OB-GYN Admission Note\n\n**Patient:** Amelia Sung, 36-year-old Filipino female, G2 P1 at 39 weeks  \n**Provider:** Dr. Darnell  \n**Allergies:** Shellfish and Penicillin  \n**Weight:** 83 kg\n\n### History\nAdmitted in active labor at 39 weeks with gestational diabetes. Cervix was 4 cm on admission. No epidural. AROM was 12 hours ago with clear fluid. Blood type O positive; GBS positive.\n\n### Plan\nContinue released orders, continuous fetal monitoring, maternal assessment, clindamycin GBS prophylaxis, and PRN morphine for pain.'},
- 'chart-256195d201d581a3a410fa640a786e42':{content:'## Prenatal Record — Amelia Sung\n\n- G2 P1 at 39 weeks\n- Blood type O positive\n- GBS positive\n- Diet-controlled gestational diabetes\n- Allergies: Shellfish and Penicillin\n- Previous vaginal delivery'},
- 'chart-fatima-sanogo-overview':{content:'## Patient Overview\n\n- Fatima Sanogo, 23-year-old female, G1 P1 at 39 weeks\n- Weight: 71 kg; Blood type: O positive; GBS negative; NKDA\n- Induction began yesterday at 0600 for elevated blood pressure\n- AROM 0912 with clear fluid; oxytocin started 0700\n- Complete 0948; pushing 0952; voided on bedpan 1000\n- Vigorous male delivered 1232, 9 lb, Apgar 9/9\n- Unmedicated vaginal delivery; second-degree periurethral laceration repaired\n- Placenta manually delivered 1235; EBL 350 mL\n- Fundus firm at U-1 with small lochia after massage and oxytocin\n- History: depression/anxiety; nonsmoker; limited English for 7 months'},
- 'chart-256195d201d58110af48db0f887e08ef':{content:'## Prenatal Record — Fatima Sanogo\n\n- 23-year-old, G1 P1 at 39 weeks\n- Blood type O positive; hepatitis B negative; rubella immune; GBS negative\n- Induction for elevated blood pressure\n- History of depression and anxiety\n- Nonsmoker; married; limited English for 7 months'},
- 'chart-256195d201d581d78298cd4150f3424f':{content:'## Delivery Summary\n\n- Provider: Dr. Nelson\n- AROM 0912, clear fluid; oxytocin started 0700\n- Complete 0948; pushing began 0952\n- Spontaneous vaginal delivery at 1232\n- Vigorous male, 9 lb; Apgar 9 at 1 minute and 9 at 5 minutes\n- Unmedicated delivery\n- Second-degree periurethral laceration repaired\n- Placenta manually delivered intact at 1235\n- Estimated blood loss: 350 mL\n- Fundus firm at U-1; lochia small after fundal massage and oxytocin'},
- 'chart-256195d201d581df894fd4238be58e3a':{content:'## Postpartum Progress Note\n\nSpontaneous vaginal delivery of a vigorous male infant, 9 lb, Apgar 9/9. Second-degree periurethral laceration repaired. Placenta delivered manually and intact at 1235. Estimated blood loss 350 mL. Fundus firm at U-1 with small lochia after fundal massage and oxytocin. Infant breastfed for 20 minutes, then went to the nursery. Third 15-minute recovery check occurred at 1320.'},
- 'chart-284195d201d5819399d7f368b25637c2':{status:'pending',title:'Critical CBC — Postpartum Hemorrhage',content:'## Critical CBC\n\n| Test | Result |\n|---|---:|\n| Hemoglobin | 6 g/dL |\n| Hematocrit | 22% |\n| Platelets | 100,000/mm3 |\n\nType and crossmatch 2 units packed red blood cells. Result remains pending until faculty release.'},
- 'chart-286195d201d580a685e2f91f207563f6':{content:'## Shift 1 Starting Vital Signs\n\n- Temperature: 37.3 C\n- Heart rate: 165/min\n- Blood pressure: 80/40 mmHg\n- Respiratory rate: 50/min\n- SpO2: 87%\n- Deep suprasternal retractions, nasal flaring, barking cough, pale/dry mucosa, capillary refill 3 seconds'},
- 'chart-27e195d201d5801891bbde543471af1e':{status:'pending',title:'Shift 3 New Orders'},
- 'chart-279195d201d5800895eec1b283799808':{status:'pending',title:'Shift 3 Labs'},
- 'chart-279195d201d5804db220dbde566bd41d':{status:'pending',title:'Shift 4 Urinalysis'},
- 'chart-279195d201d580b1a707ddf4a2e70068':{status:'pending',title:'Shift 2 Labs'},
- 'chart-279195d201d580c7846ae24b926e5915':{status:'pending',title:'Shift 2 Chest X-ray Results'},
- 'chart-293195d201d58002af36d9c313178804':{status:'pending',title:'Shift 4 Follow-up Labs'},
- 'chart-1d0195d201d5812d9d21cf4f7bac2e52':{title:'Admission Labs'},
- 'chart-1d0195d201d581b98e64df9f11bd51d4':{content:'## Surgery Admission Note\n\n**Date of Admission:** Today\n\n**Patient Name:** Jane Fowler  \n**Chief Complaint:** Pelvic pressure, bloating, and constipation  \n**DOB:** 01/28/XXXX  \n**Admitting Physician:** Dr. Smith  \n**Age/Sex:** 79-year-old female  \n**Source of History:** Patient and daughter\n\n### History of Present Illness\n\nJane Fowler has been experiencing pelvic pressure, bloating, and constipation. Her primary provider could palpate her right ovary. An abdominal CT scan showed a tumor with possible invasion of the right ovary. She is here for a total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging.\n\n### Past Medical History\n\n- No history of surgeries\n- No significant medical history\n\n### Allergies\n\n- NKDA\n\n### Social History\n\n- Lives alone\n- No tobacco, alcohol, or drug use\n\n### Home Medications\n\n- Acetaminophen (Tylenol) 650 mg as needed\n- Polyethylene glycol 3350 (MiraLAX) daily\n- Docusate sodium (Colace) daily\n- Melatonin (Natrol) 3 mg every night\n- Escitalopram (Lexapro) 10 mg PO daily\n\n### Assessment\n\nShe is alert and oriented to time, person, place, and situation. Heart rate and rhythm are regular. Lungs are clear to auscultation; oxygen saturation is 97% on room air. The abdomen is slightly distended and tender to light palpation, with rebound tenderness present.\n\n### Plan\n\n1. Total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging.\n2. Cefazolin (Ancef) 2 grams IV once on call to the operating room.\n3. Lactated Ringer\'s solution at 125 mL/hr.\n4. NPO.\n5. Sequential compression devices.\n6. Indwelling Foley catheter.\n7. Admit to the medical-surgical floor for close monitoring.'},
- 'chart-286195d201d580489c7bc8e0770135bf':{status:'pending',title:'MD Orders',content:'**Provider Orders — Pending**\n\n- Racepinephrine (Asthmanefrin) 2.25% inhalation solution, 0.5 mL mixed with 3 mL of sodium chloride 0.9% (Normal Saline), to be given by respiratory therapy. Call respiratory when needed.\n- Dexamethasone (Decadron) 0.6 mg/kg IV now.'},
- 'chart-256195d201d581aebb87f3902a0c5bc0':{status:'pending',title:'Chest X-ray',content:'![Baby Boy Sung chest radiograph](assets/baby-boy-sung-chest-xray.png)\n\n**Chest X-ray Report**\n\nFracture of the left clavicle noted. Full expansion of both right and left lung noted, no lung involvement.'}
-};
-const newbornGlucosePolicyContent=`## Newborn Glucose Management Policy
-
-<ul>
-<li><strong>Patient:</strong> Baby Boy Sung</li>
-<li><strong>Policy area:</strong> Newborn care</li>
-<li><strong>Purpose:</strong> Prevention, screening, treatment, monitoring, and documentation of neonatal hypoglycemia.</li>
-</ul>
-
----
-
-### Policy
-
-<ul>
-<li>Use for newborns at risk for unstable blood glucose or with signs or symptoms of hypoglycemia.</li>
-<li>Follow the provider's orders and notify the provider of any concerning result or change in condition.</li>
-</ul>
-
-### Definitions
-
-<table>
-<tr><td><strong>Term</strong></td><td><strong>Definition</strong></td></tr>
-<tr><td><strong>Hypoglycemia</strong></td><td>Less than <strong>45 mg/dL</strong> in a symptomatic newborn or less than <strong>40 mg/dL</strong> in an asymptomatic newborn.</td></tr>
-<tr><td><strong>LGA</strong></td><td>Large for gestational age: 4,000 g or at or above the 90th percentile.</td></tr>
-<tr><td><strong>AGA</strong></td><td>Appropriate for gestational age: 2,500-4,000 g.</td></tr>
-<tr><td><strong>SGA</strong></td><td>Small for gestational age: below 2,500 g or at or below the 10th percentile.</td></tr>
-<tr><td><strong>Macrosomia</strong></td><td>Birth weight greater than 4,500 g.</td></tr>
-<tr><td><strong>IUGR / FGR</strong></td><td>Intrauterine or fetal growth restriction.</td></tr>
-</table>
-
-### Prevention of hypoglycemia
-
-<ol>
-<li>Promote skin-to-skin care after delivery and cover the parent-newborn dyad to conserve heat.</li>
-<li>Monitor newborn temperature and support thermoregulation of the infant and environment.</li>
-<li>Offer an early feed during transition. If breastfeeding, offer the first nursing opportunity within 30-60 minutes after birth.</li>
-<li>For at-risk newborns, encourage regular, frequent feeds.</li>
-</ol>
-
-### Who requires glucose screening
-
-<ul>
-<li>Screen <strong>within 30 minutes after feeding</strong> for SGA, LGA, IUGR/FGR, late-preterm (34-36 weeks), or infant-of-diabetic-parent risk factors.</li>
-<li>Check blood glucose <strong>immediately</strong> for any sign or symptom of hypoglycemia.</li>
-</ul>
-
-<strong>Symptoms of hypoglycemia:</strong>
-
-<ul>
-<li>Jitteriness, irritability, or high-pitched cry</li>
-<li>Apnea, cyanosis, irregular or rapid respirations</li>
-<li>Hypotonia or seizures</li>
-<li>Temperature instability or hypothermia</li>
-<li>Poor suck, poor feeding, or refusal to eat</li>
-</ul>
-
-### Clinical pathway for glucose management
-
-<table>
-<tr><td><strong>Newborn status / result</strong></td><td><strong>Nursing action</strong></td><td><strong>Recheck / next step</strong></td></tr>
-<tr><td><strong>Asymptomatic, no risk factors</strong></td><td>No additional glucose action required.</td><td>Continue routine newborn care.</td></tr>
-<tr><td><strong>Asymptomatic, risk factors; BG greater than 40 mg/dL</strong></td><td>Continue feeding plan.</td><td>Check BG before feeds every 2-3 hours for 2 more consecutive feeds. Stop checks when BG remains greater than 40 mg/dL before 24 hours of age or greater than 50 mg/dL from 24-48 hours of age.</td></tr>
-<tr><td><strong>Asymptomatic, risk factors; BG 25-40 mg/dL</strong></td><td>Apply glucose gel and refeed.</td><td>Recheck BG 1 hour after gel. Up to 3 separate gel doses may be given in the first 48 hours. Notify provider to initiate IV dextrose treatment when indicated.</td></tr>
-<tr><td><strong>Asymptomatic, risk factors; BG less than 25 mg/dL</strong></td><td>Apply glucose gel and refeed; notify provider.</td><td>Recheck BG 1 hour after gel. Follow provider management plan; consider IV dextrose treatment.</td></tr>
-<tr><td><strong>Symptomatic; BG greater than 45 mg/dL</strong></td><td>Notify provider of symptoms.</td><td>Continue provider-directed management.</td></tr>
-<tr><td><strong>Symptomatic; BG 45 mg/dL or less</strong></td><td>Notify provider immediately.</td><td>Obtain management plan; consider IV dextrose treatment.</td></tr>
-</table>
-
-### Glucose gel protocol
-
-<ol>
-<li>For infants greater than 35 weeks who meet criteria, use glucose gel according to the clinical pathway and the infant's weight. Pharmacy supplies gel in 2 mL prefilled syringes.</li>
-<li>Administer the gel with a gloved finger to the buccal mucosa of each cheek in <strong>0.5 mL increments</strong>. Massage gently into gums and cheek, alternating sides until the full dose is given.</li>
-<li>A maximum of <strong>3 gel doses</strong> may be given in the first 48 hours.</li>
-<li>If BG remains below 40 mg/dL after the second gel dose and a third dose is necessary, notify the pediatrician and initiate IV glucose therapy per provider order.</li>
-<li>Glucose gel is for treatment of <strong>asymptomatic</strong> hypoglycemia as outlined in this pathway.</li>
-</ol>
-
-<table>
-<tr><td><strong>Weight in kilograms</strong></td><td><strong>Dosage amount</strong></td></tr>
-<tr><td>2 kg</td><td>1 mL</td></tr>
-<tr><td>2.5 kg</td><td>1.25 mL</td></tr>
-<tr><td>3 kg</td><td>1.5 mL</td></tr>
-<tr><td>3.5 kg</td><td>1.75 mL</td></tr>
-<tr><td>4 kg</td><td>2 mL</td></tr>
-<tr><td>4.5 kg</td><td>2.25 mL</td></tr>
-<tr><td>5 kg</td><td>2.5 mL</td></tr>
-</table>
-
-<ul><li><strong>Baby Boy Sung:</strong> 4.37 kg. Use the facility weight-based glucose-gel dose and clarify the exact dose with the pediatrician/pharmacy when needed.</li></ul>
-
-### NPO newborns
-
-<ul><li>For NPO orders, continue glucose monitoring every <strong>6 hours</strong> after values have stabilized.</li></ul>
-
-### Heel-stick glucose specimen collection
-
-<ol>
-<li>Explain the procedure to the parent(s).</li>
-<li>Perform hand hygiene and don gloves.</li>
-<li>Place the infant securely.</li>
-<li>Select a heel-stick site; cleanse with alcohol and allow to air dry.</li>
-<li>Perform the heel stick with an approved lancet.</li>
-<li>Remove the lancet and gently wipe away the first drop with gauze.</li>
-<li>Immediately process the specimen on the approved glucose monitor and verify patient information on the log.</li>
-<li>Apply pressure with gauze and/or an adhesive bandage.</li>
-<li>Document the glucose result. For a heel-stick result below 40 mg/dL, obtain serum glucose by venipuncture.</li>
-</ol>
-
-### IV glucose therapy and monitoring
-
-<ul><li>Initiate IV therapy only with the appropriate provider order.</li></ul>
-
-<ul>
-<li>Administer <strong>D10W 2 mL/kg IV push</strong> and begin continuous <strong>D10W at 3.3 mL/kg/hr</strong> (80 mL/kg/day) when ordered.</li>
-<li>Recheck BG <strong>15-30 minutes</strong> after the bolus.</li>
-<li>Obtain plasma glucose 30-45 minutes after IV therapy begins; adjust infusion rate or dextrose concentration as ordered to maintain BG above 45 mg/dL during the first 48 hours, generally not exceeding 90-100 mg/dL.</li>
-<li>Recheck BG 30-45 minutes after a change in IV dextrose infusion rate.</li>
-<li>Notify the pediatrician for glucose infusion requirements above 12 mg/kg/min or fluids above 160 mL/kg/day; obtain an order for D12.5 if indicated.</li>
-<li>Monitor fluid balance and clinical status for volume overload.</li>
-<li>When BG is within target range, gradually transition to oral feeds. Begin weaning after values remain in range for 6-9 hours. Decrease fluids by 2 mL/hr and recheck glucose in 3 hours when ordered; do not titrate fluids when BG is 45 mg/dL or lower.</li>
-</ul>
-
-### Required documentation
-
-<ul>
-<li>Risk factor or symptom</li>
-<li>Feeding and glucose result</li>
-<li>Collection method</li>
-<li>Gel or IV treatment and dose</li>
-<li>Time of recheck</li>
-<li>Provider notification and orders received</li>
-<li>Newborn response</li>
-</ul>
-
-### References
-
-<ul>
-<li>American Academy of Pediatrics, Committee on Fetus and Newborn: neonatal hypoglycemia guidance.</li>
-<li>Conway Regional Health System, Women's and Infants' Services, <strong>Glucose Management Protocol: Newborn</strong>, last reviewed April 2024.</li>
-</ul>
-`;
-
-const added=[
- {id:'admin-molly-parainfluenza',patientId:'molly-thomas',title:'Parainfluenza Result',category:'labs',status:'released',content:'**Parainfluenza: Positive**'},
- {id:'admin-molly-admission',patientId:'molly-thomas',title:'Admission Orders',category:'orders',status:'released',content:'Provider: Dr. Henderson\n\n- Admit to pediatric floor.\n- Full Code.\n- Continuous pulse oximetry.\n- Regular diet; NPO if respiratory rate exceeds 60/min.\n- Call MD with assessment findings.\n- Strict intake and output.\n- Daily weight.\n- Sodium chloride 0.9% (Normal Saline) bolus 20 mL/kg IV over 30 minutes.'},
- {id:'admin-jane-ct-results',patientId:'jane-fowler',title:'CT Abdomen and Pelvis',category:'labs',status:'released',content:'![Jane Fowler CT abdomen and pelvis](assets/jane-fowler-ct.png)\n\n**CT Abdomen and Pelvis Result**\n\nLarge right ovarian tumor with possible local invasion. Findings correlate with the patient’s pelvic pressure, bloating, constipation, and palpable right ovary.'},
- {id:'admin-jane-respiratory-naloxone',patientId:'jane-fowler',title:'Naloxone (Narcan) 0.2 mg IV push',category:'orders',status:'pending',content:'Provider: Dr. Smith MD\n\nNaloxone (Narcan) 0.2 mg IV push every 2–3 minutes PRN respiratory rate less than 6/min or change in level of consciousness. Available concentration: 0.4 mg/mL.'},
- {id:'admin-jane-respiratory-ketorolac',patientId:'jane-fowler',title:'Ketorolac (Toradol) 30 mg IV push',category:'orders',status:'pending',content:'Provider: Dr. Smith MD\n\nKetorolac (Toradol) 30 mg IV push once now. Available concentration: 30 mg/mL.'},
- {id:'admin-jane-faculty-guide',patientId:'jane-fowler',title:'Jane Fowler Faculty Simulation Guide',category:'faculty',status:'released',content:'Shift 1\n\nSituation\nJane Fowler has experienced pelvic pressure, bloating, and constipation. Her primary provider palpated her right ovary. CT showed a right ovarian tumor with possible invasion. She is scheduled for a total abdominal hysterectomy with bilateral salpingo-oophorectomy and surgical staging.\n\nStarting findings\nT 98.9 F; HR 89; RR 20; BP 124/76; SpO2 97%. Alert and oriented x4; moves all extremities on command; denies pain; normoactive bowel sounds; clear breath sounds.\n\nStudent expectations\nIntroduce self; perform hand hygiene; review orders; verify two identifiers; complete initial assessment and vital signs; explain the plan of care; begin IV fluids; verify consents and complete the pre-op checklist; insert the urinary catheter; teach incentive spirometry, leg exercises, splinting, coughing, and deep breathing; administer the ordered antibiotic using medication rights.\n\nShift 2\n\nSituation\nPostoperative total abdominal hysterectomy with bilateral salpingo-oophorectomy under general anesthesia. The patient tolerated surgery without complications. Abdominal incision is covered with a 4 x 4 gauze dressing with no drainage. Lactated Ringer\'s solution is infusing at 125 mL/hr after 2 L received during surgery. Estimated blood loss was 400 mL. She was extubated in the operating room and is breathing spontaneously. Foley catheter is present with 200 mL urine output.\n\nStarting findings\nT 97.9 F; HR 98; RR 17; BP 143/86; SpO2 93%. Pale; responds to name; moves extremities on command; moaning; hypoactive bowel sounds; clear breath sounds.\n\nStudent expectations\nIntroduce self; perform hand hygiene; review orders; verify two identifiers; complete the initial assessment and apply cardiopulmonary monitoring; recognize the low SpO2 and apply oxygen; assess pain; explain the plan of care. When the patient reports pain 6/10, administer the released analgesic using medication rights. If the patient becomes unresponsive with RR 6 and SpO2 85%, recognize respiratory depression, begin bag-mask ventilation, notify anesthesia, administer released rescue medications, reassess, and monitor stability.'},
- {id:'admin-baby-cxr-order',patientId:'baby-boy-sung',title:'Chest X-ray Order',category:'orders',status:'pending',content:'Chest X-ray. Provider: Dr. Craig.'},
- {id:'admin-baby-glucose-protocol',patientId:'baby-boy-sung',title:'Newborn Glucose Management Protocol',category:'orders',status:'released',content:'## Newborn Glucose Management Protocol\n\n**Use for at-risk or symptomatic newborns.** Baby Boy Sung weighs **4.37 kg**.\n\n### Screen and assess\n\n- Encourage early, frequent feeding and maintain thermoregulation.\n- Check blood glucose 30 minutes after feeding for an at-risk newborn; check immediately for symptoms.\n- Assess for jitteriness, irritability, high-pitched cry, apnea, cyanosis, irregular or rapid breathing, hypotonia, seizures, temperature instability, hypothermia, poor suck, or refusal to feed.\n- At-risk factors include SGA, LGA, IUGR, late-preterm birth, or infant of a parent with diabetes.\n\n### Response pathway\n\n| Finding | Action | Follow-up |\n|---|---|---|\n| Asymptomatic with BG greater than 40 mg/dL | Continue feeds | Check pre-feed every 2-3 hours for 2 more feeds. Stop when values remain greater than 40 mg/dL before 24 hours of age or greater than 50 mg/dL from 24-48 hours. |\n| Asymptomatic with BG 25-40 mg/dL | Give glucose gel per facility weight-based dose and refeed | Recheck BG in 1 hour. May give up to 3 separate gel doses in the first 48 hours. |\n| BG less than 25 mg/dL | Give glucose gel and refeed; notify provider | Recheck BG in 1 hour. Follow provider plan; consider IV dextrose therapy. |\n| Symptomatic with BG 45 mg/dL or less | Notify provider immediately | Follow provider management plan; consider IV dextrose therapy. |\n\n### Glucose gel and documentation\n\n- Administer gel to the buccal mucosa in 0.5 mL increments, alternating cheeks, and massage gently with a gloved finger.\n- If glucose remains less than 40 mg/dL after the second gel dose and a third dose is needed, notify the pediatrician and begin IV glucose therapy per provider order.\n- Document the feeding, glucose value, symptoms, treatment, recheck, and provider notification.\n- For a heel-stick value less than 40 mg/dL, obtain serum glucose by venipuncture per protocol.'},
- {id:'admin-sanogo-pph-meds',patientId:'fatima-sanogo',title:'Postpartum Hemorrhage Medication Orders',category:'orders',status:'pending',content:'If hemorrhage is suspected, call MD with assessment findings and bleeding amounts for specific medication orders. Expected orders from Dr. Darnell:\n\n1. Methylergonovine (Methergine) 0.2 mg IM every 2–4 hours as needed. Do not administer with elevated blood pressure.\n2. Carboprost tromethamine (Hemabate) 250 mcg IM every 15–90 minutes as needed; maximum approximately 2 mg total. Specific provider order required before administration.\n3. Misoprostol (Cytotec) 800 mcg rectally; 600–1000 mcg PR / SL / PO as needed per protocol. Specific provider order required before administration.\n4. Tranexamic acid (Cyklokapron; TXA) 1 g IV over 10 minutes once postpartum hemorrhage is diagnosed. May repeat 1 g after 30 minutes–24 hours if bleeding persists, per protocol. Specific provider order required before administration.'},
- {id:'admin-sanogo-followup',patientId:'fatima-sanogo',title:'Postpartum Hemorrhage Follow-up Orders',category:'orders',status:'pending',content:'Provider: Dr. Darnell/KR\n\n- CBC in 6 hours\n- Foley catheter\n- Fundus checks every 15 minutes'},
- {id:'admin-stephanie-chest-xray',patientId:'stephanie-smith',title:'Chest X-Ray',category:'orders',status:'pending',content:'Provider: Henderson\n\nChest X-Ray.'},
- {id:'admin-stephanie-prbc-2units',patientId:'stephanie-smith',title:'Infuse 1 Unit PRBC',category:'orders',status:'pending',content:'Provider: Henderson\n\nInfuse 1 unit of packed red blood cells (PRBCs). Complete blood-product verification and transfusion monitoring per protocol.'},
- {id:'admin-stephanie-ceftriaxone',patientId:'stephanie-smith',title:'Ceftriaxone 500 mg/100 mL IV every 6 hours',category:'orders',status:'pending',content:'Provider: Henderson\n\nCeftriaxone 500 mg/100 mL IV every 6 hours.'},
- {id:'admin-stephanie-acetaminophen',patientId:'stephanie-smith',title:'Acetaminophen 650 mg',category:'orders',status:'pending',content:'Provider: Henderson\n\nAcetaminophen 650 mg.'},
- {id:'admin-stephanie-cbc-am',patientId:'stephanie-smith',title:'CBC in AM',category:'orders',status:'pending',content:'Provider: Henderson\n\nCBC in AM.'}
-];
-added.push(
- {id:'packet-amelia-admission',patientId:'amelia-sung',title:'Admission Orders',category:'orders',status:'released',content:'Provider: Dr. Darnell\n\n- Admit to inpatient Labor and Delivery for active labor / gestational diabetes.\n- Full Code.\n- Clear liquid diet.\n- Continuous fetal monitoring with bathroom privileges; vital signs per protocol.\n- Intake and output every shift.\n- Lactated Ringer’s solution (LR) at 125 mL/hr.\n- Oxytocin (Pitocin) 30 units in 500 mL sodium chloride 0.9%; start at 2 milliunits/min and increase by 2 milliunits/min every 15 minutes until contractions are every 2–3 minutes.\n- Clindamycin (Cleocin) 900 mg IVPB every 6 hours until delivery for GBS prophylaxis.\n- Morphine sulfate (Duramorph) 2 mg slow IV push every 2 hours as needed for pain.\n- Lidocaine (Xylocaine) 1% available at delivery.\n- CBC, type and screen, and syphilis testing with IV start.\n- Cord blood pH at delivery when requested by MD.'},
- {id:'packet-amelia-shift2',patientId:'amelia-sung',title:'Shift 2 — Shoulder Dystocia and Newborn Resuscitation',category:'faculty',status:'released',content:'Shoulder dystocia occurs during delivery. Newborn is limp and cyanotic with no respiratory effort. Move to warmer; dry and stimulate; remove wet towels; open the airway; suction as needed; assess heart rate for a full minute. Initial heart rate 100 and 1-minute SpO2 52%. Begin positive-pressure ventilation per neonatal resuscitation protocol and reassess. If heart rate falls to 60 with no respiratory effort, verify chest movement and reposition, then begin 3:1 chest compressions with ventilation. Continue until spontaneous breathing and heart rate above 100. Apgar: 1 minute = 2; 5 minutes = 7. Assess left arm movement and clavicle crepitus; notify pediatrician; evaluate for Erb palsy, hypoglycemia, and thermoregulation.'},
- {id:'packet-amelia-faculty',patientId:'amelia-sung',title:'Amelia Sung Faculty Simulation Guide',category:'faculty',status:'released',content:'36-year-old Filipino female, G2 P1 at 39 weeks, 83 kg. Allergies: shellfish and penicillin. Admitted in active labor with diet-controlled gestational diabetes; 4 cm on admission; no epidural; AROM 12 hours ago with clear fluid. Blood type O positive and GBS positive. Clindamycin is ordered for GBS prophylaxis, and morphine is ordered for pain. Faculty-only progression includes shoulder dystocia and newborn resuscitation.'},
- {id:'packet-fatima-admission',patientId:'fatima-sanogo',title:'Admission and Immediate Postpartum Orders',category:'orders',status:'released',content:'Provider: Dr. Nelson / Dr. Darnell\n\n- Admit to Labor and Delivery for postpartum care.\n- Full Code; regular diet.\n- Assist with first ambulation after recovery.\n- Lactated Ringer’s solution (LR) 1,000 mL at 125 mL/hr; may saline lock 3 hours after delivery if bleeding is scant.\n- Oxytocin (Pitocin) 30 units in 500 mL normal saline at 334 mL/hr for 100 mL after delivery of placenta, then 95 mL/hr until complete.\n- Vital signs, fundal massage, and lochia assessment per postpartum schedule.\n- CBC after delivery and first morning after delivery.\n- Intake and output every shift; weigh all pads for the first 2 hours.\n- Witch hazel (Tucks) pads to hemorrhoids as needed.\n- Pramoxine (Epifoam) spray to perineum as needed for pain.\n- Oxycodone/acetaminophen (Percocet) 1 tablet PO every 4 hours as needed for pain.\n- Ibuprofen (Motrin) 600 mg PO every 6 hours as needed for pain.'},
- {id:'packet-fatima-shift2',patientId:'fatima-sanogo',title:'Shift 2 — Continued Postpartum Hemorrhage',category:'faculty',status:'released',content:'Continued vaginal bleeding with large clots. Obtain second IV access. T 97.5 F; HR 105; RR 16; BP 90/50. Moderate bleeding with critical Hgb 6 g/dL, Hct 22%, platelets 100,000. Pending verbal orders: type and crossmatch 2 units PRBC; start second IV; infuse blood; H&H after transfusion; tranexamic acid; uterine tamponade balloon; CBC. Students should notify provider, prepare blood verification and administration, call the surgical team for possible hysterectomy, administer released medications, and assist with tamponade placement.'},
- {id:'packet-fatima-faculty',patientId:'fatima-sanogo',title:'Fatima Sanogo Faculty Simulation Guide',category:'faculty',status:'released',content:'23-year-old G1 P1 at 39 weeks. Induction began yesterday at 0600 for elevated BP. History depression/anxiety; nonsmoker; married to Henry; limited English for 7 months. AROM at 0912 with clear fluid; oxytocin started 0700; O positive, hepatitis B negative, rubella immune, GBS negative. Complete at 0948; pushing 0952; voided at 1000. Vigorous male delivered vaginally at 1232, 9 lb, Apgar 9/9. Unmedicated delivery; second-degree periurethral laceration repaired; placenta manually delivered at 1235; EBL 350 mL. Fundus initially firm at U-1 with small lochia. Shift 1 vitals: T 98.5 F, HR 93, BP 140/80, RR 18, SpO2 96%, capillary refill under 2 seconds. If hemorrhage develops, assess fundus, insert Foley, weigh pads (1 g = 1 mL), notify MD, apply oxygen 10 L by mask, bring hemorrhage cart, and do not administer methylergonovine while BP is elevated.'},
- {id:'packet-molly-shift2-orders',patientId:'molly-thomas',title:'Shift 2 Respiratory Orders',category:'orders',status:'pending',content:'Provider: Dr. Henderson\n\n- Ampicillin (Principen) 50 mg/kg IV every 6 hours.\n- Dextrose 5% in 0.45% sodium chloride (D5 1/2 NS) IV at daily maintenance rate after void during bolus.\n- Maintain oxygen saturation at 92% or greater.\n- Chest X-ray.'},
- {id:'packet-molly-faculty',patientId:'molly-thomas',title:'Molly Thomas Faculty Simulation Guide',category:'faculty',status:'released',content:'7-month-old female, 7 kg, NKDA, upper-airway obstruction/croup. Decreased oral intake and difficulty breathing; irritable, pale, barking cough, nasal flaring. Nasopharyngeal wash positive for parainfluenza; CMP pending. Shift 1: T 37.3 C, HR 165, BP 80/40, RR 50, SpO2 87%; congestion and barking cough, deep suprasternal retractions, nasal flaring, pale dry mucosa, capillary refill 3 seconds. Shift 2 after choking/coughing and cyanosis: T 39 C, HR 168, BP 90/55, RR 60, SpO2 83%; coarse breath sounds and crackles, deep retractions and nasal flaring, fussy, capillary refill 2 seconds. Apply 100% oxygen by mask, support airway and suction, administer released medications, contact respiratory therapy and radiology, and initiate PEWS/MET escalation.'}
-);
-const charlesMeds=[
- ['Lisinopril 20 mg','PO','0900'],['Metoprolol 50 mg','PO','0900'],['Amiodarone 200 mg','PO','0900'],
- ['Digoxin 0.125 mg','PO','0900'],['Metformin 1000 mg','PO','0800'],['Warfarin 2.5 mg','PO','2100'],
- ['Insulin per AC/HS sliding scale','Subcutaneous','AC/HS'],['Spironolactone 12.5 mg','PO','HELD while receiving Lasix']
-];
-for(let shift=1;shift<=4;shift++)added.push({id:`admin-charles-mar-${shift}`,patientId:'charles-jones',title:`MAR — Shift ${shift}`,category:'mar',status:shift===1?'released':'pending',content:`**${shift===1||shift===3?'Day Shift (7 AM–7 PM)':'Night Shift (7 PM–7 AM)'}**\n\n${charlesMeds.filter(m=>(shift===1||shift===3)?m[2]!=='2100':m[2]==='2100'||m[2]==='AC/HS').map(m=>`- ${m[0]} | ${m[1]} | Due ${m[2]}`).join('\n')}`});
-
+const retiredChartIds=new Set(window.RETIRED_CHART_IDS);
 function compactContent(value){
  return String(value||'').replace(/!?\[[^\]]*\]\(file:\/{2,3}[^)]+\)/gi,'').replace(/^\s*(?:Day\s*[12]|#|---|[-|]\s*)\s*$/gmi,'').replace(/<columns>[\s\S]*?<\/columns>/gi,m=>/<table|[A-Za-z0-9]{3,}/i.test(m.replace(/<\/?(?:columns?|column)[^>]*>/gi,''))?m:'')
   .replace(/<tr>(?:\s*<td[^>]*>\s*(?:<br>)?\s*<\/td>\s*)+<\/tr>/gi,'').replace(/<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>/gi,'').replace(/(?:<br\s*\/?>\s*){2,}/gi,'<br>')
@@ -365,9 +148,9 @@ function migratePacketCharts(){
  state.releaseQueue=(state.releaseQueue||[]).filter(x=>!withoutGlucose.has(x.patientId)||!/glucose checks?|blood sugar|sliding[- ]scale|insulin/i.test([x.title,x.content,x.rowData?.name,x.rowData?.text].filter(Boolean).join(' ')));
  for(const id of withoutGlucose){const base=state.simulationBases?.[id];if(!base)continue;base.collections.glucoseChecks=[];for(const row of base.collections.vitals||[])delete row.bg;base.collections.medicationCatalog=(base.collections.medicationCatalog||[]).filter(x=>!/insulin/i.test(x.name||x.medication||''));base.collections.orders=(base.collections.orders||[]).filter(x=>!/glucose checks?|blood sugar|sliding[- ]scale|insulin/i.test(x.text||x.order||''));base.releaseQueue=(base.releaseQueue||[]).filter(x=>!/glucose checks?|blood sugar|sliding[- ]scale|insulin/i.test([x.title,x.content,x.rowData?.name,x.rowData?.text].filter(Boolean).join(' ')));}
  const profiles={
-  'amelia-sung':{weightKg:83,allergies:['Shellfish','Penicillin'],bloodType:'O+',primaryDiagnosis:'Active labor / gestational diabetes',gbs:'Positive',fetus:'Male',painPlan:'Morphine sulfate (Duramorph) 2 mg slow IV push every 2 hours PRN'},
+  'amelia-sung':{weightKg:83,allergies:['Shellfish','Penicillin'],bloodType:'O+',primaryDiagnosis:"Induction of labor / gestational diabetes (diet-controlled)",gbs:'Positive',fetus:'Male',painPlan:"Epidural in place — anesthesia-managed"},
   'jane-fowler':{primaryDiagnosis:'Ovarian cancer — preoperative total abdominal hysterectomy with bilateral salpingo-oophorectomy'},
-  'fatima-sanogo':{weightKg:71,bloodType:'O+',primaryDiagnosis:'Postpartum hemorrhage after vaginal delivery',fetus:'Male'},
+  'fatima-sanogo':{weightKg:70,bloodType:'O+',primaryDiagnosis:'Postpartum hemorrhage after vaginal delivery',fetus:'Male'},
   'molly-thomas':{weightKg:7,primaryDiagnosis:'Upper airway obstruction / croup'}
  };
  for(const [id,patch] of Object.entries(profiles)){const p=state.patients?.find(x=>x.id===id);if(p)Object.assign(p,patch);const b=state.simulationBases?.[id]?.patient;if(b)Object.assign(b,patch);}
@@ -381,14 +164,14 @@ function migratePacketCharts(){
   janeBase.collections.orders=(janeBase.collections.orders||[]).filter(x=>!String(x.id||'').startsWith('jane-postop-'));
   for(const seed of janeAdmission){const current=janeBase.collections.orders.find(x=>x.id===seed.id);if(current)Object.assign(current,cloneData(seed));else janeBase.collections.orders.push(cloneData(seed));}
   janeBase.collections.notes||=[];for(const seed of janeNotes){const current=janeBase.collections.notes.find(x=>x.id===seed.id);if(current)Object.assign(current,cloneData(seed));else janeBase.collections.notes.push(cloneData(seed));}
-  janeBase.chartRecords=(janeBase.chartRecords||[]).filter(x=>!removeIds.has(x.id));
+  janeBase.chartRecords=(janeBase.chartRecords||[]).filter(x=>!retiredChartIds.has(x.id));
   for(const id of ['chart-1d0195d201d581d49553e7787bbe1924','chart-2fd195d201d58013ab8bffdf475123e4','admin-jane-ct-results','chart-2d6195d201d58030b0ded95695bbcb1e','admin-jane-respiratory-naloxone','admin-jane-respiratory-ketorolac']){const source=CHART_RECORDS.find(x=>x.id===id);if(!source)continue;const current=janeBase.chartRecords.find(x=>x.id===id);if(current)Object.assign(current,cloneData(source));else janeBase.chartRecords.push(cloneData(source));}
  }
- const retiredAmelia=new Set(['amelia-order-admit','amelia-order-gbs','amelia-order-cervical','amelia-order-birthplan','amelia-order-breastfeed','amelia-order-glucose','amelia-order-tylenol']);
+ const retiredAmelia=new Set(['amelia-order-morphine','amelia-order-admit','amelia-order-gbs','amelia-order-cervical','amelia-order-birthplan','amelia-order-breastfeed','amelia-order-glucose','amelia-order-tylenol']);
  state.orders=(state.orders||[]).filter(x=>!retiredAmelia.has(x.id));
  state.releaseQueue=(state.releaseQueue||[]).filter(x=>!retiredAmelia.has(x.rowData?.id)&&!retiredAmelia.has(x.chartRecordId));
  const gbs=(state.labs||[]).find(x=>x.id==='amelia-lab-gbs');if(gbs)Object.assign(gbs,{result:'Positive',flag:'Abnormal',comments:'Group B Strep positive'});
- const ameliaNote=(state.notes||[]).find(x=>x.id==='amelia-admission-note');if(ameliaNote)Object.assign(ameliaNote,{situation:'36-year-old G2 P1 at 39 weeks admitted in active labor with gestational diabetes. Cervix 4 cm on admission; no epidural; AROM 12 hours ago with clear fluid.',background:'Blood type O positive; GBS positive. Allergies: shellfish and penicillin.',assessment:'Continue maternal and fetal assessment and continuous monitoring.',recommendation:'Administer clindamycin for GBS prophylaxis and morphine as ordered for pain.'});
+ const ameliaNote=(state.notes||[]).find(x=>x.id==='amelia-admission-note');if(ameliaNote)Object.assign(ameliaNote,{"situation":"36-year-old Filipino G2P1 at 39 weeks admitted for induction for diet-controlled gestational diabetes; arrived 2 hours ago. SROM at home at 0300, clear fluid; cervix 4 cm. Epidural in place — anesthesia-managed; infusion running at the start of Shift 1. GBS positive with penicillin allergy; clindamycin 900 mg IVPB every 6 hours until delivery; first dose due now, students start in Shift 1. On-call physician requests report to day-shift physician.","background":"G2P1L1; previous vaginal delivery of a 9 lb male, no complications. Diet-controlled gestational diabetes; O positive, hepatitis B negative, GBS positive. Prenatal care began at 14 weeks; pregnancy weight gain 55 lb. No surgical history. Not married; father of baby not involved; no support person.","assessment":"LR 125 mL/hr via 20 g right wrist; Pitocin 6 milliunits/min. Fingerstick glucose 90 mg/dL 2 hours ago. BP 138/80; HR 90; RR 22; T 98.9 °F; SpO₂ 99% on room air. FHR 140, moderate variability with accelerations. Strong contractions every 3 minutes lasting 45 seconds. Clear liquids; bed rest (epidural in place).","recommendation":"Report to day-shift physician; start clindamycin; epidural in place, managed by anesthesia. Recheck fingerstick blood glucose 30 minutes after a low glucose result; report the repeat result to the provider."});
  for(const id of Object.keys(profiles)){
   const base=state.simulationBases?.[id];if(!base)continue;
   base.collections.orders=(base.collections.orders||[]).filter(x=>!retiredAmelia.has(x.id));
@@ -401,12 +184,12 @@ function migratePacketCharts(){
   if(saved)Object.assign(saved,cloneData(babyProtocol));else (babyBase.chartRecords||=[]).push(cloneData(babyProtocol));
   babyBase.releaseQueue=(babyBase.releaseQueue||[]).filter(x=>x.chartRecordId!==babyProtocol.id);
  }
- state.packetCharts20260917=true;
+ window.markStateMigration('packetCharts20260917');
 }
 window.prepareAdminChartData=function(){
- for(let i=CHART_RECORDS.length-1;i>=0;i--)if(removeIds.has(CHART_RECORDS[i].id))CHART_RECORDS.splice(i,1);
+ for(let i=CHART_RECORDS.length-1;i>=0;i--)if(retiredChartIds.has(CHART_RECORDS[i].id))CHART_RECORDS.splice(i,1);
  for(let i=CHART_RECORDS.length-1;i>=0;i--)if(CHART_RECORDS[i].category==='io'&&/(?:Output day 1|Output day 2|\bDay 1\b[\s\S]*\bDay 2\b)/i.test(CHART_RECORDS[i].content))CHART_RECORDS.splice(i,1);
- for(const record of CHART_RECORDS){if(changes[record.id])Object.assign(record,changes[record.id]);record.content=compactContent(record.content);}
+ for(const record of CHART_RECORDS)if(record.id!=='admin-baby-glucose-protocol')record.content=compactContent(record.content);
  const amelia=CHART_RECORDS.find(r=>r.patientId==='amelia-sung'&&r.category==='orders');
  if(amelia)amelia.content=amelia.content.replace(/No additional orders entered\. Record new provider orders in the Provider Orders section\.?/gi,'').trim();
  // Stephanie's post-chest-X-ray orders must not appear in her original Admission Orders.
@@ -425,10 +208,7 @@ window.prepareAdminChartData=function(){
  if(babyOrders)babyOrders.content=compactContent(babyOrders.content.replace(/<tr><td>[^<]*<\/td><td>Chest\s*[Xx]-?\s*ray<\/td><td>[^<]*(?:Laney|Darrelle)[\s\S]*?<\/td><\/tr>/i,''));
  const sanogo=CHART_RECORDS.find(r=>r.id==='chart-28b195d201d5805ca4d1c8978c9278be');
  if(sanogo)sanogo.content=compactContent(sanogo.content.replace(/<tr><td[^>]*><\/td><td>\*\*If hemorrhage is suspected[\s\S]*?<\/tr>/i,'').replace(/<tr><td[^>]*><\/td><td>(?:cbc in 6 hrs|foley cath|15 min fundus\s+checks)<\/td><td>Dr\. Darnell\/KR<\/td><\/tr>/gi,''));
- for(const item of added)if(!CHART_RECORDS.some(r=>r.id===item.id))CHART_RECORDS.push({...item});
- const newbornProtocol=CHART_RECORDS.find(r=>r.id==='admin-baby-glucose-protocol');
- if(newbornProtocol)Object.assign(newbornProtocol,{title:'Newborn Glucose Management Policy',category:'orders',status:'released',content:newbornGlucosePolicyContent});
- for(const item of state.customChartRecords||[])if(!removeIds.has(item.id)&&!CHART_RECORDS.some(r=>r.id===item.id))CHART_RECORDS.push({...item});
+ for(const item of state.customChartRecords||[])if(!retiredChartIds.has(item.id)&&!CHART_RECORDS.some(r=>r.id===item.id))CHART_RECORDS.push({...item});
  normalizeJaneMedicationContent();
 };
 
@@ -439,7 +219,7 @@ function sendReleaseMessage(item){
  if(state.messages.some(m=>m.releaseItemId===item.id))return;
  state.messages.push({id:uid('msg'),patientId:item.patientId,at:item.releasedAt||nowLocal(),from:'Faculty',to:'Student',subject:`${item.title} released`,message:`${item.title} is now available in the ${destination} tab.`,read:false,releaseItemId:item.id});
 }
-const simulationPatientCollections=['orders','labs','notes','vitals','io','assessments','mar','medicationCatalog','bloodUnits','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','messages','notifications','diagnosticFiles','labPanels','audit'];
+const simulationPatientCollections=['orders','labs','notes','vitals','io','assessments','mar','medicationCatalog','bloodUnits','glucoseChecks','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','messages','notifications','diagnosticFiles','labPanels'];
 const cloneData=value=>JSON.parse(JSON.stringify(value));
 function captureSimulationBase(patientId){
  const patient=state.patients.find(x=>x.id===patientId);
@@ -479,7 +259,7 @@ function renderBloodAdministration(){
  <label>Baseline Vitals<input id="baBase" placeholder="T / HR / RR / BP / SpO₂"></label><label>15-minute Vitals<input id="ba15" placeholder="T / HR / RR / BP / SpO₂"></label><label>Completion Vitals<input id="baEndVitals" placeholder="T / HR / RR / BP / SpO₂"></label>
  <label class="wide">Response / Notes<textarea id="baNotes"></textarea></label></div><div class="actions"><button id="baVerify" class="secondary">Verify Scan</button><button id="baSave" class="primary">Save Blood Administration</button></div>`)+panel('Blood Administration Record',`<table><thead><tr><th>Start</th><th>Product / Unit</th><th>Barcode</th><th>Volume</th><th>Reaction</th><th>Administered / Verified</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.startTime)}</td><td>${esc(r.product)}<br>${esc(r.unit)}</td><td>${esc(r.barcode)}</td><td>${esc(r.volume)} mL</td><td>${esc(r.reaction||'None')}</td><td>${esc(r.student)} / ${esc(r.verifiedBy)}</td></tr>`).join('')||'<tr><td colspan="6">No blood products documented.</td></tr>'}</tbody></table>`);
  baVerify.onclick=()=>{if(!baBarcode.value.trim()||baPatient.value.trim()!==String(p.mrn)){alert('Scan the unit and verify the patient MRN.');return}alert('Patient and blood-product scan verified. Complete the independent verifier check before administration.');};
- baSave.onclick=()=>{if(!baUnit.value.trim()||!baBarcode.value.trim()||!baStudent.value.trim()||!baVerifier.value.trim()){alert('Unit, barcode, administering clinician, and independent verifier are required.');return}state.bloodAdministration.push({id:uid('blood'),patientId:p.id,product:baProduct.value,unit:baUnit.value.trim(),barcode:baBarcode.value.trim(),patientVerification:baPatient.value.trim(),bloodType:baType.value.trim(),expiry:baExpiry.value,startTime:baStart.value,endTime:baEnd.value,volume:baVolume.value,student:baStudent.value.trim(),verifiedBy:baVerifier.value.trim(),reaction:baReaction.value,baselineVitals:baBase.value.trim(),fifteenMinuteVitals:ba15.value.trim(),completionVitals:baEndVitals.value.trim(),response:baNotes.value.trim()});audit('Blood product administration',p.id,`${baProduct.value}, unit ${baUnit.value.trim()}, verified by ${baVerifier.value.trim()}`);renderBloodAdministration();};
+ baSave.onclick=()=>{if(!baUnit.value.trim()||!baBarcode.value.trim()||!baStudent.value.trim()||!baVerifier.value.trim()){alert('Unit, barcode, administering clinician, and independent verifier are required.');return}state.bloodAdministration.push({id:uid('blood'),patientId:p.id,product:baProduct.value,unit:baUnit.value.trim(),barcode:baBarcode.value.trim(),patientVerification:baPatient.value.trim(),bloodType:baType.value.trim(),expiry:baExpiry.value,startTime:baStart.value,endTime:baEnd.value,volume:baVolume.value,student:baStudent.value.trim(),verifiedBy:baVerifier.value.trim(),reaction:baReaction.value,baselineVitals:baBase.value.trim(),fifteenMinuteVitals:ba15.value.trim(),completionVitals:baEndVitals.value.trim(),response:baNotes.value.trim()});save();renderBloodAdministration();};
 }
 window.renderBloodAdministration=renderBloodAdministration;
 
@@ -495,7 +275,7 @@ function renderCharlesMAR(){
  document.querySelectorAll('.charlesShift').forEach(b=>b.onclick=()=>{charlesMarShift=Number(b.dataset.shift);renderMAR();});
  if(!available)return;
  let verifiedMed=null;
- const verify=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(cjPatientScan.value.trim()),med=meds.find(m=>medBarcode(m[0])===cjMedScan.value.trim().toUpperCase()&&(isFaculty()||window.medicationsForPatient(p.id,false).some(x=>x.name===m[0])));cjPatientFeedback.className=patientOk?'success':'warn';cjPatientFeedback.textContent=patientOk?`Patient verified: ${p.name}, MRN ${p.mrn}.`:'PATIENT MISMATCH: Wristband was not recognized.';cjMedFeedback.className=med?'success':'warn';cjMedFeedback.textContent=med?`Medication verified: ${med[0]} ${med[1]}.`:'MEDICATION NOT FOUND OR NOT DUE THIS SHIFT.';verifiedMed=patientOk&&med?med:null;cjVerifyStatus.textContent=verifiedMed?'Patient and medication match this MAR.':'Verification failed. Stop and recheck.';cjAdminArea.innerHTML=verifiedMed?panel('Medication Verification',`${verifiedMed[0].includes('Warfarin')||verifiedMed[0].includes('Insulin')?'<div class="warn"><b>HIGH-ALERT MEDICATION:</b> Independent verification is required.</div>':''}<div class="success">Patient wristband and medication barcode matched.</div><div class="grid3"><label>Student Nurse<input id="cjStudent"></label><label>Administration Time<input id="cjTime" type="datetime-local" value="${nowLocal()}"></label><label>Site / Line<input id="cjSite"></label><label>Pre-administration Assessment<input id="cjAssessment"></label><label>Patient Education<input id="cjEducation"></label><label>Independent Verifier<input id="cjVerifier"></label><label>Status<select id="cjStatus"><option>Given</option><option>Held</option><option>Refused</option><option>Not given</option></select></label><label class="wide">Response / Notes<textarea id="cjNotes"></textarea></label></div><button id="cjDocument" class="primary">Document Medication Administration</button>`):'';if(verifiedMed)cjDocument.onclick=()=>{if((!isFaculty()&&!window.medicationsForPatient(p.id,false).some(x=>x.name===verifiedMed[0]))||![p.barcode,String(p.mrn)].includes(cjPatientScan.value.trim())||medBarcode(verifiedMed[0])!==cjMedScan.value.trim()){alert('Codes changed. Verify the patient and medication again.');return;}if(!cjStudent.value.trim()){alert('Enter the student nurse name.');return}if((verifiedMed[0].includes('Warfarin')||verifiedMed[0].includes('Insulin'))&&!cjVerifier.value.trim()){alert('Enter the independent verifier for this high-alert medication.');return}state.mar.push({id:uid('mar'),patientId:p.id,shiftNumber:charlesMarShift,shift:`Shift ${charlesMarShift}`,time:cjTime.value,student:cjStudent.value.trim(),medication:verifiedMed[0],dose:'',route:verifiedMed[1],due:verifiedMed[2],status:cjStatus.value,site:cjSite.value.trim(),preAssessment:cjAssessment.value.trim(),education:cjEducation.value.trim(),verifiedBy:cjVerifier.value.trim(),response:cjNotes.value.trim(),patientBarcode:cjPatientScan.value.trim(),medicationBarcode:medBarcode(verifiedMed[0])});audit('Medication administration',p.id,`${verifiedMed[0]}: ${cjStatus.value} by ${cjStudent.value.trim()}`);renderMAR();};};
+ const verify=()=>{const patientOk=[p.barcode,String(p.mrn)].includes(cjPatientScan.value.trim()),med=meds.find(m=>medBarcode(m[0])===cjMedScan.value.trim().toUpperCase()&&(isFaculty()||window.medicationsForPatient(p.id,false).some(x=>x.name===m[0])));cjPatientFeedback.className=patientOk?'success':'warn';cjPatientFeedback.textContent=patientOk?`Patient verified: ${p.name}, MRN ${p.mrn}.`:'PATIENT MISMATCH: Wristband was not recognized.';cjMedFeedback.className=med?'success':'warn';cjMedFeedback.textContent=med?`Medication verified: ${med[0]} ${med[1]}.`:'MEDICATION NOT FOUND OR NOT DUE THIS SHIFT.';verifiedMed=patientOk&&med?med:null;cjVerifyStatus.textContent=verifiedMed?'Patient and medication match this MAR.':'Verification failed. Stop and recheck.';cjAdminArea.innerHTML=verifiedMed?panel('Medication Verification',`${verifiedMed[0].includes('Warfarin')||verifiedMed[0].includes('Insulin')?'<div class="warn"><b>HIGH-ALERT MEDICATION:</b> Independent verification is required.</div>':''}<div class="success">Patient wristband and medication barcode matched.</div><div class="grid3"><label>Student Nurse<input id="cjStudent"></label><label>Administration Time<input id="cjTime" type="datetime-local" value="${nowLocal()}"></label><label>Site / Line<input id="cjSite"></label><label>Pre-administration Assessment<input id="cjAssessment"></label><label>Patient Education<input id="cjEducation"></label><label>Independent Verifier<input id="cjVerifier"></label><label>Status<select id="cjStatus"><option>Given</option><option>Held</option><option>Refused</option><option>Not given</option></select></label><label class="wide">Response / Notes<textarea id="cjNotes"></textarea></label></div><button id="cjDocument" class="primary">Document Medication Administration</button>`):'';if(verifiedMed)cjDocument.onclick=()=>{if((!isFaculty()&&!window.medicationsForPatient(p.id,false).some(x=>x.name===verifiedMed[0]))||![p.barcode,String(p.mrn)].includes(cjPatientScan.value.trim())||medBarcode(verifiedMed[0])!==cjMedScan.value.trim()){alert('Codes changed. Verify the patient and medication again.');return;}if(!cjStudent.value.trim()){alert('Enter the student nurse name.');return}if((verifiedMed[0].includes('Warfarin')||verifiedMed[0].includes('Insulin'))&&!cjVerifier.value.trim()){alert('Enter the independent verifier for this high-alert medication.');return}state.mar.push({id:uid('mar'),patientId:p.id,shiftNumber:charlesMarShift,shift:`Shift ${charlesMarShift}`,time:cjTime.value,student:cjStudent.value.trim(),medication:verifiedMed[0],dose:'',route:verifiedMed[1],due:verifiedMed[2],status:cjStatus.value,site:cjSite.value.trim(),preAssessment:cjAssessment.value.trim(),education:cjEducation.value.trim(),verifiedBy:cjVerifier.value.trim(),response:cjNotes.value.trim(),patientBarcode:cjPatientScan.value.trim(),medicationBarcode:medBarcode(verifiedMed[0])});save();renderMAR();};};
  cjVerifyButton.onclick=verify;cjPatientScan.oninput=cjMedScan.oninput=()=>{verifiedMed=null;cjAdminArea.innerHTML='';cjVerifyStatus.textContent='Codes changed. Verify again.';};cjPatientScan.onkeydown=e=>{if(e.key==='Enter')verify();};cjMedScan.onkeydown=e=>{if(e.key==='Enter')verify();};
 }
 
@@ -530,7 +310,7 @@ function removeSmithIcePackOrders(){
  if(base){base.collections.orders=cleanRows(base.collections.orders);base.chartRecords=cleanRows(base.chartRecords);base.releaseQueue=cleanQueue(base.releaseQueue);}
 }
 function updateSmithTylenolDose(){
- if(state.smithTylenol650V1)return;
+ if(window.stateMigrationApplied('smithTylenol650V1'))return;
  const correct=text=>String(text||'').replace(/\b(Tylenol|Acetaminophen)(\s*(?:\([^)]*\))?\s*)\d+(?:\.\d+)?\s*mg\b/gi,(_,name,gap)=>name+gap+'650 mg');
  const update=row=>{
   if(!row)return;
@@ -545,11 +325,11 @@ function updateSmithTylenolDose(){
  for(const item of (state.releaseQueue||[]).filter(smith)){if(item.kind==='order'||['orders','medicationCatalog'].includes(item.targetCollection)||item.chartRecordId==='admin-stephanie-acetaminophen'){update(item);update(item.rowData);}}
  const base=state.simulationBases?.['stephanie-smith'];
  if(base){for(const row of base.chartRecords||[])if(row.category==='orders')update(row);for(const key of ['orders','medicationCatalog'])for(const row of base.collections?.[key]||[])update(row);for(const item of base.releaseQueue||[])if(item.kind==='order'||['orders','medicationCatalog'].includes(item.targetCollection)||item.chartRecordId==='admin-stephanie-acetaminophen'){update(item);update(item.rowData);}}
- state.smithTylenol650V1=true;
+ window.markStateMigration('smithTylenol650V1');
 }
 // Migrate old local/cloud saves once; later faculty edits and releases win.
 window.migrateCarlProfile=function(){
- if(state.carlProfileImportV1)return;
+ if(window.stateMigrationApplied('carlProfileImportV1'))return;
  const patientId='carl-shapiro',labId='chart-262195d201d580e18688dc6f4d7711db',noteId='chart-262195d201d581ad96b0e8bb01be03b9';
  const fillProfile=p=>{
   if(!p)return;
@@ -578,18 +358,19 @@ window.migrateCarlProfile=function(){
   if(!item&&record){item=cloneData(state.releaseQueue.find(r=>r.chartRecordId===labId));base.releaseQueue.push(item);}
   if(item){item.status='pending';item.releasedAt='';}
  }
- state.carlProfileImportV1=true;
+ window.markStateMigration('carlProfileImportV1');
 };
 // Apply the Level 3 chart cleanup once to saved charts and their saved bases.
 function migrateLevel3Charts(){
- if(state.level3ChartCleanupV1)return;
+ if(window.stateMigrationApplied('level3ChartCleanupV1'))return;
  const current=Object.fromEntries(level3VitalsStart.map(r=>[r.id,r]));
  for(const r of CHART_RECORDS)if(current[r.id])Object.assign(r,cloneData(current[r.id]));
  for(const id of [...level3RetiredAssessments,...level3VitalsRecords])delete state.chartContentEdits[id];
  state.customChartRecords=state.customChartRecords.filter(r=>!level3RetiredAssessments.includes(r.id));
  for(const base of Object.values(state.simulationBases))if(base?.chartRecords)base.chartRecords=base.chartRecords.filter(r=>!level3RetiredAssessments.includes(r.id)).map(r=>current[r.id]?cloneData(current[r.id]):r);
- state.level3ChartCleanupV1=true;
+ window.markStateMigration('level3ChartCleanupV1');
 }
+window.updateSmithTylenolDose=updateSmithTylenolDose;window.migratePacketCharts=migratePacketCharts;window.migrateLevel3Charts=migrateLevel3Charts;
 window.initializeAdminEnhancements=function(){
  state.chartContentEdits ||= {};state.customChartRecords ||= [];state.marVisibility ||= {};state.marHiddenRecords ||= {};state.simulationBases ||= {};
  for(const [id,edit] of Object.entries(state.chartContentEdits)){const r=CHART_RECORDS.find(x=>x.id===id);if(r){Object.assign(r,edit);r.content=compactContent(r.content);edit.content=r.content;}}
@@ -704,18 +485,18 @@ window.initializeAdminEnhancements=function(){
   if(pendingEditor&&lastPendingPanel)lastPendingPanel.insertAdjacentElement('afterend',pendingEditor);
   const records=CHART_RECORDS.filter(r=>r.patientId===activePatientId);
   document.getElementById('view').insertAdjacentHTML('beforeend',panel('Editable Chart Content',`<div class="actions"><label style="display:flex;align-items:center;gap:8px"><input id="facultyMarVisible" type="checkbox" style="width:auto" ${state.marVisibility[activePatientId]!==false?'checked':''}> Show MAR to students</label></div><div class="note">Edit, pend, release, or delete any content area for this patient.</div>${records.map(r=>`<div class="releaseCard" data-admin-record="${esc(r.id)}"><div class="grid3"><label>Title<input class="adminTitle" value="${esc(r.title)}"></label><label>Section<select class="adminCategory">${['summary','notes','prenatal','labor','surgery','assessments','flowsheets','io','orders','labs','mar','documents'].map(c=>`<option ${c===r.category?'selected':''}>${c}</option>`).join('')}</select></label><label>Status<select class="adminStatus"><option ${r.status==='released'?'selected':''}>released</option><option ${r.status==='pending'?'selected':''}>pending</option></select></label><label class="wide">Content<textarea class="adminContent">${esc(r.content)}</textarea></label></div><div class="actions"><button class="primary adminSave">Save Edit</button><button class="secondary adminPend">Make Pending</button><button class="secondary adminRelease">Release</button><button class="danger adminDelete">Delete</button></div></div>`).join('')||'<div class="note">No imported content areas for this patient.</div>'}`));
-  const liveCollections=['medicationCatalog','bloodUnits','orders','labs','notes','vitals','io','assessments','mar','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','messages','notifications','diagnosticFiles','labPanels','audit'];
+  const liveCollections=['medicationCatalog','bloodUnits','orders','labs','notes','vitals','io','assessments','mar','laborProgress','postpartumRecovery','pphPads','pphMedications','bloodAdministration','surgicalChecklist','surgicalAssessments','messages','notifications','diagnosticFiles','labPanels'];
   const liveRows=liveCollections.flatMap(collection=>(state[collection]||[]).filter(row=>row.patientId===activePatientId).map(row=>({collection,row})));
   document.getElementById('view').insertAdjacentHTML('beforeend',panel('Editable Live Data',`<div class="note">Change the wording or values below. Faculty can save, make an entry pending, or delete it—no coding is required.</div>${liveRows.map(({collection,row})=>`<div class="releaseCard" data-live-collection="${collection}" data-live-id="${esc(row.id)}"><b>${esc(collection.replace(/([A-Z])/g,' $1'))}</b><div class="grid3" style="margin-top:8px">${liveFieldEditor(row)}</div><div class="actions"><button class="primary liveSaveRow">Save Changes</button><button class="secondary livePendRow">Make Pending</button><button class="danger liveDeleteRow">Delete</button></div></div>`).join('')||'<div class="note">No live entries have been charted for this patient.</div>'}`));
   facultyMarVisible.onchange=()=>{state.marVisibility[activePatientId]=facultyMarVisible.checked;liveSave('mar_visibility_changed',{patientId:activePatientId});};
   const simulationActions=[...document.querySelectorAll('#view .panel')].find(x=>x.querySelector('h2')?.textContent==='Simulation Controls')?.querySelector('.actions');if(simulationActions)simulationActions.insertAdjacentHTML('afterbegin',`<button id="saveSimulationBase" class="primary">Save as Base Patient</button>`);
   if(document.getElementById('saveSimulationBase'))saveSimulationBase.onclick=()=>{if(!confirm('Save the current chart as this patient’s new simulation starting point? Future resets will return to this exact base.'))return;state.simulationBases[activePatientId]=captureSimulationBase(activePatientId);liveSave('simulation_base_saved',{patientId:activePatientId});alert('Base patient saved. Future resets will keep these corrections.');renderFaculty();};
-  const resetButton=document.getElementById('resetPatient');if(resetButton){resetButton.textContent='Reset to Simulation Start';resetButton.onclick=()=>{if(!state.simulationBases[activePatientId]){alert('Save this chart as the Base Patient first.');return}if(!confirm('Reset this patient? Student-entered charting will be deleted, and starting orders, labs, and diagnostics will return to pending.'))return;if(!restoreSimulationBase(activePatientId))return;audit('Simulation reset',activePatientId,'Restored saved base patient; orders, labs, and diagnostics returned to pending');liveSave('simulation_reset',{patientId:activePatientId});renderFaculty();};}
-  savePatientProfile.onclick=()=>{for(const [key] of profileFields){const value=document.querySelector(`[data-profile-field="${key}"]`).value.trim();patient[key]=key==='allergies'?value.split(',').map(x=>x.trim()).filter(Boolean):key==='weightKg'&&value!==''?Number(value):value;}for(const input of document.querySelectorAll('[data-extra-path]')){const path=JSON.parse(input.dataset.extraPath);let object=patient;for(const key of path.slice(0,-1))object=object[key];const key=path[path.length-1],original=object[key];object[key]=typeof original==='number'&&input.value!==''?Number(input.value):typeof original==='boolean'?input.value==='true':input.value;}audit('Faculty edited patient profile',activePatientId,'Patient demographics and profile updated');renderFaculty();};
+  const resetButton=document.getElementById('resetPatient');if(resetButton){resetButton.textContent='Reset to Simulation Start';resetButton.onclick=()=>{if(!state.simulationBases[activePatientId]){alert('Save this chart as the Base Patient first.');return}if(!confirm('Reset this patient? Student-entered charting will be deleted, and starting orders, labs, and diagnostics will return to pending.'))return;if(!restoreSimulationBase(activePatientId))return;liveSave('simulation_reset',{patientId:activePatientId});renderFaculty();};}
+  savePatientProfile.onclick=()=>{for(const [key] of profileFields){const value=document.querySelector(`[data-profile-field="${key}"]`).value.trim();patient[key]=key==='allergies'?value.split(',').map(x=>x.trim()).filter(Boolean):key==='weightKg'&&value!==''?Number(value):value;}for(const input of document.querySelectorAll('[data-extra-path]')){const path=JSON.parse(input.dataset.extraPath);let object=patient;for(const key of path.slice(0,-1))object=object[key];const key=path[path.length-1],original=object[key];object[key]=typeof original==='number'&&input.value!==''?Number(input.value):typeof original==='boolean'?input.value==='true':input.value;}save();renderFaculty();};
   addChartSection.onclick=()=>{const title=newChartTitle.value.trim(),content=compactContent(newChartContent.value);if(!title){alert('Enter a section title.');return}const record={id:uid('faculty-record'),patientId:activePatientId,title,category:newChartCategory.value,status:newChartStatus.value,content};CHART_RECORDS.push(record);state.customChartRecords.push({...record});state.chartContentEdits[record.id]={title:record.title,category:record.category,status:record.status,content:record.content};if(record.status==='pending')queueRelease(record.category==='orders'?'order':record.category==='mar'?'mar':'result',record.patientId,record.title,record.content,{chartRecordId:record.id});liveSave('chart_content_created',{patientId:activePatientId,recordId:record.id});renderFaculty();};
   document.querySelectorAll('[data-edit-pending]').forEach(card=>{const id=card.dataset.editPending,getItem=()=>state.releaseQueue.find(x=>x.id===id);card.querySelector('.pendingSave').onclick=()=>{const item=getItem(),category=card.querySelector('.pendingCategory').value.trim(),targetCollection=card.querySelector('.pendingTarget').value;Object.assign(item,{title:card.querySelector('.pendingTitle').value.trim(),kind:card.querySelector('.pendingKind').value,targetCollection,provider:card.querySelector('.pendingProvider').value.trim(),orderType:item.kind==='order'?category:item.orderType,resultType:item.kind==='result'?category:item.resultType,flag:card.querySelector('.pendingFlag').value,content:compactContent(facultyEditorValue(card.querySelector('.pendingContent')))});if(item.chartRecordId){const record=CHART_RECORDS.find(x=>x.id===item.chartRecordId);if(record){Object.assign(record,{title:item.title,content:item.content});if(['orders','labs','mar','notes','flowsheets','io','assessments','labor','surgery'].includes(targetCollection))record.category=targetCollection==='vitals'?'flowsheets':targetCollection;state.chartContentEdits[record.id]={title:record.title,category:record.category,status:'pending',content:record.content};const custom=state.customChartRecords.find(x=>x.id===record.id);if(custom)Object.assign(custom,record);}}liveSave('pending_item_changed',{patientId:activePatientId,itemId:id});renderFaculty();};card.querySelector('.pendingRelease').onclick=()=>{releaseItem(id);renderFaculty();};card.querySelector('.pendingDelete').onclick=()=>{if(!confirm('Delete this pending item?'))return;const item=getItem();if(item?.chartRecordId){const record=CHART_RECORDS.find(x=>x.id===item.chartRecordId);if(record){CHART_RECORDS.splice(CHART_RECORDS.indexOf(record),1);delete state.chartContentEdits[record.id];state.customChartRecords=state.customChartRecords.filter(x=>x.id!==record.id);}}state.releaseQueue=state.releaseQueue.filter(x=>x.id!==id);liveSave('pending_item_deleted',{patientId:activePatientId,itemId:id});renderFaculty();};});
   document.querySelectorAll('[data-admin-record]').forEach(card=>{const id=card.dataset.adminRecord,record=CHART_RECORDS.find(r=>r.id===id);if(record.category==='mar')card.querySelector('.actions').insertAdjacentHTML('afterbegin',`<label style="display:flex;align-items:center;gap:6px"><input class="marSheetVisible" type="checkbox" style="width:auto" ${!state.marHiddenRecords[id]?'checked':''}> Visible to students</label>`);const visibility=card.querySelector('.marSheetVisible');if(visibility)visibility.onchange=()=>{state.marHiddenRecords[id]=!visibility.checked;liveSave('mar_sheet_visibility_changed',{patientId:activePatientId,recordId:id});};const persist=status=>{Object.assign(record,{title:card.querySelector('.adminTitle').value.trim(),category:card.querySelector('.adminCategory').value,status:status||card.querySelector('.adminStatus').value,content:compactContent(facultyEditorValue(card.querySelector('.adminContent')))});state.chartContentEdits[id]={title:record.title,category:record.category,status:record.status,content:record.content};const custom=state.customChartRecords.find(x=>x.id===id);if(custom)Object.assign(custom,record);let q=(state.releaseQueue||[]).find(x=>x.chartRecordId===id);if(record.status==='pending'){if(!q){q=queueRelease(record.category==='orders'?'order':record.category==='mar'?'mar':'result',record.patientId,record.title,record.content,{chartRecordId:id});}q.status='pending';q.title=record.title;q.content=record.content;}else if(q&&q.status==='pending')releaseItem(q.id);liveSave('chart_content_changed',{patientId:record.patientId,recordId:id});renderFaculty();};card.querySelector('.adminSave').onclick=()=>persist();card.querySelector('.adminPend').onclick=()=>persist('pending');card.querySelector('.adminRelease').onclick=()=>persist('released');card.querySelector('.adminDelete').onclick=()=>{if(!confirm(`Delete ${record.title}?`))return;CHART_RECORDS.splice(CHART_RECORDS.indexOf(record),1);state.customChartRecords=state.customChartRecords.filter(x=>x.id!==id);delete state.chartContentEdits[id];state.releaseQueue=(state.releaseQueue||[]).filter(x=>x.chartRecordId!==id);liveSave('chart_content_deleted',{patientId:activePatientId,recordId:id});renderFaculty();};});
-  document.querySelectorAll('[data-live-collection]').forEach(card=>{const collection=card.dataset.liveCollection,id=card.dataset.liveId;const getRow=()=>state[collection].find(x=>x.id===id),savePlainFields=()=>{const row=getRow();for(const input of card.querySelectorAll('[data-live-field]')){const key=input.dataset.liveField,original=row[key],value=facultyEditorValue(input);row[key]=typeof original==='number'&&value!==''?Number(value):typeof original==='boolean'?value==='true':value;}return row;};card.querySelector('.liveSaveRow').onclick=()=>{savePlainFields();audit('Faculty edited chart data',activePatientId,`${collection}: ${id}`);liveSave('live_content_changed',{patientId:activePatientId,collection,id});renderFaculty();};card.querySelector('.liveDeleteRow').onclick=()=>{if(!confirm('Delete this chart entry?'))return;state[collection]=state[collection].filter(x=>x.id!==id);audit('Faculty deleted chart data',activePatientId,`${collection}: ${id}`);renderFaculty();};card.querySelector('.livePendRow').onclick=()=>{const row={...savePlainFields()},title=row.test||row.medication||row.text||row.type||`${collection} entry`,content=row.result||row.text||row.medication||row.narrative||row.message||row.notes||title;state[collection]=state[collection].filter(x=>x.id!==id);queueRelease('chartdata',activePatientId,title,content,{targetCollection:collection,rowData:row});renderFaculty();};});
+  document.querySelectorAll('[data-live-collection]').forEach(card=>{const collection=card.dataset.liveCollection,id=card.dataset.liveId;const getRow=()=>state[collection].find(x=>x.id===id),savePlainFields=()=>{const row=getRow();for(const input of card.querySelectorAll('[data-live-field]')){const key=input.dataset.liveField,original=row[key],value=facultyEditorValue(input);row[key]=typeof original==='number'&&value!==''?Number(value):typeof original==='boolean'?value==='true':value;}return row;};card.querySelector('.liveSaveRow').onclick=()=>{savePlainFields();liveSave('live_content_changed',{patientId:activePatientId,collection,id});renderFaculty();};card.querySelector('.liveDeleteRow').onclick=()=>{if(!confirm('Delete this chart entry?'))return;state[collection]=state[collection].filter(x=>x.id!==id);save();renderFaculty();};card.querySelector('.livePendRow').onclick=()=>{const row={...savePlainFields()},title=row.test||row.medication||row.text||row.type||`${collection} entry`,content=row.result||row.text||row.medication||row.narrative||row.message||row.notes||title;state[collection]=state[collection].filter(x=>x.id!==id);queueRelease('chartdata',activePatientId,title,content,{targetCollection:collection,rowData:row});renderFaculty();};});
   prepareFacultyTextEditors();
  };
  const baseMenu=applyPatientMenu;applyPatientMenu=function(){baseMenu();document.querySelector('[data-view="labor"]')?.classList.toggle('hiddenByPatient',activePatientId==='baby-boy-sung'||!((PATIENT_SPECIALTY_VIEWS[activePatientId]||[]).includes('labor')));};
