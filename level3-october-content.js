@@ -13,6 +13,13 @@
   return s;
  }
  window.LEVEL3_OCTOBER={retired,targets,patches,content};
+ window.repairLevel3ImportedContent=function(){
+  const repair=r=>{if(r&&targets.includes(r.patientId))for(const key of ['content','text'])if(typeof r[key]==='string')r[key]=content(r.patientId,r[key]);};
+  for(const r of CHART_RECORDS)repair(r);
+  for(const key of ['customChartRecords','releaseQueue','orders'])for(const r of state[key]||[])repair(r);
+  for(const [id,edit] of Object.entries(state.chartContentEdits||{})){const record=CHART_RECORDS.find(r=>r.id===id);if(record&&typeof edit.content==='string')edit.content=content(record.patientId,edit.content);}
+  for(const b of Object.values(state.simulationBases||{})){for(const r of b.chartRecords||[])repair(r);for(const r of b.releaseQueue||[])repair(r);for(const r of b.collections?.orders||[])repair(r);}
+ };
  function cleanRows(rows){return (rows||[]).filter(r=>!retired.includes(r.id)&&!retired.includes(r.chartRecordId)&&!retired.includes(r.sourceChartRecordId)&&!retired.some(id=>String(r.id||'').startsWith('blood-mar-'+id)));}
  window.applyLevel3October=function(){
   for(let i=CHART_RECORDS.length-1;i>=0;i--)if(retired.includes(CHART_RECORDS[i].id))CHART_RECORDS.splice(i,1);

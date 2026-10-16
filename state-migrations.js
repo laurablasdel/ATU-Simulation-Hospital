@@ -37,10 +37,11 @@
   if((Number(state.schemaVersion)||0)<14)window.applyOctoberPatientContent();
   if((Number(state.schemaVersion)||0)<15)window.applyLevel3October();
   if((Number(state.schemaVersion)||0)<16)window.applyPriorNurseHistory();
+  if((Number(state.schemaVersion)||0)<17)window.repairLevel3ImportedContent();
   // Always clean receives too, including stale tabs claiming a current schema.
   state=window.hydrateStateBaselines(window.cleanRetiredState(state));
   for(const [key] of steps)delete state[key];
-  state.schemaVersion=Math.max(Number(state.schemaVersion)||0,steps.length+4);
+  state.schemaVersion=Math.max(Number(state.schemaVersion)||0,steps.length+5);
  };
- window.STATE_SCHEMA_VERSION=steps.length+4;
+ window.STATE_SCHEMA_VERSION=steps.length+5;
 })();

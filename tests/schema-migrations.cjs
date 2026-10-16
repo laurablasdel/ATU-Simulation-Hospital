@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const names=['updateSmithTylenolDose','migratePacketCharts','migrateCarlProfile','migrateRuthOrthoStart','migrateRuthNorepinephrine','migrateRuthProfile','migrateLevel3Charts','seedOriginalMAR','normalizeJaneMAR','migrateMollyAdmission','applySungScenario','migrateVernonProfile','applyOctoberPatientContent','applyLevel3October','applyPriorNurseHistory'];
+const names=['updateSmithTylenolDose','migratePacketCharts','migrateCarlProfile','migrateRuthOrthoStart','migrateRuthNorepinephrine','migrateRuthProfile','migrateLevel3Charts','seedOriginalMAR','normalizeJaneMAR','migrateMollyAdmission','applySungScenario','migrateVernonProfile','applyOctoberPatientContent','applyLevel3October','applyPriorNurseHistory','repairLevel3ImportedContent'];
 for(const legacy of [{},{carlProfileImportV1:true,ruthNorepinephrineV1:true,vernonProfileV1:true},{medicationOrdersRebuiltV6:true,janeMarNormalizedV7:true}]){
  const calls=[],ctx={state:{...legacy,notes:[{id:'keep'}],simulationReports:[{id:'remove'}]},hydrateStateBaselines:x=>x};ctx.window=ctx;
  for(const name of names)ctx[name]=()=>calls.push(name);
