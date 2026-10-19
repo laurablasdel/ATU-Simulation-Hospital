@@ -324,17 +324,7 @@ const SEED_AMELIA_ORDERS=[
     "time": "SIM ADMISSION",
     "provider": "Dr. Darnell",
     "type": "Medication",
-    "text": "Oxytocin (Pitocin) 30 units in 500 mL sodium chloride 0.9% — infusing at 6 milliunits/min.",
-    "status": "Active",
-    "enteredBy": "Provider"
-  },
-  {
-    "id": "amelia-order-pitocin-titration",
-    "patientId": "amelia-sung",
-    "time": "SIM ADMISSION",
-    "provider": "Dr. Darnell",
-    "type": "Medication",
-    "text": "Standing order: Increase oxytocin (Pitocin) infusion by 2 milliunits/min every 15 minutes, per simulation protocol, until discontinued by provider order.",
+    "text": "Oxytocin (Pitocin) 30 units in 500 mL sodium chloride 0.9% — infusing at 6 milliunits/min. Standing order: Increase infusion by 2 milliunits/min every 15 minutes, per simulation protocol, until discontinued by provider order.",
     "status": "Active",
     "enteredBy": "Provider"
   },
