@@ -329,6 +329,16 @@ const SEED_AMELIA_ORDERS=[
     "enteredBy": "Provider"
   },
   {
+    "id": "amelia-order-pitocin-titration",
+    "patientId": "amelia-sung",
+    "time": "SIM ADMISSION",
+    "provider": "Dr. Darnell",
+    "type": "Medication",
+    "text": "Standing order: Increase oxytocin (Pitocin) infusion by 2 milliunits/min every 15 minutes, per simulation protocol, until discontinued by provider order.",
+    "status": "Active",
+    "enteredBy": "Provider"
+  },
+  {
     "id": "amelia-order-lr",
     "patientId": "amelia-sung",
     "time": "SIM ADMISSION",
