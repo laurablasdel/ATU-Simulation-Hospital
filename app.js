@@ -369,6 +369,16 @@ const SEED_AMELIA_ORDERS=[
     "enteredBy": "Provider"
   },
   {
+    "id": "amelia-order-foley",
+    "patientId": "amelia-sung",
+    "time": "SIM ADMISSION",
+    "provider": "Dr. Darnell",
+    "type": "Nursing",
+    "text": "Insert indwelling Foley urinary catheter.",
+    "status": "Active",
+    "enteredBy": "Provider"
+  },
+  {
     "id": "amelia-order-fingerstick",
     "patientId": "amelia-sung",
     "time": "SIM ADMISSION",
