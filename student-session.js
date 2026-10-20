@@ -5,7 +5,7 @@
  const key=()=>STORAGE_KEY+'_student_session';
  window.studentSession=()=>identity?{...identity}:null;
  window.studentPatientAreas=function(p){
-  const assigned={'karl-sharp':['Medical Surgical'],'vernon-watkins':['Medical Surgical'],'carl-shapiro':['ICU']};
+  const assigned={'karl-sharp':['Medical Surgical','ICU'],'vernon-watkins':['Medical Surgical','ICU'],'carl-shapiro':['Medical Surgical','ICU']};
   if(assigned[p.id])return assigned[p.id];
   if(Array.isArray(p.clinicalAreas)&&p.clinicalAreas.length)return p.clinicalAreas;
   const unit=String(p.unit||'');
