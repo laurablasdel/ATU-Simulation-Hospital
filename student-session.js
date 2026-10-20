@@ -1,23 +1,23 @@
 /* Student identity is local to this tab; shared connection remains separate. */
 (function(){
- const areas=['Medical Surgical','ICU','Psychiatric','PEDS','OB'];
+ const areas=['Medical Surgical','ICU/Critical Care','Psychiatric','PEDS','OB'];
  let identity=null;
  const key=()=>STORAGE_KEY+'_student_session';
  window.studentSession=()=>identity?{...identity}:null;
  window.studentPatientAreas=function(p){
-  const assigned={'karl-sharp':['Medical Surgical','ICU'],'vernon-watkins':['Medical Surgical','ICU'],'carl-shapiro':['Medical Surgical','ICU'],'ruth-livingston':['Medical Surgical','ICU']};
+  const assigned={'karl-sharp':['Medical Surgical'],'vernon-watkins':['Medical Surgical'],'vincent-brody':['Medical Surgical'],'carl-shapiro':['ICU/Critical Care'],'ruth-livingston':['ICU/Critical Care']};
   if(assigned[p.id])return assigned[p.id];
-  if(Array.isArray(p.clinicalAreas)&&p.clinicalAreas.length)return [...new Set(p.clinicalAreas.flatMap(a=>a==='Orthopedic Med-Surg'||a==='Medical Surgical and ICU'?['Medical Surgical','ICU']:[a]))];
+  if(Array.isArray(p.clinicalAreas)&&p.clinicalAreas.length)return [...new Set(p.clinicalAreas.flatMap(a=>a==='Orthopedic Med-Surg'||a==='Medical Surgical and ICU'?['Medical Surgical','ICU/Critical Care'] :[a==='ICU'?'ICU/Critical Care':a]))];
   const unit=String(p.unit||'');
-  const mapped={'charles-jones':['Medical Surgical'],'jane-fowler':['Medical Surgical'],'vincent-brody':['Medical Surgical'],'vernon-watkins':['Medical Surgical'],'baby-boy-sung':['OB'],'ruth-livingston':['Medical Surgical','ICU']};
+  const mapped={'charles-jones':['Medical Surgical'],'jane-fowler':['Medical Surgical'],'vincent-brody':['Medical Surgical'],'vernon-watkins':['Medical Surgical'],'baby-boy-sung':['OB'],'ruth-livingston':['Medical Surgical','ICU/Critical Care']};
   if(mapped[p.id])return mapped[p.id];
   if(/psych/i.test(unit))return ['Psychiatric'];
-  if(/ortho/i.test(unit))return ['Medical Surgical','ICU'];
-  if(/progressive/i.test(unit))return ['ICU'];
+  if(/ortho/i.test(unit))return ['Medical Surgical','ICU/Critical Care'];
+  if(/progressive/i.test(unit))return ['ICU/Critical Care'];
   const specialty=PATIENT_SPECIALTY_VIEWS[p.id]||[];
   if(/pedi|peds|neonat|nursery/i.test(unit)||specialty.includes('pews'))return ['PEDS'];
   if(/obst|labor|maternity/i.test(unit)||specialty.includes('prenatal'))return ['OB'];
-  return ['Medical Surgical','ICU'];
+  return ['Medical Surgical','ICU/Critical Care'];
  };
  window.studentPatientVisible=p=>getTabMode()!=='student'||!identity||studentPatientAreas(p).includes(identity.area);
  function closeLogin(){document.getElementById('studentCheckIn')?.remove();document.querySelector('aside')?.removeAttribute('inert');document.getElementById('view')?.removeAttribute('inert');}
@@ -58,7 +58,7 @@
   document.querySelector('header').after(controls);controls.querySelector('#studentSignOut').onclick=signOutStudent;controls.querySelector('#studentChangeArea').onclick=changeArea;
  }
  window.initializeStudentSession=function(){
-  try{const saved=JSON.parse(sessionStorage.getItem(key())||'null');if(saved?.area==='Progressive Care')saved.area='ICU';if(saved?.area==='Medical Surgical and ICU'||saved?.area==='Orthopedic Med-Surg')saved.area='Medical Surgical';if(saved&&typeof saved.name==='string'&&saved.name.trim()&&areas.includes(saved.area))identity=saved;}catch{}
+  try{const saved=JSON.parse(sessionStorage.getItem(key())||'null');if(saved?.area==='Progressive Care'||saved?.area==='ICU')saved.area='ICU/Critical Care';if(saved?.area==='Medical Surgical and ICU'||saved?.area==='Orthopedic Med-Surg')saved.area='Medical Surgical';if(saved&&typeof saved.name==='string'&&saved.name.trim()&&areas.includes(saved.area))identity=saved;}catch{}
   const style=document.createElement('style');style.textContent='.studentLoginScreen{background:#edf1f3;overflow:auto;padding:32px 18px}.studentLoginScreen .popupCard{width:min(560px,100%);max-height:calc(100dvh - 64px);overflow:auto}.studentLoginScreen label{display:block;margin-top:12px}.studentLoginScreen .popupHead{padding:22px 20px}.studentLoginScreen .popupBody{padding:20px}';document.head.append(style);
   const previous=render;render=function(...args){const result=previous(...args);sessionControls();return result;};
   sessionControls();
