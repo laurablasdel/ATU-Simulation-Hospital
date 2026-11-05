@@ -1,0 +1,2 @@
+/* Public patient wristbands only. Medication package mappings load from visible chart orders. */
+window.ATU_BARCODES = {"wristbands":{"1000":"ameliasung","1001":"janefowler","1002":"fatimasanogo","1003":"mollythomas","1004":"stephaniesmith","1005":"charlesjones","1006":"babyboysung","1007":"brody","1008":"livingston","1009":"shapiro","1010":"sharp","1011":"watkins","1012":"carter","1013":"marilynhughes","1014":"janefowlerpneumonia"},"packages":{}};
