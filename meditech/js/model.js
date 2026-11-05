@@ -16,7 +16,7 @@
     const patient=Object.assign({},p,Store.patientEdits(p.id));
     patient.events = window.Shared ? Shared.eventData(p.id) : (p.events || []);
     const clean=window.ScenarioContent ? ScenarioContent.cleanPatient(patient) : patient;
-    return window.PacketUpdates ? PacketUpdates.cleanPatient(clean) : clean;
+    return window.PacketUpdates && typeof PacketUpdates.cleanPatient === 'function' ? PacketUpdates.cleanPatient(clean) : clean;
   });
   M.base = pid => M.allPatients().find(p => p.id === pid);
 
