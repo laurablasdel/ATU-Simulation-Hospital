@@ -7,7 +7,7 @@ window.EHR_CONFIG = {
   systemName: 'SimEHR',
   // Shown on the sign-in screen. Also bump ?v= in index.html, orientation.html, and labels.html when files change,
   // so browsers (older iPads especially) load the new files instead of a saved copy.
-  version: '2026.11.05-secure.03',
+  version: '2026.11.05-secure.04',
   // Pending scenario payloads are server stored and returned only after faculty unlock.
   secureScenarioStore: true,
 
@@ -24,7 +24,6 @@ window.EHR_CONFIG = {
   // Simulation experiences students choose from at sign-in. Each patient in
   // js/data/patients.js lists the experience ids it belongs to.
   experiences: [
-    { id: 'ms0', label: 'Level 0 — Medical-Surgical' },
     { id: 'ms', label: 'Medical-Surgical' },
     { id: 'advms', label: 'Advanced Medical-Surgical' },
     { id: 'icu', label: 'ICU / Critical Care' },

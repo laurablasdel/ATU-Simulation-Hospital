@@ -24,9 +24,9 @@
 
   function requestFacultyUnlock(passphrase, errorRoot, onSuccess) {
     if (!window.Shared || !Shared.on()) { UI.formError(errorRoot, 'Connect to the shared hospital chart before unlocking Faculty.'); return; }
-    if (!String(passphrase || '').trim()) { UI.formError(errorRoot, 'Enter the Faculty passphrase.'); return; }
+    if (!String(passphrase || '').trim()) { UI.formError(errorRoot, 'Enter the Faculty PIN.'); return; }
     Shared.facultyUnlock(passphrase).then(ok => {
-      if (!ok) { UI.formError(errorRoot, 'That Faculty passphrase is not correct.'); return; }
+      if (!ok) { UI.formError(errorRoot, 'That Faculty PIN is not correct.'); return; }
       onSuccess();
     }).catch(error => UI.formError(errorRoot, error.message || 'Faculty could not be unlocked.'));
   }
@@ -64,7 +64,7 @@
       UI.modal({
         title: to === 'faculty' ? 'Switch to Faculty' : 'Leave Observer Mode',
         body: `<p>${to === 'faculty' ? 'Faculty mode opens instructor tools for your selected simulation experience.' : 'An instructor must unlock Faculty to change an observer to a documenting student.'}</p>
-          <label class="field"><span>Faculty passphrase</span><input type="password" name="pin" autofocus autocomplete="current-password"></label>`,
+          <label class="field"><span>Faculty PIN</span><input type="password" name="pin" autofocus autocomplete="current-password"></label>`,
         buttons: [{ label: 'Cancel' }, { label: 'Switch', cls: 'btn-primary', onClick: api => {
           requestFacultyUnlock(U.formValues(api.el).pin, api.el.querySelector('.modal-body'), () => {
             api.close(); setTimeout(() => withExperience(apply), 0);
@@ -92,7 +92,7 @@
             ? '<div class="field"><span>Role</span><div class="login-fixed">Student Nurse (SN)</div><input type="hidden" name="cred" value="SN"></div>'
             : `<label class="field"><span>Role</span><select name="cred">
             <option value="SN">Student Nurse (SN)</option><option value="Faculty">Faculty</option></select></label>
-          <label class="field login-pin" hidden><span>Faculty passphrase</span><input type="password" name="pin" autocomplete="current-password"></label>`}
+          <label class="field login-pin" hidden><span>Faculty PIN</span><input type="password" name="pin" autocomplete="current-password"></label>`}
           <label class="field"><span>Simulation experience</span><select name="experience" required>
             <option value="">— Select your sim experience —</option>
             ${C.experiences.map(x => `<option value="${esc(x.id)}" ${C.experiences.length === 1 ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}
@@ -253,7 +253,7 @@
     if (Store.instructorUnlocked()) { then(); return; }
     UI.modal({
       title: 'Instructor Tools',
-      body: '<label class="field"><span>Faculty passphrase</span><input type="password" name="pin" autofocus autocomplete="current-password"></label>',
+      body: '<label class="field"><span>Faculty PIN</span><input type="password" name="pin" autofocus autocomplete="current-password"></label>',
       buttons: [{ label: 'Cancel' }, { label: 'Unlock', cls: 'btn-primary', onClick: api => {
         requestFacultyUnlock(U.formValues(api.el).pin, api.el.querySelector('.modal-body'), () => {
           api.close(); Store.setInstructor(true); then();
@@ -318,7 +318,7 @@
   Screens.instructor = {
     select: pickPatient,
     render() {
-      const all = Model.allPatients().filter(Screens.canSee).sort((a,b)=>(a.level||3)-(b.level||3) || a.name.last.localeCompare(b.name.last));
+      const all = Model.allPatients().filter(Screens.canSee).sort((a,b)=>(a.level ?? 3)-(b.level ?? 3) || a.name.last.localeCompare(b.name.last));
       const picked = pickedPatient();
       const sel = (all.find(p => p.id === picked) || {}).id || '';
       if (picked && !sel) pickPatient('');

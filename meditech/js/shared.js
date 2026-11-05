@@ -486,7 +486,7 @@
         body: `<p>Hospital login: <strong>${esc(a.email || '')}</strong> (${esc(a.label || a.role || '')}).</p>
           <p>${n ? `<strong>${n} change${n === 1 ? '' : 's'} not shared yet.</strong> They stay on this device and are sent as soon as the connection works.` : status === 'shared' ? 'The shared chart is up to date.' : 'The shared connection has not been verified. Use Sync now to retry.'}</p>
           ${lastError ? `<p class="muted small">Last problem: ${esc(lastError)}</p>` : ''}
-          <p class="muted small">Session: ${esc(cfg.session)}. Faculty releases and resets require the Faculty passphrase. Observer logins are view only.</p>`,
+          <p class="muted small">Session: ${esc(cfg.session)}. Faculty releases and resets require the Faculty PIN. Observer logins are view only.</p>`,
         buttons: [{ label: 'Disconnect this device', cls: 'btn-danger', onClick: () => {
           if (n && !confirm(`${n} change(s) have not been shared yet and will stay only on this device. Disconnect anyway?`)) return false;
           signedOut(); App.render();
