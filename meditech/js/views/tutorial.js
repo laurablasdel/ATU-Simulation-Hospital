@@ -83,6 +83,9 @@
     show: worklistSteps('vitals'),
     done: (st, p, doc) => active(doc, 'vitals').length > 0 };
 
+  // A short list of the values to enter, shown inside a task (not counted as task-list items).
+  const vals = items => '<div class="tut-vals">' + items.map(i => `<div>• ${i}</div>`).join('') + '</div>';
+
   const GENERAL = [
     TASK_OPEN,
     { id: 'safety', title: 'Check allergies and code status',
@@ -100,31 +103,67 @@
       how: 'Select <strong>Orders</strong> in the toolbar. Find the order marked <strong>NEW</strong> (the blood transfusion) and acknowledge it.',
       show: [{ sel: '[data-ack="prac-o-new"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
       done: (st, p, doc) => Model.isAcked(doc, 'prac-o-new') },
-    TASK_VITALS,
-    { id: 'assess', title: 'Complete a focused assessment',
-      how: 'On the Worklist, check <strong>Pain Assessment</strong> (or another assessment), select <strong>Document</strong>, and complete the form.',
+    { id: 'vitals', title: 'Chart a set of vital signs',
+      how: 'Select <strong>Document</strong> (the Worklist). Check the <strong>Vital Signs</strong> row, select <strong>Document</strong>, and enter the vital signs you obtained:'
+        + vals(['Temperature <strong>98.4 °F</strong> (oral)', 'Heart rate <strong>106</strong>', 'Respirations <strong>18</strong>', 'Blood pressure <strong>104/64</strong>',
+                'SpO₂ <strong>97%</strong> on <strong>room air</strong>', 'Pain <strong>3</strong> (0–10)'])
+        + 'Then select <strong>Save</strong>. <em>Notice the heart rate and blood pressure — what could they mean with her falling Hgb?</em>',
+      show: worklistSteps('vitals'),
+      done: (st, p, doc) => active(doc, 'vitals').length > 0 },
+    { id: 'assess', title: 'Complete a focused pain assessment',
+      how: 'On the Worklist, check <strong>Pain Assessment</strong>, select <strong>Document</strong>, and enter:'
+        + vals(['Scale used: <strong>Numeric 0–10</strong>', 'Score: <strong>3</strong> · Pain goal: <strong>2</strong>', 'Location: <strong>upper abdomen (epigastric)</strong>',
+                'Quality: <strong>Aching</strong> and <strong>Dull</strong>', 'Onset / duration: <strong>2 days, comes and goes</strong>', 'Radiation: <strong>none</strong>',
+                'Aggravating: <strong>empty stomach</strong> · Alleviating: <strong>rest</strong>',
+                'Interventions / plan: <strong>acetaminophen 650 mg PO per PRN order (no NSAIDs); reassess in 1 hour</strong>'])
+        + 'Then select <strong>Sign &amp; Save</strong>.',
       show: worklistSteps('form:pain'),
       done: (st, p, doc) => active(doc, 'assess').length > 0 },
     { id: 'sched', title: 'Give a scheduled medication',
-      how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Tap the <strong>wristband</strong> practice label, then the label for a scheduled medication (pantoprazole or sucralfate). Select <strong>Save</strong>, review, then <strong>Document</strong>.',
+      how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Give the <strong>pantoprazole 40 mg IV push</strong>:'
+        + vals(['Tap the <strong>wristband</strong> practice label first (patient verified)', 'Then tap the <strong>Pantoprazole 40 mg</strong> pharmacy label (medication verified)',
+                'Action: <strong>Given</strong> · Site: <strong>left forearm IV, 20 gauge</strong>', 'Give IV push over <strong>2 minutes</strong> (per the order instructions)'])
+        + 'Select <strong>Save</strong>, review, then <strong>Document</strong>. (Sucralfate 1 g PO also counts.)',
       show: marSteps('.tut-label[data-code="RX-PRAC-PANTOPRAZOLE"], .tut-label[data-code="RX-PRAC-SUCRALFATE"]'),
       done: (st, p, doc) => active(doc, 'mar').some(e => SCHEDULED.includes(e.data.medId) && e.data.action === 'Given' && e.data.scan && e.data.scan.patient === 'verified' && e.data.scan.med === 'verified') },
     { id: 'prn', title: 'Give a PRN and document its effectiveness',
-      how: 'On the MAR, scan the wristband, then <strong>two acetaminophen 325 mg</strong> labels (they add up to the 650 mg dose). Save and Document. Then select <strong>Reassess</strong> on the acetaminophen row to document how well it worked.',
+      how: 'On the MAR, give <strong>acetaminophen 650 mg PO</strong> for her pain of 3:'
+        + vals(['Scan the <strong>wristband</strong>, then <strong>two acetaminophen 325 mg</strong> labels (2 × 325 mg = 650 mg)', 'Pre-assessment pain score: <strong>3</strong>',
+                'Select <strong>Save</strong>, then <strong>Document</strong>'])
+        + 'Then select <strong>Reassess</strong> on the acetaminophen row and enter:'
+        + vals(['Response: <strong>Effective</strong>', 'Pain score after: <strong>1</strong>', 'Comment: <strong>Resting comfortably; states stomach discomfort is better.</strong>']),
       show: [{ sel: '[data-effect][data-med="' + PRN + '"]' }].concat(marSteps('.tut-label[data-code="NDC-ACETAMINOPHEN-325MG"]')),
       done: (st, p, doc) => { const m = active(doc, 'mar'); return m.some(e => e.data.medId === PRN && e.data.action === 'Given') && m.some(e => e.data.medId === PRN && e.data.action === 'Effectiveness'); } },
-    { id: 'protocol', title: 'Open a protocol (the "P" link)',
-      how: 'Select <strong>Orders</strong>. On the blood glucose order, tap <strong>P</strong> to open the <strong>Adult Hypoglycemia Management Protocol</strong>. Read it, then answer: Sunny\'s fingerstick is <strong>62 mg/dL</strong>. She is alert and able to swallow.',
+    { id: 'protocol', title: 'Open and use a protocol (the "P" link)',
+      how: 'Select <strong>Orders</strong>. On the blood glucose order, tap <strong>P</strong> to open the <strong>Adult Hypoglycemia Management Protocol</strong>. A protocol is a provider-signed set of steps the nurse may follow without calling for a new order. Read these rows:'
+        + vals(['<strong>Use when</strong> — the blood glucose level that starts the protocol', '<strong>Alert and able to swallow</strong> — what to give by mouth, and how much',
+                '<strong>NPO or unable to swallow</strong> — the IV option (D50)', '<strong>Recheck</strong> — when to check again', '<strong>Notify the provider</strong> — when you must call'])
+        + 'Then answer: Sunny\'s fingerstick is <strong>62 mg/dL</strong>. She is alert and able to swallow.',
       show: [{ sel: '.p-link[data-protocol="hypo"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
       quiz: [{ name: 'treat', label: 'First treatment per the protocol', options: ['15 g fast-acting carbohydrate by mouth', 'Dextrose 50% 25 g IV push', 'Glucagon 1 mg IM', 'Call the provider and wait for orders'], answer: '15 g fast-acting carbohydrate by mouth' },
-             { name: 'recheck', label: 'Recheck the blood glucose in', options: ['5 minutes', '15 minutes', '1 hour', '4 hours'], answer: '15 minutes' }],
+             { name: 'recheck', label: 'Recheck the blood glucose in', options: ['5 minutes', '15 minutes', '1 hour', '4 hours'], answer: '15 minutes' },
+             { name: 'call', label: 'You must notify the provider if the BG is less than', options: ['70 mg/dL', '54 mg/dL', '100 mg/dL'], answer: '54 mg/dL' }],
       done: st => !!st.quiz.protocol },
     { id: 'tar', title: 'Document a blood transfusion (TAR)',
-      how: 'Select <strong>Document ▾ → Transfusion Administration Record (TAR)</strong>. Start the transfusion against the PRBC order: confirm the signed consent (Documents), complete the two-RN bedside check, enter the unit details (Sunny is <strong>O+</strong>), and record the pre-transfusion vital signs. Then document the <strong>15-minute</strong> vital signs.',
+      how: 'First open <strong>Chart → Documents</strong> and confirm the signed <strong>Blood Transfusion Consent</strong>. Then select <strong>Document ▾ → Transfusion Administration Record (TAR)</strong> → <strong>Start Transfusion</strong> and enter:'
+        + vals(['Blood product order: <strong>Transfuse 1 unit PRBC</strong> · Product: <strong>Packed red blood cells (PRBC)</strong>',
+                'Unit / donor number: <strong>W0362 26 104118</strong>', 'Unit ABO/Rh: <strong>O+</strong> · Patient ABO/Rh: <strong>O+</strong> (from the Blood Bank results)',
+                'Unit expiration: <strong>any date one week from today</strong> · Volume: <strong>300 mL</strong>',
+                'Starting rate: <strong>100 mL/hr</strong> for the first 15 minutes (watch closely for a reaction)', 'IV site / gauge: <strong>right forearm, 18 gauge</strong> · Premedication: <strong>none ordered</strong>',
+                'Check every box of the two-RN bedside check · Verifying RN 2: <strong>your partner\'s name, SN</strong>',
+                'Pre-transfusion vitals: T <strong>98.4 °F</strong>, HR <strong>106</strong>, RR <strong>18</strong>, BP <strong>104/64</strong>, SpO₂ <strong>97%</strong>'])
+        + 'Then add the <strong>15-minute</strong> check:'
+        + vals(['T <strong>98.6 °F</strong>, HR <strong>100</strong>, RR <strong>18</strong>, BP <strong>110/66</strong>, SpO₂ <strong>98%</strong>',
+                'Current rate: <strong>150 mL/hr</strong> (no reaction, so the rate goes up to finish in 2 hours)', 'Signs of a reaction: <strong>none</strong>'])
+        + 'Then select <strong>Sign &amp; Save</strong>.',
       show: [{ sel: '[data-tar]' }, { sel: '.tb-menu:not([hidden]) [data-docmenu="tar"]' }, { sel: DOC_CARET }, { sel: ROW }],
       done: (st, p, doc) => { const t = active(doc, 'tar'); return t.some(e => e.data.kind === 'start') && t.some(e => e.data.kind === 'vitals'); } },
     { id: 'note', title: 'Write a nursing note',
-      how: 'Select <strong>Document ▾ → Write Note</strong>. Describe the care you gave, including the transfusion and how Sunny tolerated it, then sign the note.',
+      how: 'Select <strong>Document ▾ → Write Note</strong>. Write a short note that includes:'
+        + vals(['Her Hgb of <strong>7.2</strong> and the transfusion order', 'Consent confirmed; two-RN check done; transfusion started at <strong>100 mL/hr</strong>',
+                '15-minute vital signs stable, <strong>no signs of a reaction</strong>; rate increased to <strong>150 mL/hr</strong>',
+                'Pantoprazole given; acetaminophen given for pain <strong>3</strong>, pain <strong>1</strong> after', 'Plan: vitals at completion; recheck CBC 1 hour after the transfusion'])
+        + 'Then sign the note.',
       show: [{ sel: '.tb-menu:not([hidden]) [data-docmenu="note"]' }, { sel: DOC_CARET }, { sel: ROW }],
       done: (st, p, doc) => active(doc, 'notes').length > 0 }
   ];
