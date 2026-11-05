@@ -130,6 +130,60 @@ window.ASSESSMENT_FORMS = {
         { id: 'motor', label: 'Motor response', type: 'score', options: [['Obeys commands', 6], ['Localizing', 5], ['Normal flexion', 4], ['Abnormal flexion', 3], ['Extension', 2], ['None', 1]] }
       ] }
     ]
+  },
+
+  // Incident (occurrence) report for falls and other patient-safety events.
+  'incident-report': {
+    title: 'Incident Report',
+    intro: 'Complete for any fall or patient-safety event. Describe only what you saw, heard, and did — objective facts, no opinions or blame. The incident report is a confidential quality document: do not mention it in the nursing note.',
+    sections: [
+      { id: 'event', title: 'Event', fields: [
+        { id: 'when', label: 'Date and time of the event', type: 'text' },
+        { id: 'where', label: 'Location', type: 'select', options: ['Patient room', 'Bathroom', 'Hallway', 'Other'] },
+        { id: 'type', label: 'Type of event', type: 'checks', options: ['Fall — unassisted', 'Fall — assisted to the floor', 'Found on the floor', 'IV / line dislodged', 'Medication event', 'Other'] },
+        { id: 'witnessed', label: 'Was the event witnessed?', type: 'radio', options: ['Yes', 'No'] },
+        { id: 'witnesses', label: 'Witness names / roles (if any)', type: 'text' },
+        { id: 'what', label: 'What happened (objective description)', type: 'textarea' },
+        { id: 'quote', label: "Patient's own words about what happened", type: 'text' }
+      ] },
+      { id: 'before', title: 'Before the event', fields: [
+        { id: 'risk', label: 'Fall risk before the event', type: 'select', options: ['High fall risk', 'Moderate fall risk', 'Low fall risk', 'Not assessed'] },
+        { id: 'precautions', label: 'Precautions in place', type: 'checks', wide: true, options: ['Bed in low, locked position', 'Bed alarm on', 'Call light in reach', 'Non-skid socks on', 'Side rails up × 2', 'Toileting schedule', 'Sitter / frequent rounding', 'None'] },
+        { id: 'factors', label: 'Contributing factors', type: 'checks', wide: true, options: ['Confusion / change in mental status', 'Got up without help', 'IV pole / tubing', 'Fever / infection', 'Medication (sedative, opioid, diuretic)', 'Wet floor / clutter', 'Footwear', 'Poor lighting', 'Other'] }
+      ] },
+      { id: 'patient', title: 'Patient assessment after the event', fields: [
+        { id: 'loc', label: 'Level of consciousness / orientation', type: 'text' },
+        { id: 'injury', label: 'Injuries found', type: 'checks', wide: true, options: ['No injury found', 'Pain — hip', 'Pain — other', 'Bleeding from IV site', 'Bruising', 'Skin tear / laceration', 'Head strike', 'Other'] },
+        { id: 'severity', label: 'Injury level', type: 'select', options: ['None', 'Minor (first aid only)', 'Moderate (needed treatment, such as sutures or an X-ray)', 'Major (fracture, surgery, or transfer to a higher level of care)', 'Unknown — awaiting results'] },
+        { id: 'findings', label: 'Assessment details', type: 'textarea' }
+      ] },
+      { id: 'vitals', title: 'Vital signs after the event', fields: [
+        { id: 'vsTime', label: 'Time taken', type: 'text' },
+        { id: 'temp', label: 'Temperature (°F)', type: 'number', min: 90, max: 110 },
+        { id: 'hr', label: 'Heart rate (/min)', type: 'number', min: 0, max: 250 },
+        { id: 'rr', label: 'Respirations (/min)', type: 'number', min: 0, max: 80 },
+        { id: 'sbp', label: 'Blood pressure — systolic', type: 'number', min: 0, max: 300 },
+        { id: 'dbp', label: 'Blood pressure — diastolic', type: 'number', min: 0, max: 200 },
+        { id: 'spo2', label: 'SpO₂ (%)', type: 'number', min: 0, max: 100 },
+        { id: 'o2', label: 'Oxygen (L/min and device)', type: 'text' },
+        { id: 'painScore', label: 'Pain score (0–10)', type: 'number', min: 0, max: 10 },
+        { id: 'painSite', label: 'Pain location', type: 'text' },
+        { id: 'recheck', label: 'Repeat vital signs (time and values), if taken', type: 'text' }
+      ] },
+      { id: 'actions', title: 'Actions taken', fields: [
+        { id: 'done', label: 'Actions', type: 'checks', wide: true, options: ['Stayed with the patient and called for help', 'Did not move the patient until assessed for injury', 'Applied pressure to the IV site', 'Obtained vital signs', 'Returned the patient to bed with help', 'Bed in low position; call light in reach', 'Bed alarm on', 'IV restarted or reported for restart', 'Fall precautions reviewed with the patient'] },
+        { id: 'other', label: 'Other actions', type: 'textarea' }
+      ] },
+      { id: 'notify', title: 'Notifications', fields: [
+        { id: 'who', label: 'Notified', type: 'checks', wide: true, options: ['Charge nurse', 'Provider', 'Family / emergency contact', 'Risk management (per policy)'] },
+        { id: 'provider', label: 'Provider name and time notified', type: 'text' },
+        { id: 'family', label: 'Family member name and time notified', type: 'text' },
+        { id: 'orders', label: 'New orders received', type: 'textarea' }
+      ] },
+      { id: 'prevent', title: 'Follow-up and prevention', fields: [
+        { id: 'plan', label: 'Plan to prevent another event', type: 'textarea' }
+      ] }
+    ]
   }
 };
 

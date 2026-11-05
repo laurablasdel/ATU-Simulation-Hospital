@@ -10,10 +10,16 @@
   'use strict';
   const esc = U.esc;
   const C = window.EHR_CONFIG;
-  const PID = 'practice';
-  const SCHEDULED = ['prac-ceftriaxone', 'prac-lisinopril'];
+  // Two orientations share this panel: 'general' (orientation.html, Sunny Goldman) and
+  // 'level0' (orientation-level0.html, Jane Fowler). The page's config picks the track and patient.
+  const TRACK = C.orientationTrack || 'general';
+  const PID = C.orientationPid || 'practice';
+  const TITLE = C.orientationTitle || 'EMR Orientation';
+  const SCHEDULED = ['prac-pantoprazole', 'prac-sucralfate'];
   const PRN = 'prac-apap';
   const chart = tab => `#/patient/${PID}/${tab}`;
+  const PT = (window.SIM_PATIENTS || []).find(x => x.id === PID) || { name: { first: '', last: '' }, mrn: '' };
+  const PT_NAME = `${PT.name.last}, ${PT.name.first}`;
 
   /* ---------- Per-student progress (kept on this device) ---------- */
   const key = () => `${C.storagePrefix}.tutorial.${((Store.session() || {}).name || 'guest').toLowerCase()}`;
@@ -64,47 +70,107 @@
     { sel: '.tb-menu:not([hidden]) a[href$="/mar"]' },
     { sel: DOC_CARET }, { sel: ROW }];
 
-  const TASKS = [
-    { id: 'open', title: 'Open your patient',
-      how: 'On the <strong>PCS Status Board</strong>, double-click <strong>Morgan, Taylor</strong> (or select the row, then <strong>Open Chart</strong>).',
-      show: [{ sel: ROW }, { sel: HOME }],
-      done: st => !!st.opened },
+  const formDone = id => (st, p, doc) => active(doc, 'assess').some(e => e.data.formId === id);
+  const ORDERS_BTN = 'a.tb-btn[href$="/orders"]';
+  const TASK_OPEN = { id: 'open', title: 'Open your patient',
+    how: `On the <strong>PCS Status Board</strong>, find <strong>${esc(PT_NAME)}</strong> (MRN ${esc(PT.mrn)}) and double-click the row (or select it, then <strong>Open Chart</strong>).${
+      (window.SIM_PATIENTS || []).filter(x => (x.experiences || []).some(e => (PT.experiences || []).includes(e))).length > 1
+        ? ' Other patients are on the board — always check the name and MRN before you open a chart.' : ' Always check the name and MRN before you open a chart.'}`,
+    show: [{ sel: ROW }, { sel: HOME }],
+    done: st => !!st.opened };
+  const TASK_VITALS = { id: 'vitals', title: 'Chart a set of vital signs',
+    how: 'Select <strong>Document</strong> (the Worklist). Check the <strong>Vital Signs</strong> row, select <strong>Document</strong>, and enter the vital signs you obtained.',
+    show: worklistSteps('vitals'),
+    done: (st, p, doc) => active(doc, 'vitals').length > 0 };
+
+  const GENERAL = [
+    TASK_OPEN,
     { id: 'safety', title: 'Check allergies and code status',
       how: 'In the chart, find the patient panel with <strong>Special Indicators</strong> and <strong>Allergies</strong> (beside the chart tabs). Then answer:',
       show: [{ sel: '.side .side-sec' }, { sel: '.side' }, { sel: ROW }],
-      quiz: [{ name: 'allergy', label: 'Allergy', options: ['No known drug allergies', 'Penicillin', 'Sulfa drugs', 'Latex'], answer: 'Sulfa drugs' },
+      quiz: [{ name: 'allergy', label: 'Allergy', options: ['No known drug allergies', 'Codeine', 'Penicillin', 'Sulfa drugs'], answer: 'Codeine' },
              { name: 'code', label: 'Code status', options: ['Full Code', 'DNR', 'DNR/DNI'], answer: 'Full Code' }],
       done: st => !!st.quiz.safety },
     { id: 'hgb', title: 'Find the latest hemoglobin (Hgb)',
-      how: 'Open the <strong>Diagnostics</strong> tab. Results run from oldest to newest, left to right — use the newest column.',
+      how: 'Open the <strong>Diagnostics</strong> tab. Results run from oldest to newest, left to right — use the newest column. Notice the trend.',
       show: [{ find: hgbRow }, { sel: `.ftab[href="${chart('results')}"]` }, { sel: ROW }],
-      quiz: [{ name: 'hgb', label: 'Latest Hgb (g/dL)', input: true, answer: '11.8' }],
+      quiz: [{ name: 'hgb', label: 'Latest Hgb (g/dL)', input: true, answer: '7.2' }],
       done: st => !!st.quiz.hgb },
     { id: 'ack', title: 'Acknowledge the new order',
-      how: 'Select <strong>Orders</strong> in the toolbar. Find the order marked <strong>NEW</strong> (ambulate in the hallway) and acknowledge it.',
-      show: [{ sel: '[data-ack="prac-o-new"]' }, { sel: 'a.tb-btn[href$="/orders"]' }, { sel: ROW }],
+      how: 'Select <strong>Orders</strong> in the toolbar. Find the order marked <strong>NEW</strong> (the blood transfusion) and acknowledge it.',
+      show: [{ sel: '[data-ack="prac-o-new"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
       done: (st, p, doc) => Model.isAcked(doc, 'prac-o-new') },
-    { id: 'vitals', title: 'Chart a set of vital signs',
-      how: 'Select <strong>Document</strong> (the Worklist). Check the <strong>Vital Signs</strong> row, select <strong>Document</strong>, and enter the vital signs you obtained.',
-      show: worklistSteps('vitals'),
-      done: (st, p, doc) => active(doc, 'vitals').length > 0 },
+    TASK_VITALS,
     { id: 'assess', title: 'Complete a focused assessment',
       how: 'On the Worklist, check <strong>Pain Assessment</strong> (or another assessment), select <strong>Document</strong>, and complete the form.',
       show: worklistSteps('form:pain'),
       done: (st, p, doc) => active(doc, 'assess').length > 0 },
     { id: 'sched', title: 'Give a scheduled medication',
-      how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Tap the <strong>wristband</strong> practice label, then the label for a scheduled medication (ceftriaxone or lisinopril). Select <strong>Save</strong>, review, then <strong>Document</strong>.',
-      show: marSteps('.tut-label[data-code="RX-PRAC-LISINOPRIL"], .tut-label[data-code="RX-PRAC-CEFTRIAXONE"]'),
+      how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Tap the <strong>wristband</strong> practice label, then the label for a scheduled medication (pantoprazole or sucralfate). Select <strong>Save</strong>, review, then <strong>Document</strong>.',
+      show: marSteps('.tut-label[data-code="RX-PRAC-PANTOPRAZOLE"], .tut-label[data-code="RX-PRAC-SUCRALFATE"]'),
       done: (st, p, doc) => active(doc, 'mar').some(e => SCHEDULED.includes(e.data.medId) && e.data.action === 'Given' && e.data.scan && e.data.scan.patient === 'verified' && e.data.scan.med === 'verified') },
     { id: 'prn', title: 'Give a PRN and document its effectiveness',
       how: 'On the MAR, scan the wristband, then <strong>two acetaminophen 325 mg</strong> labels (they add up to the 650 mg dose). Save and Document. Then select <strong>Reassess</strong> on the acetaminophen row to document how well it worked.',
       show: [{ sel: '[data-effect][data-med="' + PRN + '"]' }].concat(marSteps('.tut-label[data-code="NDC-ACETAMINOPHEN-325MG"]')),
       done: (st, p, doc) => { const m = active(doc, 'mar'); return m.some(e => e.data.medId === PRN && e.data.action === 'Given') && m.some(e => e.data.medId === PRN && e.data.action === 'Effectiveness'); } },
+    { id: 'protocol', title: 'Open a protocol (the "P" link)',
+      how: 'Select <strong>Orders</strong>. On the blood glucose order, tap <strong>P</strong> to open the <strong>Adult Hypoglycemia Management Protocol</strong>. Read it, then answer: Sunny\'s fingerstick is <strong>62 mg/dL</strong>. She is alert and able to swallow.',
+      show: [{ sel: '.p-link[data-protocol="hypo"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
+      quiz: [{ name: 'treat', label: 'First treatment per the protocol', options: ['15 g fast-acting carbohydrate by mouth', 'Dextrose 50% 25 g IV push', 'Glucagon 1 mg IM', 'Call the provider and wait for orders'], answer: '15 g fast-acting carbohydrate by mouth' },
+             { name: 'recheck', label: 'Recheck the blood glucose in', options: ['5 minutes', '15 minutes', '1 hour', '4 hours'], answer: '15 minutes' }],
+      done: st => !!st.quiz.protocol },
+    { id: 'tar', title: 'Document a blood transfusion (TAR)',
+      how: 'Select <strong>Document ▾ → Transfusion Administration Record (TAR)</strong>. Start the transfusion against the PRBC order: confirm the signed consent (Documents), complete the two-RN bedside check, enter the unit details (Sunny is <strong>O+</strong>), and record the pre-transfusion vital signs. Then document the <strong>15-minute</strong> vital signs.',
+      show: [{ sel: '[data-tar]' }, { sel: '.tb-menu:not([hidden]) [data-docmenu="tar"]' }, { sel: DOC_CARET }, { sel: ROW }],
+      done: (st, p, doc) => { const t = active(doc, 'tar'); return t.some(e => e.data.kind === 'start') && t.some(e => e.data.kind === 'vitals'); } },
     { id: 'note', title: 'Write a nursing note',
-      how: 'Select <strong>Document ▾ → Write Note</strong>. Describe the care you gave, then sign the note.',
+      how: 'Select <strong>Document ▾ → Write Note</strong>. Describe the care you gave, including the transfusion and how Sunny tolerated it, then sign the note.',
       show: [{ sel: '.tb-menu:not([hidden]) [data-docmenu="note"]' }, { sel: DOC_CARET }, { sel: ROW }],
       done: (st, p, doc) => active(doc, 'notes').length > 0 }
   ];
+
+  const LEVEL0 = [
+    TASK_OPEN,
+    { id: 'safety', title: 'Check allergies and the admitting diagnosis',
+      how: 'Find the patient panel with <strong>Special Indicators</strong> and <strong>Allergies</strong> beside the chart tabs, and the admitting diagnosis in the banner. Then answer:',
+      show: [{ sel: '.side .side-sec' }, { sel: '.side' }, { sel: ROW }],
+      quiz: [{ name: 'allergy', label: 'Allergy', options: ['No known drug allergies', 'Penicillin', 'Sulfa drugs', 'Latex'], answer: 'No known drug allergies' },
+             { name: 'dx', label: 'Admitting diagnosis', options: ['Pneumonia', 'Hip fracture', 'Heart failure', 'Stroke'], answer: 'Pneumonia' }],
+      done: st => !!st.quiz.safety },
+    { id: 'vitals', title: 'Chart a set of vital signs',
+      how: 'Select <strong>Document</strong> (the Worklist). <strong>Vital Signs</strong> is the first row: check it, select <strong>Document</strong>, and enter her reassessment vital signs:'
+        + '<div class="tut-vals"><div>• Temperature <strong>101.6 °F</strong> (oral)</div><div>• Heart rate <strong>104</strong></div><div>• Respirations <strong>28</strong></div>'
+        + '<div>• Blood pressure <strong>145/92</strong></div><div>• SpO₂ <strong>88%</strong> on <strong>3 L nasal cannula</strong></div></div>Then select <strong>Save</strong>.',
+      show: worklistSteps('vitals'),
+      done: (st, p, doc) => active(doc, 'vitals').length > 0 },
+    { id: 'loc', title: 'Complete a level-of-consciousness assessment',
+      how: 'On the Worklist, check <strong>Nursing Shift Assessment (WDL)</strong> (the second row) and select <strong>Document</strong>. Mark each system:'
+        + '<div class="tut-vals"><div>• <strong>Cognitive — WDL Except:</strong> confused and restless (new for her, per her daughter)</div>'
+        + '<div>• <strong>Respiratory — WDL Except:</strong> respirations 28, coarse breath sounds in both lungs, SpO₂ 88% on 3 L</div>'
+        + '<div>• <strong>Every other system — WDL</strong></div></div>Then select <strong>Sign &amp; Save</strong>.',
+      show: worklistSteps('form:wdl-adult'),
+      done: formDone('wdl-adult') },
+    { id: 'ack', title: 'Acknowledge the new IV fluid order',
+      how: 'Select <strong>Orders</strong> in the toolbar. Find the order marked <strong>NEW</strong> (normal saline) and acknowledge it.',
+      show: [{ sel: '[data-ack="prac-l0-o-new"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
+      done: (st, p, doc) => Model.isAcked(doc, 'prac-l0-o-new') },
+    { id: 'ivf', title: 'Start the normal saline on the MAR',
+      how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Tap the <strong>wristband</strong> practice label, then the <strong>normal saline</strong> label. Choose <strong>Started / hung</strong>, confirm the rate (100 mL/hr), then <strong>Save</strong> and <strong>Document</strong>.',
+      show: marSteps('.tut-label[data-code="RX-PRAC-L0-NS"]'),
+      done: (st, p, doc) => active(doc, 'mar').some(e => e.data.medId === 'prac-l0-ns' && /Started/.test(e.data.action || '')) },
+    { id: 'sbar', title: 'Write an SBAR note to the provider',
+      how: 'Select <strong>Document ▾ → Write Note</strong>. Write the call to the provider in SBAR format — <strong>S</strong>ituation, <strong>B</strong>ackground, <strong>A</strong>ssessment, <strong>R</strong>ecommendation — about her new confusion, fever, and breathing. Sign the note.',
+      show: [{ sel: '.tb-menu:not([hidden]) [data-docmenu="note"]' }, { sel: DOC_CARET }, { sel: ROW }],
+      done: (st, p, doc) => active(doc, 'notes').length > 0 },
+    { id: 'incident', title: 'Complete an incident report for the fall',
+      how: 'Jane becomes more confused and gets up to go to the bathroom by herself, without her IV pump. The IV pulls out and she falls. You find her on the floor with blood coming from the IV site; she says her hip hurts. On the Worklist, check <strong>Incident Report</strong> (the third row), select <strong>Document</strong>, and complete it with the facts from this event. Use these vital signs taken right after the fall:'
+        + '<div class="tut-vals"><div>• Temperature <strong>101.4 °F</strong></div><div>• Heart rate <strong>112</strong></div><div>• Respirations <strong>28</strong></div>'
+        + '<div>• Blood pressure <strong>150/94</strong></div><div>• SpO₂ <strong>89%</strong> on <strong>3 L nasal cannula</strong></div><div>• Pain <strong>7/10</strong>, right hip</div></div>',
+      show: worklistSteps('form:incident-report'),
+      done: formDone('incident-report') }
+  ];
+
+  const TASKS = TRACK === 'level0' ? LEVEL0 : GENERAL;
 
   function status(st) {
     const p = Model.get(PID);
@@ -139,6 +205,7 @@
     const s = Store.session();
     if (!s) { el.innerHTML = ''; document.body.classList.remove('tut-open'); return; }
     const st = load();
+    if (!st.started) { st.started = Date.now(); save(st); }   // start of the orientation (time on task is measured from here)
     if (App.current && App.current.id === PID && !st.opened) { st.opened = Date.now(); save(st); }
     const list = status(st);
     const n = list.filter(x => x.ok).length;
@@ -147,10 +214,10 @@
     // The open panel takes its own space beside (or below) the EHR so it never covers a button.
     document.body.classList.toggle('tut-open', !st.collapsed);
     if (st.collapsed) {
-      el.innerHTML = `<button type="button" class="tut-pill" data-tut="expand" aria-label="Show orientation tasks">🎓 Orientation ${n}/${TASKS.length}</button>`;
+      el.innerHTML = `<button type="button" class="tut-pill" data-tut="expand" aria-label="Show orientation tasks">🎓 ${esc(TITLE)} ${n}/${TASKS.length}</button>`;
     } else {
       el.innerHTML = `<aside class="tut" aria-label="EMR orientation tasks">
-        <div class="tut-h"><strong>🎓 EMR Orientation</strong><span class="tut-count">${n} of ${TASKS.length} done</span>
+        <div class="tut-h"><strong>🎓 ${esc(TITLE)}</strong><span class="tut-count">${n} of ${TASKS.length} done</span>
           <button type="button" class="tut-min" data-tut="collapse" aria-label="Hide orientation tasks">–</button></div>
         <div class="tut-bar"><span style="width:${Math.round(100 * n / TASKS.length)}%"></span></div>
         <ol class="tut-list">${list.map(({ t, ok }) => {
@@ -170,7 +237,7 @@
     on('[data-tut="collapse"]', () => { st.collapsed = true; save(st); render(); });
     on('[data-tut="expand"]', () => { st.collapsed = false; save(st); render(); });
     on('[data-tut="summary"]', () => summary());
-    on('[data-tut="reset"]', () => UI.confirm('Start Over', 'Erase your practice charting on Morgan, Taylor and start the orientation tasks again?', () => {
+    on('[data-tut="reset"]', () => UI.confirm('Start Over', `Erase your practice charting on ${PT_NAME} and start the orientation tasks again?`, () => {
       Store.saveDoc(PID, {});
       Store.restartScenario(PID);
       try { localStorage.removeItem(key()); } catch (e) { /* ignore */ }
@@ -235,18 +302,26 @@
     const st = load();
     const list = status(st);
     const n = list.filter(x => x.ok).length;
-    const rows = list.map(({ t, ok }) => `<tr><td>${ok ? '✔' : '—'}</td><td>${esc(t.title)}</td><td>${ok && st.doneAt[t.id] ? esc(new Date(st.doneAt[t.id]).toLocaleString('en-US')) : 'Not done'}</td></tr>`).join('');
-    const html = `<h2 style="margin:0 0 4px">EMR Orientation — ${n === TASKS.length ? 'Completed' : 'Progress'}</h2>
-      <p style="margin:0 0 10px">${esc(C.hospitalName)} · Practice patient: Morgan, Taylor (MRN ORIENT-001)</p>
-      <p><strong>Student:</strong> ${esc(s.name || '')}${s.cred ? ', ' + esc(s.cred) : ''}${s.group ? ` · <strong>Group:</strong> ${esc(s.group)}` : ''}<br><strong>Printed:</strong> ${esc(new Date().toLocaleString('en-US'))}<br><strong>Tasks completed:</strong> ${n} of ${TASKS.length}</p>
-      <table class="grid"><thead><tr><th></th><th>Task</th><th>Completed</th></tr></thead><tbody>${rows}</tbody></table>`;
+    // Time on task: from the previous completed task (or the start of the orientation) to this task's completion.
+    const fmtDur = ms => { const s = Math.max(0, Math.round(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+      return h ? `${h} hr ${m} min` : m ? `${m} min ${sec} sec` : `${sec} sec`; };
+    const start = st.started || Math.min(...Object.values(st.doneAt).concat([Date.now()]));
+    const order = Object.entries(st.doneAt).sort((a, b) => a[1] - b[1]);
+    const dur = {};
+    order.forEach(([id, at], i) => { dur[id] = at - (i ? order[i - 1][1] : start); });
+    const last = order.length ? order[order.length - 1][1] : null;
+    const rows = list.map(({ t, ok }) => `<tr><td>${ok ? '✔' : '—'}</td><td>${esc(t.title)}</td><td>${ok && st.doneAt[t.id] ? esc(new Date(st.doneAt[t.id]).toLocaleString('en-US')) : 'Not done'}</td><td>${ok && dur[t.id] != null ? esc(fmtDur(dur[t.id])) : '—'}</td></tr>`).join('');
+    const html = `<h2 style="margin:0 0 4px">${esc(TITLE)} — ${n === TASKS.length ? 'Completed' : 'Progress'}</h2>
+      <p style="margin:0 0 10px">${esc(C.hospitalName)} · Practice patient: ${esc(PT_NAME)} (MRN ${esc(PT.mrn)})</p>
+      <p><strong>Student:</strong> ${esc(s.name || '')}${s.cred ? ', ' + esc(s.cred) : ''}${s.group ? ` · <strong>Group:</strong> ${esc(s.group)}` : ''}<br><strong>Printed:</strong> ${esc(new Date().toLocaleString('en-US'))}<br><strong>Tasks completed:</strong> ${n} of ${TASKS.length}<br><strong>Started:</strong> ${esc(new Date(start).toLocaleString('en-US'))}${last ? `<br><strong>Total time${n === TASKS.length ? '' : ' so far'}:</strong> ${esc(fmtDur(last - start))}` : ''}</p>
+      <table class="grid"><thead><tr><th></th><th>Task</th><th>Completed</th><th>Time on task</th></tr></thead><tbody>${rows}</tbody></table>`;
     UI.modal({
       title: 'Orientation Summary', wide: true, body: `<div class="tut-summary">${html}</div>`,
       // In Blackboard (SCORM) completion is graded automatically, so there is nothing to print.
       buttons: inLMS() ? [{ label: 'Close' }] : [{ label: 'Close' }, { label: 'Print', cls: 'btn-primary', onClick: () => {
         const w = window.open('', '_blank');
         if (!w) { window.print(); return false; }
-        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>EMR Orientation Summary</title><style>body{font:14px Arial,sans-serif;margin:32px;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left}th{background:#eee}</style></head><body>${html}<p style="margin-top:28px">Faculty initials: ____________ &nbsp; Date: ____________</p></body></html>`);
+        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(TITLE)} Summary</title><style>body{font:14px Arial,sans-serif;margin:32px;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left}th{background:#eee}</style></head><body>${html}<p style="margin-top:28px">Faculty initials: ____________ &nbsp; Date: ____________</p></body></html>`);
         w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
         return false;
       } }]

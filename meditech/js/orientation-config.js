@@ -5,6 +5,9 @@
  */
 Object.assign(window.EHR_CONFIG, {
   orientation: true,
+  orientationTrack: 'general',
+  orientationPid: 'practice',
+  orientationTitle: 'EMR Orientation',
   systemName: 'SimEHR Orientation',
   // Separate storage: practice charting never mixes with simulation documentation.
   storagePrefix: 'atuSimEHR.orient',

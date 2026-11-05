@@ -47,6 +47,8 @@
     formItem('gcs', 'Glasgow Coma Scale', 'Q12HOURS', 12 * H);
     formItem('braden', 'Braden Scale Assessment', 'DAILY', 24 * H);
     formItem('morse', 'Morse Fall Risk Assessment', 'DAILY', 24 * H);
+    // As needed after a fall or other safety event (never shown as overdue).
+    if (forms.includes('incident-report')) list.push({ key: 'form:incident-report', formId: 'incident-report', name: 'Incident Report', freq: 'PRN — after an event', ms: 24 * H, prn: true, tab: 'assess', kind: 'form' });
     if (p.orders.some(o => o.status === 'Active' && /I\s*&\s*O|intake/i.test(o.text))) list.push({ key: 'io', name: 'Intake and Output Measurement', freq: 'Q4HOURS', ms: 4 * H, tab: 'io', kind: 'tab' });
     if (p.heparinFlowsheet && Views.heparin.drip(p)) list.push({ key: 'heparin', name: 'Heparin Protocol / aPTT Titration', freq: 'Q6HOURS', ms: 6 * H, tab: 'heparin', kind: 'heparin' });
     // A running transfusion adds its monitoring vitals (charted on the TAR).
@@ -94,7 +96,7 @@
 
   // null = nothing due: not open yet (newborn items before delivery) or a one-time item that is complete.
   function dueTime(p, it, last, doc) {
-    if (it.locked || (it.complete && it.complete(doc))) return null;
+    if (it.locked || it.prn || (it.complete && it.complete(doc))) return null;
     if (it.fixedDue) return it.fixedDue;
     if (it.eos) return shiftEnd(last != null && last >= p.clock.simStart ? last + MIN : p.clock.now());
     return last == null ? p.clock.simStart : last + it.ms;
@@ -142,6 +144,9 @@
         const last = lastDone(p, doc, it);
         return Object.assign({ last, due: dueTime(p, it, last, doc) }, it);
       }).sort((a, b) => (a.due == null ? Infinity : a.due) - (b.due == null ? Infinity : b.due));
+      // A chart may pin care items to the top, in order (p.worklistFirst: ['vitals', 'form:wdl-adult', ...]).
+      const pin = p.worklistFirst || [];
+      if (pin.length) list.sort((a, b) => (pin.includes(a.key) ? pin.indexOf(a.key) : pin.length) - (pin.includes(b.key) ? pin.indexOf(b.key) : pin.length));
 
       // Time columns: every due occurrence from one hour ago through the look-ahead window.
       const from = now - H, to = now + hours * H;
@@ -166,7 +171,7 @@
           <td class="wl-a">A</td>
           <td class="wl-item"><span>${esc(it.name)}</span><span class="wl-freq">${esc(it.freq)}</span></td>
           <td class="nowrap wl-last">${it.last == null ? '' : span(now - it.last).replace('-', '')}</td>
-          <td class="nowrap wl-status ${diff != null && diff <= 0 ? 'wl-late' : ''}">${diff == null ? `<span class="muted">${it.locked ? 'After delivery' : 'Done'}</span>` : span(diff)}</td>
+          <td class="nowrap wl-status ${diff != null && diff <= 0 ? 'wl-late' : ''}">${diff == null ? `<span class="muted">${it.locked ? 'After delivery' : it.prn ? 'As needed' : 'Done'}</span>` : span(diff)}</td>
           ${colTimes.map(t => `<td class="wl-cell ${t <= now ? 'wl-past' : ''} ${checked.has(it.key + '|' + t) ? 'wl-cell-on' : ''}" data-t="${t}">${checked.has(it.key + '|' + t) ? `<span class="wl-check" role="img" aria-label="Checked to document ${U.fmtTime(t)}">✔</span>` : times.has(t) ? `<svg class="wl-clock" viewBox="0 0 20 20" role="img" aria-label="Due ${U.fmtTime(t)}"><circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10h3.5"/></svg>` : ''}</td>`).join('')}
         </tr>`;
       }).join('');
