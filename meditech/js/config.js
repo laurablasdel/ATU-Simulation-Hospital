@@ -7,7 +7,7 @@ window.EHR_CONFIG = {
   systemName: 'SimEHR',
   // Shown on the sign-in screen. Also bump ?v= in index.html, orientation.html, and labels.html when files change,
   // so browsers (older iPads especially) load the new files instead of a saved copy.
-  version: '2026.11.05-secure.13',
+  version: '2026.11.05-secure.14',
   // Pending scenario payloads are server stored and returned only after faculty unlock.
   secureScenarioStore: true,
 
