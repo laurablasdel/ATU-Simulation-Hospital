@@ -37,7 +37,7 @@ function labelDocument(items,start=1,wristband=null){
 window.OriginalLabels={labelDocument,barcodeSvg};
 async function initializeLabels(){
 const el=document.getElementById('labels');
-if(!Store.session()||!Shared.on()||!Store.instructorUnlocked()){el.innerHTML='<h1>Faculty sign-in required</h1><p>Open Faculty controls in this browser tab, unlock with the Faculty passphrase, then select Print Labels.</p><a href="index.html#/instructor">Return to hospital sign-in</a>';return;}
+if(!Store.session()||!Shared.on()||!Store.instructorUnlocked()){el.innerHTML='<h1>Faculty sign-in required</h1><p>Open Faculty controls in this browser tab, unlock with the Faculty PIN, then select Print Labels.</p><a href="index.html#/instructor">Return to hospital sign-in</a>';return;}
 try{await Shared.loadFacultyEvents();await Shared.loadFacultyCatalog();}catch(error){el.innerHTML='<h1>Faculty connection required</h1><p>'+esc(error.message||'Reconnect to the shared chart and unlock Faculty again.')+'</p><a href="index.html#/instructor">Return to Faculty controls</a>';return;}
 const pid=new URLSearchParams(location.search).get('patient');
 const p=pid?Model.base(pid):null;

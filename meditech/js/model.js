@@ -344,6 +344,8 @@
       });
     }
     for (const row of packageRows.values()) row.meds = meds.filter(item => Scan.pkgMatches(row.code, item));
+    // Which package (if any) each medication uses; medications without one get their own label below.
+    const pkgOf = new Map(meds.map(m => [m, [...packageRows.values()].find(row => row.meds.includes(m))?.code || null]));
     return {
       meds: meds.map(m => ({ kind: 'med', m, text: M.barcodeFor(m), code: Scan.shortCode(M.barcodeFor(m)) })),
       units: units.map(x => ({ kind: 'unit', m: x.m, d: x.d, text: Scan.productCode(x.m, x.d), code: Scan.shortCode(Scan.productCode(x.m, x.d)) })),
