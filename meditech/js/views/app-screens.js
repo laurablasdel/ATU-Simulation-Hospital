@@ -305,7 +305,10 @@
     if (!evs.some(e => e.group)) return evs.map(ev => eventHtml(p, base, rel, ev)).join('');
     const order = [], by = {};
     evs.forEach(ev => { const g = ev.group || 'Other'; if (!by[g]) { by[g] = []; order.push(g); } by[g].push(ev); });
-    order.sort((a,b)=>(Number(/^Shift\s+(\d+)/i.exec(a)?.[1])||Infinity)-(Number(/^Shift\s+(\d+)/i.exec(b)?.[1])||0));
+    // Shift 1, Shift 2, … in number order; headings without a shift number go last. Ties keep their original order.
+    const shiftNum = g => { const m = /^Shift\s+(\d+)/i.exec(g); return m ? Number(m[1]) : Infinity; };
+    const firstSeen = new Map(order.map((g, i) => [g, i]));
+    order.sort((a, b) => (shiftNum(a) - shiftNum(b)) || (firstSeen.get(a) - firstSeen.get(b)));
     const open = openGroups();
     return order.map(g => {
       const key = `${p.id}|${g}`, list = by[g], n = list.filter(e => rel[e.id]).length;
@@ -359,7 +362,10 @@
           <label class="btn">Import Documentation<input type="file" accept=".json,application/json" data-action="import" hidden></label>
           <button class="btn" data-action="lock">Lock</button>
         </div></div>
-        ${!sel ? `<p class="muted faculty-experience">${esc(Screens.experienceLabel(Screens.experience()))} · ${all.length} patient${all.length === 1 ? '' : 's'}</p>` : ''}
+        ${!sel ? `<p class="muted faculty-experience"><label>Sim experience
+            <select data-action="faculty-experience">${C.experiences.map(x => `<option value="${esc(x.id)}" ${x.id === Screens.experience() ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}
+            <option value="all" ${Screens.experience() === 'all' ? 'selected' : ''}>All experiences</option></select></label>
+            · ${all.length} patient${all.length === 1 ? '' : 's'}</p>` : ''}
         <div class="alert alert-info">${window.Shared && Shared.on()
           ? 'This computer is connected to the shared chart: releases and resets reach every connected device. "Reset Patient" erases that patient\'s documentation and restarts the scenario.'
           : 'Documentation is saved in <strong>this browser only</strong>. Release events and export charting on the same workstation the student used. "Reset Patient" erases that patient\'s documentation and restarts the scenario.'}</div>
@@ -368,6 +374,12 @@
       </div>`;
     },
     bind(root) {
+      // Faculty switch the sim experience here without signing out; this only changes which patients they see.
+      const expSel = root.querySelector('[data-action="faculty-experience"]');
+      if (expSel) expSel.addEventListener('change', e => {
+        const sess = Store.session(); if (!sess) return;
+        sess.viewExperience = e.target.value; Store.setSession(sess); pickPatient(''); App.render();
+      });
       root.querySelectorAll('[data-evgroup]').forEach(d => d.addEventListener('toggle', () => setGroupOpen(d.dataset.evgroup, d.open)));
       root.querySelectorAll('[data-scenario-shift]').forEach(el => el.addEventListener('change', () => { if (Store.advanceScenario(el.dataset.scenarioShift, el.value)) UI.toast('Simulation shift advanced. Release items individually when ready.'); App.render(); }));
       root.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => FacultySession.add(b.dataset.addItem)));
