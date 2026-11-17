@@ -269,6 +269,14 @@
       [...p.meds.filter(m => !m.entered), ...p.orders.filter(o => !o.entered)].filter(x => x.id === e.data.ref && x.status !== 'Discontinued')
         .forEach(x => { x.status = 'Discontinued'; x.dcTime = e.time; x.dcEntry = e; });
     });
+
+    // Shift clock (p.scenarioShifts, e.g. Charles Jones): once faculty move the chart to a later shift, scheduled doses
+    // due before that shift started that nobody charted were given by the prior shift. Doses from the new shift's start
+    // on (Shift 3 = Day 2 morning) stay due. Held and discontinued medications keep their status; charting always wins.
+    if (clock.staged && clock.stage && clock.stage.id !== p.scenarioShifts[0].id) p.meds.forEach(m => {
+      if (m.type !== 'scheduled' || m.status !== 'Active') return;
+      (m.doseTimes || []).forEach(dt => { if (dt.time < clock.stageStart && !dt.priorBy && !dt.priorNotGiven && !dt.notToday) dt.priorBy = 'Prior shift'; });
+    });
     return p;
   };
 

@@ -58,6 +58,23 @@
     Object.keys(verified).concat(Object.keys(queue)).forEach(pid => { if (location.hash !== `#/patient/${pid}/mar`) { delete verified[pid]; delete queue[pid]; } });
   });
 
+  // After a medication is documented: "Do you have more medications to give?" Yes keeps the patient verified on the MAR,
+  // so back-to-back medications need only their own barcode (no wristband rescan); No ends the verification.
+  function askMoreMeds(p) {
+    setTimeout(() => UI.modal({
+      title: 'More Medications?',
+      body: `<p>Do you have more medications to give to <strong>${esc(p.name.first)} ${esc(p.name.last)}</strong> now?</p>
+        <p class="muted small">Yes keeps the patient verified, so you can scan the next medication without scanning the wristband again.</p>`,
+      buttons: [
+        { label: 'No', onClick: () => { delete verified[p.id]; App.render(); } },
+        { label: 'Yes', cls: 'btn-primary', onClick: () => {
+          verified[p.id] = p.clock.now(); App.render();
+          setTimeout(() => { const s = document.getElementById('mar-scan'); if (s) s.focus(); }, 50);
+        } }
+      ]
+    }), 0);
+  }
+
   // One scanned unit for an order, or null when the barcode is not this medication.
   function unitFor(med, parsed) {
     if (!parsed) return null;
@@ -712,6 +729,7 @@
           delete queue[p.id];
           UI.toast(`${results.length} medication${results.length > 1 ? 's' : ''} documented.`);
           App.render();
+          askMoreMeds(p);
           return true;
         } }
       ]
@@ -804,6 +822,8 @@
           Store.add(p.id, 'mar', r.data, r.time, p.clock.now());
           UI.toast(mode === 'infusion' ? 'Infusion documented.' : r.given ? `${med.name} documented as given.` : `${med.name} documented as not given.`);
           App.render();
+          // Only after a real wristband match (not "Unable to scan") can the patient stay verified for the next medication.
+          if (r.given && Scan.patientOf(v.scanPt || '') && Scan.patientOf(v.scanPt).id === p.id && !v.noScan) askMoreMeds(p);
           return true;
         } }
       ]
