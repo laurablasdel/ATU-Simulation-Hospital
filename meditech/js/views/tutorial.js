@@ -182,13 +182,21 @@
         + '<div>• Blood pressure <strong>145/92</strong></div><div>• SpO₂ <strong>88%</strong> on <strong>3 L nasal cannula</strong></div></div>Then select <strong>Save</strong>.',
       show: worklistSteps('vitals'),
       done: (st, p, doc) => active(doc, 'vitals').length > 0 },
-    { id: 'loc', title: 'Complete a level-of-consciousness assessment',
-      how: 'On the Worklist, check <strong>Nursing Shift Assessment (WDL)</strong> (the second row) and select <strong>Document</strong>. Mark each system:'
-        + '<div class="tut-vals"><div>• <strong>Cognitive — WDL Except:</strong> confused and restless (new for her, per her daughter)</div>'
-        + '<div>• <strong>Respiratory — WDL Except:</strong> respirations 28, coarse breath sounds in both lungs, SpO₂ 88% on 3 L</div>'
-        + '<div>• <strong>Every other system — WDL</strong></div></div>Then select <strong>Sign &amp; Save</strong>.',
+    { id: 'head-to-toe', title: 'Complete a head-to-toe assessment',
+      how: 'Before the fall, open the nursing shift assessment on the Worklist and document all nine systems on the <strong>Physical Assessment (WDL)</strong> form.'
+        + vals(['Cognitive — WDL Except: confused and restless, oriented to person only. Her daughter says the confusion is new.',
+                'Cardiovascular — WDL Except: HR 104, regular rhythm.',
+                'Respiratory — WDL Except: RR 28, coarse breath sounds bilaterally, SpO₂ 88% on 3 L nasal cannula.',
+                'Skin — WDL Except: warm and flushed, temperature 101.6 °F.',
+                'Mark gastrointestinal, genitourinary, musculoskeletal, peripheral neurovascular, and safety WDL.'])
+        + 'Select <strong>Sign &amp; Save</strong>.',
       show: worklistSteps('form:wdl-adult'),
-      done: formDone('wdl-adult') },
+      done: (st, p, doc) => active(doc, 'assess').some(({ data }) => {
+        if (data.formId !== 'wdl-adult' || !data.values) return false;
+        const v = data.values;
+        return ['cog', 'cv', 'resp', 'skin'].every(id => v[id + '.wdl'] === 'WDL Except' && String(v[id + '.exc'] || '').trim())
+          && ['gi', 'gu', 'msk', 'pnv', 'safety'].every(id => v[id + '.wdl'] === 'WDL');
+      }) },
     { id: 'ack', title: 'Acknowledge the new IV fluid order',
       how: 'Select <strong>Orders</strong> in the toolbar. Find the order marked <strong>NEW</strong> (normal saline) and acknowledge it.',
       show: [{ sel: '[data-ack="prac-l0-o-new"]' }, { sel: ORDERS_BTN }, { sel: ROW }],
@@ -197,16 +205,23 @@
       how: 'Open the <strong>MAR</strong> (Document ▾ → Mar). Tap the <strong>wristband</strong> practice label, then the <strong>normal saline</strong> label. Choose <strong>Started / hung</strong>, confirm the rate (100 mL/hr), then <strong>Save</strong> and <strong>Document</strong>.',
       show: marSteps('.tut-label[data-code="RX-PRAC-L0-NS"]'),
       done: (st, p, doc) => active(doc, 'mar').some(e => e.data.medId === 'prac-l0-ns' && /Started/.test(e.data.action || '')) },
-    { id: 'sbar', title: 'Write an SBAR note to the provider',
-      how: 'Select <strong>Document ▾ → Write Note</strong>. Write the call to the provider in SBAR format — <strong>S</strong>ituation, <strong>B</strong>ackground, <strong>A</strong>ssessment, <strong>R</strong>ecommendation — about her new confusion, fever, and breathing. Sign the note.',
-      show: [{ sel: '.tb-menu:not([hidden]) [data-docmenu="note"]' }, { sel: DOC_CARET }, { sel: ROW }],
-      done: (st, p, doc) => active(doc, 'notes').length > 0 },
     { id: 'incident', title: 'Complete an incident report for the fall',
       how: 'Jane becomes more confused and gets up to go to the bathroom by herself, without her IV pump. The IV pulls out and she falls. You find her on the floor with blood coming from the IV site; she says her hip hurts. On the Worklist, check <strong>Incident Report</strong> (the third row), select <strong>Document</strong>, and complete it with the facts from this event. Use these vital signs taken right after the fall:'
         + '<div class="tut-vals"><div>• Temperature <strong>101.4 °F</strong></div><div>• Heart rate <strong>112</strong></div><div>• Respirations <strong>28</strong></div>'
         + '<div>• Blood pressure <strong>150/94</strong></div><div>• SpO₂ <strong>89%</strong> on <strong>3 L nasal cannula</strong></div><div>• Pain <strong>7/10</strong>, right hip</div></div>',
       show: worklistSteps('form:incident-report'),
-      done: formDone('incident-report') }
+      done: formDone('incident-report') },
+    { id: 'full-sbar', title: 'Give a full SBAR report to the provider',
+      how: 'After completing the fall incident report, open <strong>Document ▾ → Write Note</strong> and choose <strong>SBAR — Provider Notification</strong>. Enter the provider and contact method.'
+        + vals(['Situation: Report the fall, dislodged IV, bleeding at the IV site, and right hip pain of 7/10.',
+                'Background: Explain why Jane was admitted and how her confusion differs from baseline.',
+                'Assessment: Report the post-fall findings, including temperature 101.4 °F, HR 112, RR 28, BP 150/94, and SpO₂ 89% on 3 L nasal cannula.',
+                'Recommendation: State what you are asking the provider to assess or order.',
+                'Provider response: Record the response given in the simulation. If a response is pending, document that.'])
+        + 'Sign the completed note.',
+      show: [{ sel: '.tb-menu:not([hidden]) [data-docmenu="note"]' }, { sel: DOC_CARET }, { sel: ROW }],
+      done: (st, p, doc) => active(doc, 'notes').some(({ data }) => data.type === 'SBAR — Provider Notification'
+        && ['provider', 'method', 's', 'b', 'a', 'r', 'outcome'].every(key => String(data[key] || '').trim())) }
   ];
 
   const TASKS = TRACK === 'level0' ? LEVEL0 : GENERAL;
