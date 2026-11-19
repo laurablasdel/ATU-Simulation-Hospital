@@ -280,7 +280,7 @@
             ${cur ? `<div class="tut-how">${t.how}</div>${t.quiz ? quizHtml(t) : ''}<button type="button" class="btn btn-sm tut-show" data-show="${t.id}">👀 Show me</button>` : ''}</li>`;
         }).join('')}</ol>
         ${current ? '' : `<div class="tut-complete"><strong>Orientation complete!</strong> You are ready to chart in simulation.${inLMS() ? ' Your completion has been recorded in Blackboard.' : '<button type="button" class="btn btn-primary btn-block" data-tut="summary">Print completion summary</button>'}</div>`}
-        <div class="tut-foot"><button type="button" class="tut-link" data-tut="summary">Progress summary</button><button type="button" class="tut-link" data-tut="reset">Start over</button></div>
+        <div class="tut-foot"><button type="button" class="tut-link" data-tut="summary">${TRACK === 'level0' ? 'View / print grading report' : 'Progress summary'}</button><button type="button" class="tut-link" data-tut="reset">Start over</button></div>
       </aside>`;
     }
     bind(el, st);
@@ -309,6 +309,7 @@
       const v = U.formValues(f);
       const wrong = t.quiz.filter(q => String(v[q.name] || '').trim().replace(/\s+/g, ' ').toLowerCase() !== q.answer.toLowerCase());
       const msg = f.querySelector('.tut-msg');
+      if (TRACK === 'level0' && t.id === 'safety') { st.safetyAnswers = { allergy: v.allergy, dx: v.dx }; save(st); }
       if (wrong.length) { msg.className = 'tut-msg bad'; msg.textContent = `Not quite — check ${wrong.map(q => q.label.toLowerCase()).join(' and ')} in the chart and try again.`; return; }
       st.quiz[t.id] = true; save(st);
       UI.toast('Correct!');
@@ -351,6 +352,27 @@
   }
 
   /* ---------- Completion summary (printable) ---------- */
+  function gradingEvidence(student, st) {
+    const doc = Store.doc(PID);
+    const name = value => String(value || '').trim().toLowerCase();
+    const own = key => (doc[key] || []).filter(e => e.user && name(student.name) && name(e.user.name) === name(student.name) && (e.user.group || '') === (student.group || ''));
+    const fields = (data, labels) => Object.entries(labels).map(([key, label]) =>
+      '<div><strong>' + esc(label) + ':</strong> ' + esc(String(data[key] ?? '').trim() ? String(data[key]) : 'No entry') + '</div>').join('');
+    const section = (title, entries, body) => '<h3>' + esc(title) + '</h3>' + (entries.length ? entries.map(e =>
+      '<article style="margin-bottom:12px;white-space:pre-wrap;overflow-wrap:anywhere"><strong>' + esc(U.fmtDT(e.time)) + (e.status === 'error' ? ' · Entered in error' : '') + '</strong>' + body(e.data) + '</article>').join('') : '<p>No saved entry for this student on this device.</p>');
+    const assessment = (id, title) => section(title, own('assess').filter(e => e.data.formId === id),
+      data => Views.assess.detail(PT, window.ASSESSMENT_FORMS[id], data));
+    return '<h2>Student documentation for grading</h2>'
+      + section('SBAR — Provider Notification', own('notes').filter(e => e.data.type === 'SBAR — Provider Notification'), data => fields(data, {
+        provider: 'Provider notified', method: 'Contact method', s: 'Situation', b: 'Background', a: 'Assessment', r: 'Recommendation / request', outcome: 'Provider response'
+      }))
+      + '<h3>Latest quiz answers</h3>' + fields(st.safetyAnswers || {}, { allergy: 'Allergy', dx: 'Admitting diagnosis' })
+      + assessment('wdl-adult', 'Head-to-toe assessment')
+      + assessment('incident-report', 'Fall incident report')
+      + section('Vital signs', own('vitals'), data => fields(data, { temp: 'Temperature (°F)', tempRoute: 'Route', hr: 'Heart rate', rr: 'Respirations', sbp: 'Systolic BP', dbp: 'Diastolic BP', bpPos: 'Position', spo2: 'SpO₂ (%)', o2: 'Oxygen device', o2Flow: 'Oxygen flow (L/min)', pain: 'Pain score', glucose: 'POC glucose', weight: 'Weight (kg)', note: 'Comment' }))
+      + section('IV fluid administration', own('mar').filter(e => e.data.medId === 'prac-l0-ns'), data => fields(data, { action: 'Normal saline action', dose: 'Dose', route: 'Route', rate: 'Rate', site: 'Site', reason: 'Reason', comment: 'Comment' }));
+  }
+
   function summary() {
     const s = Store.session() || {};
     const st = load();
@@ -368,11 +390,11 @@
     const html = `<h2 style="margin:0 0 4px">${esc(TITLE)} — ${n === TASKS.length ? 'Completed' : 'Progress'}</h2>
       <p style="margin:0 0 10px">${esc(C.hospitalName)} · Practice patient: ${esc(PT_NAME)} (MRN ${esc(PT.mrn)})</p>
       <p><strong>Student:</strong> ${esc(s.name || '')}${s.cred ? ', ' + esc(s.cred) : ''}${s.group ? ` · <strong>Group:</strong> ${esc(s.group)}` : ''}<br><strong>Printed:</strong> ${esc(new Date().toLocaleString('en-US'))}<br><strong>Tasks completed:</strong> ${n} of ${TASKS.length}<br><strong>Started:</strong> ${esc(new Date(start).toLocaleString('en-US'))}${last ? `<br><strong>Total time${n === TASKS.length ? '' : ' so far'}:</strong> ${esc(fmtDur(last - start))}` : ''}</p>
-      <table class="grid"><thead><tr><th></th><th>Task</th><th>Completed</th><th>Time on task</th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="grid"><thead><tr><th></th><th>Task</th><th>Completed</th><th>Time on task</th></tr></thead><tbody>${rows}</tbody></table>${TRACK === 'level0' ? gradingEvidence(s, st) : ''}`;
     UI.modal({
       title: 'Orientation Summary', wide: true, body: `<div class="tut-summary">${html}</div>`,
       // In Blackboard (SCORM) completion is graded automatically, so there is nothing to print.
-      buttons: inLMS() ? [{ label: 'Close' }] : [{ label: 'Close' }, { label: 'Print', cls: 'btn-primary', onClick: () => {
+      buttons: inLMS() && TRACK !== 'level0' ? [{ label: 'Close' }] : [{ label: 'Close' }, { label: 'Print', cls: 'btn-primary', onClick: () => {
         const w = window.open('', '_blank');
         if (!w) { window.print(); return false; }
         w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(TITLE)} Summary</title><style>body{font:14px Arial,sans-serif;margin:32px;color:#111}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left}th{background:#eee}</style></head><body>${html}<p style="margin-top:28px">Faculty initials: ____________ &nbsp; Date: ____________</p></body></html>`);
